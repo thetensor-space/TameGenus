@@ -1,0 +1,13 @@
+A package for isomorphism testing of groups of small genus for Magma V2.22 and 
+beyond. It may require an updated version of the Multilinear package provided by
+Maglione and Wilson.
+
+This software was created by Peter Brooksbank, Joshua Maglione, and James B. 
+Wilson, Copyright 2016. GNU Public Liscence v. 3.
+
+Contents:
+
+Source Code is contained in the folder "src"
+Spec file is "./src/Small.spec"
+
+Documentation is included as "SmallGenus.pdf" in "doc"
