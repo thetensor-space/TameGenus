@@ -117,8 +117,10 @@ __IsPseudoSG := function( B, C : Constructive := false, Method := 0, Print := fa
       bForms2 := [ S2*nForms2[1]*Transpose(S2) ];
       N1 := ExtractBlock( bForms1[1], 1, Nrows(bForms1[1]) div 2 + 1, Nrows(bForms1[1]) div 2, Nrows(bForms1[1]) div 2 );
       N2 := ExtractBlock( bForms2[1], 1, Nrows(bForms1[1]) div 2 + 1, Nrows(bForms1[1]) div 2, Nrows(bForms1[1]) div 2 );
-      T := DiagonalJoin( N2 * N1^-1, IdentityMatrix( k, Nrows(N1) ) );
-      X := < M2 ^-1 * S2^-1 * T * S1 * M1, IdentityMatrix(k,1) >;
+      T := DiagonalJoin( DiagonalJoin( N2 * N1^-1, IdentityMatrix( k, Nrows(N1) ) ), IdentityMatrix(k, Dimension(R1)) );
+      S2 := DiagonalJoin( S2, IdentityMatrix(k,Dimension(R1)) );
+      S1 := DiagonalJoin( S1, IdentityMatrix(k,Dimension(R1)) );
+      X := < M2^-1 * S2^-1 * T * S1 * M1, IdentityMatrix(k,1) >;
 
       // Sanity check
       //assert [ X[1] * F * Transpose(X[1]) : F in SystemOfForms(B) ] eq SystemOfForms(B);
