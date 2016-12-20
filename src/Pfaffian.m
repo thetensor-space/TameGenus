@@ -197,6 +197,7 @@ end function;
 
 __Pfaffian_AUT := function( sB, d : Sanity := false )
 	k := BaseRing(sB);
+  p := Characteristic(k);
   B := SystemOfForms(sB);
 	// Now that the bimaps are in block diagonal form, we extract the top right corner
 	TRX := [**];
@@ -273,45 +274,46 @@ __Pfaffian_AUT := function( sB, d : Sanity := false )
     if Z eq Parent(Z)!1 then
       Z := PrimitiveElement(k) * Z;
     end if;
-	  poly2_Z := [ __GL2ActionOnPolynomial( poly2[i], Z ) : i in [1..#poly2] ];
-	  mul_poly2 := {* poly2_Z[i] : i in [1..#poly2] *};
-	  mul_poly1 := {* poly1[i] : i in [1..#poly1] *};
+    for sigma in [0..Degree(k)-1] do
+	    poly2_Z := [ __GL2ActionOnPolynomial( poly2[i], Z : Gal := sigma ) : i in [1..#poly2] ];
+	    mul_poly2 := {* poly2_Z[i] : i in [1..#poly2] *};
+	    mul_poly1 := {* poly1[i] : i in [1..#poly1] *};
 
-	  if mul_poly1 eq mul_poly2 then
-		  boolval := true;
-		  perm := __FindPermutation( poly1, poly2_Z );
-		  P := __PermutationDegreeMatrix( k, [ d[i] : i in [1..#d] ], perm );
+	    if mul_poly1 eq mul_poly2 then
+		    boolval := true;
+		    perm := __FindPermutation( poly1, poly2_Z );
+		    P := __PermutationDegreeMatrix( k, [ d[i] : i in [1..#d] ], perm );
 
-		  // Lift the sloped parts
-		  M := IdentityMatrix( k, 0 );
-		  for i in [1..#poly1] do
-			  Lift := __LiftSlopeGenus2( poly2[i], poly1[perm[i]], Z  : Sanity := Sanity );
-			  M := DiagonalJoin( M, DiagonalJoin( Transpose(Lift[1]), Lift[2] ) );
-		  end for;
-		  M := Transpose( M );
-		  X1 := M * Transpose( P ) * Q * A; 
-		  X2 := Q * A;
-		  X := X2^(-1) * X1;
+		    // Lift the sloped parts
+		    M := IdentityMatrix( k, 0 );
+		    for i in [1..#poly1] do
+			    Lift := __LiftSlopeGenus2( poly2[i], poly1[perm[i]], Z  : Sanity := Sanity );
+			    M := DiagonalJoin( M, DiagonalJoin( Transpose(Lift[1]), Lift[2] ) );
+		    end for;
+		    M := Transpose( M );
+		    X1 := M * Transpose( P ) * Q * A; 
+		    X2 := Q * A;
+		    X := X2^(-1) * X1;
 
-		  /*
-				  There are many matrices, each doing a different thing.
-				  P1 = Permutation matrix to sort the blocks by flat to slope
-				  C1 = Matrix to get flat into standard form (based on Pete's
-					    form)
-				  A = Matrix to turn invertibles into identity
-				  Q = Matrix to get the other one into RCF
-				  P = Permutation matrix to align the slopes
-				  F = Lifts of the flats
-				  M = Lifts of the slopes
-		  */
+		    /*
+				    There are many matrices, each doing a different thing.
+				    P1 = Permutation matrix to sort the blocks by flat to slope
+				    C1 = Matrix to get flat into standard form (based on Pete's
+					      form)
+				    A = Matrix to turn invertibles into identity
+				    Q = Matrix to get the other one into RCF
+				    P = Permutation matrix to align the slopes
+				    F = Lifts of the flats
+				    M = Lifts of the slopes
+		    */
 
-		  // Sanity check!
-      //S := SystemOfForms(sB);
-      //assert [ X*F*Transpose(X) : F in S ] eq [ &+[ Z[j][i]*S[j] : j in [1..#S] ] : i in [1..Nrows(Z)] ];
-	    Append( ~inner, X );
-      Append( ~outer, Z );
-	  end if;
-
+		    // Sanity check!
+        //S := SystemOfForms(sB);
+        //assert [ X*F*Transpose(X) : F in S ] eq [ &+[ Z[j][i]*S[j] : j in [1..#S] ] : i in [1..Nrows(Z)] ];
+	      Append( ~inner, X );
+        Append( ~outer, Z );
+	    end if;
+    end for;
   end for;
 
 	return inner, outer;
