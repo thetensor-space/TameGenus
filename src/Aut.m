@@ -84,7 +84,11 @@ intrinsic AutomorphismGroupSG( G::GrpPC : Cent := false, Method := 0, Print := f
 {Construct generators for the automorphism group of a small genus group G.
 To use a specific method regardless of structure, set Method to 1 for adjoint tensor method or 2 for determinant method.}
   require IsPrime(Exponent(G)) : "Group must have exponent p.";
-  require NilpotencyClass(G) eq 2 : "Group is not class 2.";
+  require NilpotencyClass(G) le 2 : "Group is not class 2.";
+  
+  if IsAbelian(G) then
+    return AutomorphismGroup(G);
+  end if;
 
   B := pCentralTensor( G, 1, 1 );
   if Cent then

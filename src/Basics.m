@@ -2,7 +2,10 @@ import "Util.m" : __FindPermutation, __PermutationDegreeMatrix, __GL2ActionOnPol
 
 intrinsic Genus( G::GrpPC ) -> RngIntElt
 {Computes the genus of G.}
-  require pClass(G) eq 2 : "G is not p-class 2.";
+  require pClass(G) le 2 : "G is not p-class 2.";
+  if IsAbelian(G) then
+    return 0;
+  end if;
   B := pCentralTensor(G,1,1);
   overC := TensorOverCentroid( B );
 	return Dimension(overC`Codomain);

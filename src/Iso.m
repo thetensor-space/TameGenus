@@ -281,8 +281,12 @@ intrinsic IsIsomorphicSG( G::GrpPC, H::GrpPC : Cent := false, Constructive := tr
     return false,_;
   end if;
   require IsPrime(Exponent(G)) : "Groups do not have exponent p.";
-  require NilpotencyClass(G) eq 2 : "Groups are not class 2.";
+  require NilpotencyClass(G) le 2 : "Groups are not class 2.";
   require IsOdd(#G) : "Groups must have odd order.";
+
+  if IsAbelian(G) then 
+    return IsIsomorphic(G,H);
+  end if;
   
   if Print then
     printf "Getting tensor info... ";
