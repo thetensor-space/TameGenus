@@ -7,6 +7,13 @@ Wilson, Copyright 2016. GNU Public Liscence v. 3.
 
 Contents:
 
-Spec file is "SmallGenus.spec"
-Source Code is contained in the folder "src"
-Documentation is included as "SmallGenus.pdf" in "doc"
+SmallGenus.spec  — magma specification file.
+
+src/
+	Source Code for package.
+doc/
+	Package documentation.
+examples/
+	Examples of package use.
+test/
+	Performance and debugging tests.
