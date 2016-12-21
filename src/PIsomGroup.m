@@ -209,7 +209,7 @@ intrinsic PseudoIsometryGroupSG( B::TenSpcElt : Cent := false, Method := 0, Prin
 {Construct the pseudo-isometry group for an alternating bimap of genus 1 or 2. 
 To use a specific method for genus 2, set Method to 1 for adjoint tensor method or 2 for determinant method.}
   require forall{ X : X in Frame(B) | Type(X) eq ModTupFld } : "Domain and codomain must be vector spaces.";
-  require B`Valence eq 2 : "Tensor must be a bimap.";
+  require B`Valence eq 3 : "Tensor must be a bimap.";
   require IsAlternating(B) : "Bimap must be alternating.";
   k := BaseRing(B);
   require ISA(Type(k),FldFin) : "Base ring must be a finite field.";
