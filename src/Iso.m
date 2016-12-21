@@ -237,7 +237,7 @@ intrinsic IsPseudoIsometricSG( B::TenSpcElt, C::TenSpcElt : Cent := false, Const
   l := BaseRing(C);
   require ISA(Type(k),FldFin) and ISA(Type(l),FldFin) : "Base rings must be finite fields.";
   require #k eq #l : "Base rings must be the same.";
-  require B`Valence eq 2 and C`Valence eq 2 : "Tensors must have valence 2.";
+  require B`Valence eq 3 and C`Valence eq 3 : "Tensors must be bimaps.";
   require forall{ X : X in Frame(B) cat Frame(C) | Type(X) eq ModTupFld } : 
     "Domains and codomains must be vector spaces.";
   require IsAlternating(B) and IsAlternating(C) : "Bimaps must be alternating.";
