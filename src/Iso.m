@@ -62,15 +62,11 @@ end function;
 __IsPseudoSG := function( B, C : Constructive := false, Method := 0, Print := false )
   k := BaseRing(B);
   // Peel off the radicals
-  if Print then
-    printf "Computing radicals... ";
-    tt := Cputime();
-  end if;
+  vprintf SmallGenus, 1 : "Computing radicals... ";
+  tt := Cputime();
   R1 := Radical(B,1);
   R2 := Radical(C,1);
-  if Print then
-    printf "%o seconds.\n", Cputime(tt);
-  end if;
+  vprintf SmallGenus, 1 : "%o seconds.\n", Cputime(tt);
   if Dimension(R1) ne Dimension(R2) then
     return false,_;
   end if;
@@ -95,20 +91,14 @@ __IsPseudoSG := function( B, C : Constructive := false, Method := 0, Print := fa
 
   // trivial case -- genus 1
   if Dimension(B`Codomain) eq 1 then
-    if Print then
-      printf "Genus 1 case.\n";
-    end if;
+    vprintf SmallGenus, 1 : "Genus 1 case.\n";
     if Constructive then
       /* Hack until bug in StarAlg gets fixed for forms. */
-      if Print then
-        printf "Computing adjoint algebras... ";
-        tt := Cputime();
-      end if;
+      vprintf SmallGenus, 1 : "Computing adjoint algebras... ";
+      tt := Cputime();
       A1 := AdjointAlgebra( nB );
       A2 := AdjointAlgebra( nC );
-      if Print then
-        printf "%o seconds.\n", Cputime(tt);
-      end if;
+      vprintf SmallGenus, 1 : "%o seconds.\n", Cputime(tt);
       I1 := __GetIdempotents( A1 );
       I2 := __GetIdempotents( A2 );
       S1 := Matrix( &cat[ Basis( Image( I1[i] ) ) : i in [1..#I1] ] );
@@ -131,40 +121,27 @@ __IsPseudoSG := function( B, C : Constructive := false, Method := 0, Print := fa
   end if;
 
   // genus 2
-  if Print then
-    printf "Genus 2 case.\n";
-  end if;
-  if Print then
-    printf "Computing adjoint algebras... ";
-    tt := Cputime();
-  end if;
+  vprintf SmallGenus, 1 : "Genus 2 case.\n";
+  vprintf SmallGenus, 1 : "Computing adjoint algebras... ";
+  tt := Cputime();
   A1 := AdjointAlgebra( nB );
   A2 := AdjointAlgebra( nC );
-  if Print then
-    printf "%o seconds.\n", Cputime(tt);
-  end if;
-  if Print then
-    printf "Computing perp decompositions... ";
-    tt := Cputime();
-  end if;
+  vprintf SmallGenus, 1 : "%o seconds.\n", Cputime(tt);
+  vprintf SmallGenus, 1 : "Computing perp decompositions... ";
+  tt := Cputime();
   T1,dims1 := PerpDecomposition( nB );
   T2,dims2 := PerpDecomposition( nC );
-  if Print then
-    printf "%o seconds.\n", Cputime(tt);
-  end if;
+  vprintf SmallGenus, 1 : "%o seconds.\n", Cputime(tt);
   if Multiset(dims1) ne Multiset(dims2) then
-    if Print then
-      "Genus 2 signatures are not the same.";
-    end if;
+    vprint SmallGenus, 1 : "Genus 2 signatures are not the same.";
     return false,_; 
   end if;
   flats := Sort( [ d : d in dims1 | IsOdd(d) ] );
   sloped := Sort( [ d : d in dims1 | IsEven(d) ] );
   sorted_dims := flats cat sloped;
   adjten := __WhichMethod(Method,#k,sloped);
-  if Print then 
-    Sprintf( "%o sloped blocks and %o flat blocks.\nDims: %o", #sloped, #flats, sorted_dims );
-  end if;
+  vprintf SmallGenus, 1 : "%o sloped blocks and %o flat blocks.\nDims: %o", #sloped, #flats, sorted_dims;
+  //Sprintf( "%o sloped blocks and %o flat blocks.\nDims: %o", #sloped, #flats, sorted_dims );
   if not Constructive and sloped eq [] then 
     return true,_; 
   end if;
@@ -202,21 +179,15 @@ __IsPseudoSG := function( B, C : Constructive := false, Method := 0, Print := fa
   end if;
 
   if adjten then
-    if Print then
-      printf "Using adjoint-tensor method... ";
-      tt := Cputime();
-    end if;
+    vprintf SmallGenus, 1 : "Using adjoint-tensor method... ";
+    tt := Cputime();
     isit,X := __IsPseudoSGAdjTens( flats, sloped, bB, bC );
   else
-    if Print then
-      printf "Using Pfaffian method... ";
-      tt := Cputime();
-    end if;
+    vprintf SmallGenus, 1 : "Using Pfaffian method... ";
+    tt := Cputime();
     isit,X := __IsPseudoSGPfaffian( flats, sloped, bB, bC : Constructive := Constructive );
   end if;
-  if Print then
-    printf "%o seconds.\n", Cputime(tt);
-  end if;
+  vprintf SmallGenus, 1 : "%o seconds.\n", Cputime(tt);
 
   if (not Constructive) or (not isit) then
     return isit,_; 
@@ -251,31 +222,25 @@ intrinsic IsPseudoIsometricSG( B::TenSpcElt, C::TenSpcElt : Cent := false, Const
   end try;
 
   if Cent then
-    if Print then
-      printf "Rewriting bimap over its centroid... ";
-      tt := Cputime();
-    end if;
+    vprintf SmallGenus, 1 : "Rewriting bimap over its centroid... ";
+    tt := Cputime();
     B := TensorOverCentroid(B);
     C := TensorOverCentroid(C);
-    if Print then
-      print "%o seconds.\n", Cputime(tt);
-    end if;
+    vprintf SmallGenus, 1 : "%o seconds.\n", Cputime(tt);
     if BaseRing(B) ne BaseRing(C) then
       return false,_;
     end if;
     require IsPrimeField(BaseRing(B)) : "Currently only accepting prime fields.";
   end if;
   if Dimension(B`Domain[1]) ne Dimension(C`Domain[1]) or Dimension(B`Codomain) ne Dimension(C`Codomain) then
-    if Print then
-      "Domains or codomains not isormorphic.";
-    end if;
+    vprint SmallGenus, 1 : "Domains or codomains not isormorphic.";
     return false,_;
   end if;
   require Dimension(B`Codomain) le 2 : "Bimaps have genus greater than 2.";
   return __IsPseudoSG( B, C : Constructive := Constructive, Method := Method, Print := Print );
 end intrinsic;
 
-intrinsic IsIsomorphicSG( G::GrpPC, H::GrpPC : Cent := false, Constructive := true, Method := 0, Print := false ) -> BoolElt
+intrinsic IsIsomorphicSG( G::GrpPC, H::GrpPC : Cent := true, Constructive := true, Method := 0 ) -> BoolElt
 {For genus 2 p-groups G and H, determine if G is isomorphic to H.}
   if (Exponent(G) ne Exponent(H)) or (#G ne #H) or (NilpotencyClass(G) ne NilpotencyClass(H)) then
     return false,_;
@@ -288,51 +253,37 @@ intrinsic IsIsomorphicSG( G::GrpPC, H::GrpPC : Cent := false, Constructive := tr
     return IsIsomorphic(G,H);
   end if;
   
-  if Print then
-    printf "Getting tensor info... ";
-    tt := Cputime();
-  end if;
+  vprintf SmallGenus, 1 : "Getting tensor info... ";
+  tt := Cputime();
 	B := pCentralTensor( G, 1, 1 );
   C := pCentralTensor( H, 1, 1 );
   _ := Eltseq(B);
   _ := Eltseq(C);
-  if Print then
-    printf "%o seconds.\n", Cputime(tt);
-  end if;
+  vprintf SmallGenus, 1 : "%o seconds.\n", Cputime(tt);
   if Cent then
-    if Print then
-      printf "Rewriting bimap over its centroid... ";
-      tt := Cputime();
-    end if;
+    vprintf SmallGenus, 1 : "Rewriting bimap over its centroid... ";
+    tt := Cputime();
     B := TensorOverCentroid(B);
     C := TensorOverCentroid(C);
-    if Print then
-      print "%o seconds.\n", Cputime(tt);
-    end if;
+    vprintf SmallGenus, 1 : "%o seconds.\n", Cputime(tt);
     if BaseRing(B) ne BaseRing(C) then
       return false,_;
     end if;
     require IsPrimeField(BaseRing(B)) : "Currently only accepting prime fields.";
   end if;
   if Dimension(B`Domain[1]) ne Dimension(C`Domain[1]) or Dimension(B`Codomain) ne Dimension(C`Codomain) then
-    if Print then
-      "Domains or codomains not isormorphic.";
-    end if;
+    vprint SmallGenus, 1 : "Domains or codomains not isormorphic.";
     return false,_;
   end if;
   require Dimension(B`Codomain) le 2 : "Groups have genus greater than 2.";
-  isit, X := __IsPseudoSG( B, C : Constructive := Constructive, Method := Method, Print := Print );
+  isit, X := __IsPseudoSG( B, C : Constructive := Constructive, Method := Method );
 
   if Constructive and isit then
-    if Print then
-      printf "Putting everything together... ";
-      tt := Cputime();
-    end if;
+    vprintf SmallGenus, 1 : "Putting everything together... ";
+    tt := Cputime();
     M := ExtractBlock(X,1,1,Dimension(B`Domain[1]),Dimension(B`Domain[1]))^-1;
     phi := hom< G -> H | [ <G.i,&*[H.j^(Integers()!M[i][j]) : j in [1..Dimension(B`Domain[1])]]> : i in [1..Dimension(B`Domain[1])] ] : Check:=false >; 
-    if Print then
-      printf "%o seconds.\n", Cputime(tt);
-    end if;
+    vprintf SmallGenus, 1 : "%o seconds.\n", Cputime(tt);
     return true, phi;
   end if;
   return isit,_;

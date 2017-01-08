@@ -181,3 +181,19 @@ __WhichMethod := function(m,q,d)
     return true;
   end if;
 end function;
+
+__WriteMatrixOverPrimeField := function( M )
+  E := BaseRing(M);
+  p := Characteristic(E);
+  K := GF(p);
+  d := Degree(E,K);
+  if d eq 1 then
+    return M;
+  end if;
+  n := Nrows(M);
+  V_ext := VectorSpace(E, n);
+  V := VectorSpace(K, n*d);
+  phi := map< V -> V_ext | x :-> V_ext!([ E!(Eltseq(x)[(j-1)*d+1..j*d]) : j in [1..n]]),
+                           y :-> V!(&cat[Eltseq(y[i]) : i in [1..n]]) >;
+  return Matrix(K, [ Eltseq(((V.i @ phi)*M) @@ phi) : i in [1..n*d] ]);
+end function;

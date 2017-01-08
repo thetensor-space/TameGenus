@@ -285,14 +285,14 @@ __Pfaffian_AUT := function( sB, d : Sanity := false )
 		    P := __PermutationDegreeMatrix( k, [ d[i] : i in [1..#d] ], perm );
 
 		    // Lift the sloped parts
-		    M := IdentityMatrix( k, 0 );
+		    M := IdentityMatrix( GF(p), 0 );
 		    for i in [1..#poly1] do
-			    Lift := __LiftSlopeGenus2( poly2[i], poly1[perm[i]], Z  : Sanity := Sanity );
+			    Lift := __LiftSlopeGenus2( poly2[i], poly1[perm[i]], Z  : Sanity := Sanity, Gal := sigma );
 			    M := DiagonalJoin( M, DiagonalJoin( Transpose(Lift[1]), Lift[2] ) );
 		    end for;
 		    M := Transpose( M );
-		    X1 := M * Transpose( P ) * Q * A; 
-		    X2 := Q * A;
+		    X2 := __WriteOverPrimeField(Q * A);
+		    X1 := M * __WriteOverPrimeField(Transpose( P )) * X2; 
 		    X := X2^(-1) * X1;
 
 		    /*
@@ -311,10 +311,10 @@ __Pfaffian_AUT := function( sB, d : Sanity := false )
         //S := SystemOfForms(sB);
         //assert [ X*F*Transpose(X) : F in S ] eq [ &+[ Z[j][i]*S[j] : j in [1..#S] ] : i in [1..Nrows(Z)] ];
 	      Append( ~inner, X );
-        Append( ~outer, Z );
+        Append( ~outer, Lift[3] );
 	    end if;
     end for;
   end for;
-
+inner,outer;
 	return inner, outer;
 end function;
