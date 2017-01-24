@@ -104,29 +104,12 @@ __LiftSlopeGenus2 := function( f,g,Z : Sanity := false, Gal := 0 )
       C := __Scharlau(MA!1);
       D := __Scharlau(Cg);
   end if;
+
   M := DiagonalJoin( X, Transpose(Y) );
   LHS := [ M * C * Transpose(M), M * D * Transpose(M) ];
   RHS := [ Z[1][i]*A + Z[2][i]*B : i in [1..2] ];
   //Verify <X,Y;Z> is a "pseudo-isometry."
   assert LHS eq RHS;
-
-  p := Characteristic(K);
-  k := GF(p);
-  d := Degree(K,k);
-  // Assumes that there's a non-trivial field automorphism x -> x^(p^Gal).
-  if d gt 1 then
-    // default basis: [ 1, K.1, K.1^2, ..., K.1^(d-1) ]
-
-    // Build Galois action
-    sigma := Matrix(k, [Eltseq(K.1^(i*p^Gal)) : i in [0..d-1]]);
-    Sigma_out := DiagonalJoin( < sigma : i in [1..Nrows(X)] > );
-    Sigma_in := DiagonalJoin( sigma, sigma );
-
-    // Write X, Y, and Z over k
-    X := __WriteMatrixOverPrimeField(X)*Sigma_out;
-    Y := __WriteMatrixOverPrimeField(Y)*Sigma_out;
-    Z := __WriteMatrixOverPrimeField(Z)*Sigma_in;
-  end if;
 
 	return <X,Y,Z>;
 end function;

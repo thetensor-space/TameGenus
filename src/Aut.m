@@ -56,7 +56,7 @@ __SmallGenusAutomorphism := function( G, B : Cent := true, Method := 0, Order :=
                             y :-> V_p!(&cat[Eltseq(y[i]) : i in [1..n]]) >;
     phi2 := map< W_p -> W | x :-> W!([ k!(Eltseq(x)[(j-1)*d+1..j*d]) : j in [1..2]]),
                             y :-> W_p!(&cat[Eltseq(y[i]) : i in [1..2]]) >;
-    dom := [ V_p.i @ phi1 @@ f : i in [1..Dimension(V_p)] ];dom;
+    dom := [ V_p.i @ phi1 @@ f : i in [1..Dimension(V_p)] ];
     AutGens := [ __MatrixToAutomorphism( G, GF(p), V_p, phi1*f, W_p, phi2*g, X ) : X in AutMatGens ];
   end if;
 

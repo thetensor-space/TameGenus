@@ -67,7 +67,7 @@ __G2_PIsometry := function( B : Method := 0, Print := false )
   dims_sorted := flatdims cat slopeddims;
   adjten := __WhichMethod(Method,#k,slopeddims);
 
-  vprintf SmallGenus, 1 : "%o sloped blocks and %o flat blocks.\nDims: %o", #slopeddims, #flatdims, dims_sorted;
+  vprintf SmallGenus, 1 : "%o sloped blocks and %o flat blocks.\nDims: %o\n", #slopeddims, #flatdims, dims_sorted;
   //Sprintf( "%o sloped blocks and %o flat blocks.\nDims: %o", #slopeddims, #flatdims, dims_sorted );
 
   P := __PermutationDegreeMatrix( k, dims, __FindPermutation( dims_sorted, dims ) ); 
@@ -197,7 +197,7 @@ To use a specific method for genus 2, set Method to 1 for adjoint tensor method 
     tt := Cputime();
     B := TensorOverCentroid(B);
     vprintf SmallGenus, 1 : "%o seconds.\n", Cputime(tt);
-    require IsPrimeField(BaseRing(B)) : "Currently only accepting prime fields.";
+    //require IsPrimeField(BaseRing(B)) : "Currently only accepting prime fields.";
   end if;
   require Dimension(B`Codomain) le 2 : "Bimap is not genus 1 or 2.";
   if Dimension(B`Codomain) eq 1 then
