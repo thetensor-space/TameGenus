@@ -45,16 +45,17 @@ __GetGenus2Signature := function( B )
   end function;
   act := OrbitAction( GL(2,k), LineOrbits(GL(2,k))[1][1] ); // The action GL on the line (1,0)
   Perms := Image( act ); // PGL(2,k)
+  pfaff := &*polys;
 
-  // Get canonical polynomials.
-  orbits := [ {@ polys[i] @} : i in [1..#polys] ];
+  // Get canonical Pfaffian.
+  orbits := [ pfaff ];
   for Z in Perms do
     X := cleartop(Z @@ act, k);
-    for i in [1..#polys] do
-      Include(~orbits[i],__GL2ActionOnPolynomial( polys[i], X ));
-    end for;
+    Include(~orbits, __GL2ActionOnPolynomial( pfaff, X ));
   end for;
-  can_polys := [ Sort(O)[1] : O in orbits ]; 
+  canonical_poly := Sort(orbits)[1]; // internal Magma ordering on K[x,y].
+  factored_poly := Factorization(canonical_poly);
+  can_polys := [ f[1] : f in factored_poly ]; 
 
   // Polynomials are annoying to compare... Here's the (possibly temporary) fix.
   terms := [* [ 0 : i in [0..Degree(f)] ] : f in can_polys *];
