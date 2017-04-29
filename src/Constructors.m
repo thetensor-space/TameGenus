@@ -73,9 +73,10 @@ __WriteOverPrimeField := function( Forms )
     return (< x[i] @ maps_D[i] : i in [1..#x] > @ M) @ map_C;
   end function;
   N := Tensor( D_new, C_new, F );
-  //assert forall{ b : b in CartesianProduct( < [ c*K.1^i : i in [0..e-1], c in Basis(D) ] : D in D_old > ) | 
-    //(b @ M) @ map_C eq < b[i] @@ maps_D[i] : i in [1..#b] > @ N };
-  return SystemOfForms(N);
+//  assert forall{ b : b in CartesianProduct( < [ c*K.1^i : i in [0..e-1], c in Basis(D) ] : D in D_old > ) | 
+//    (b @ M) @ map_C eq < b[i] @@ maps_D[i] : i in [1..#b] > @ N };
+  sys := SystemOfForms(N);
+  return sys;
 end function;
 
 intrinsic RandomGroupSG( q::RngIntElt, n::RngIntElt, g::RngIntElt : Exponentp := false ) -> GrpPC

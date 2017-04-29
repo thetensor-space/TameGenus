@@ -29,7 +29,7 @@ Method: if set to 0, it uses the established cut offs for determining which meth
 	If set to 1, then we use the polynomial method, and if set to 2, we use the adjoint tensor method. 
 */
 
-__G2_PIsometry := function( B : Method := 0, Print := false )
+__G2_PIsometry := function( B : Method := 0 )
   k := BaseRing(B);
 
   /* Step 0.5: Remove the radical. */
@@ -184,7 +184,7 @@ end function;
 
 intrinsic PseudoIsometryGroupSG( B::TenSpcElt : Cent := true, Method := 0 ) -> GrpMat
 {Construct the pseudo-isometry group for an alternating bimap of genus 1 or 2. 
-To use a specific method for genus 2, set Method to 1 for adjoint tensor method or 2 for determinant method.}
+To use a specific method for genus 2, set Method to 1 for adjoint-tensor method or 2 for Pfaffian method.}
   require forall{ X : X in Frame(B) | Type(X) eq ModTupFld } : "Domain and codomain must be vector spaces.";
   require B`Valence eq 3 : "Tensor must be a bimap.";
   require IsAlternating(B) : "Bimap must be alternating.";
@@ -192,16 +192,25 @@ To use a specific method for genus 2, set Method to 1 for adjoint tensor method 
   require ISA(Type(k),FldFin) : "Base ring must be a finite field.";
   require Characteristic(k) ne 2 : "Must be odd characteristic.";
 
+  // write bimap over its centroid. 
   if Cent then
     vprintf SmallGenus, 1 : "Rewriting bimap over its centroid... ";
     tt := Cputime();
     B := TensorOverCentroid(B);
     vprintf SmallGenus, 1 : "%o seconds.\n", Cputime(tt);
-    //require IsPrimeField(BaseRing(B)) : "Currently only accepting prime fields.";
   end if;
   require Dimension(B`Codomain) le 2 : "Bimap is not genus 1 or 2.";
+
+  // if genus 1, do the simple algorithm.
   if Dimension(B`Codomain) eq 1 then
     return __G1_PIsometry( B );
   end if;
+
+  // if Cent is not prime field, do adj-ten method.
+  if not IsPrimeField(BaseRing(B)) then
+    Method := 1; 
+    vprintf SmallGenus, 1 : "Centroid is not a prime field, applying adjoint-tensor method.\n";
+  end if;
+
   return __G2_PIsometry( B : Method := Method );
 end intrinsic;

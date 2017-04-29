@@ -1,3 +1,5 @@
+import "PIsomGroup.m" : __G2_PIsometry;
+
 __MatrixToAutomorphism := function( G, k, V, f, W, g, M )
   im := [];
   for i in [1..Dimension(V)] do
@@ -18,7 +20,7 @@ If set to 1, then we use the polynomial method, and if set to 2, we use the adjo
 
 __SmallGenusAutomorphism := function( G, B : Cent := true, Method := 0, Order := false )
 
-  PIsom := PseudoIsometryGroupSG( B : Cent := Cent, Method := Method );
+  PIsom := __G2_PIsometry( B : Method := Method );
   k := BaseRing(B);
   V := B`Domain[1];
   f := B`Coerce[1];
@@ -89,7 +91,7 @@ end function;
 
 intrinsic AutomorphismGroupSG( G::GrpPC : Cent := true, Method := 0, Order := false ) -> GrpAuto
 {Construct generators for the automorphism group of a small genus group G.
-To use a specific method regardless of structure, set Method to 1 for adjoint tensor method or 2 for determinant method.}
+To use a specific method regardless of structure, set Method to 1 for adjoint-tensor method or 2 for Pfaffian method.}
   require IsPrime(Exponent(G)) : "Group must have exponent p.";
   require NilpotencyClass(G) le 2 : "Group is not class 2.";
   
@@ -102,11 +104,14 @@ To use a specific method regardless of structure, set Method to 1 for adjoint te
     vprintf SmallGenus, 1 : "Rewriting bimap over its centroid... ";
     tt := Cputime();
     B := TensorOverCentroid(B);
-    //require IsPrimeField(BaseRing(B)) : "Currently only accepting prime fields.";
     timing := Cputime(tt);
     vprintf SmallGenus, 1 : "%o seconds.\n", timing;
   end if;
   require Dimension(B`Codomain) le 2 : "Group is not genus 1 or 2.";
+  if not IsPrimeField(BaseRing(B)) then
+    Method := 1; 
+    vprintf SmallGenus, 1 : "Centroid is not a prime field, applying adjoint-tensor method.\n";
+  end if;
 
 	return __SmallGenusAutomorphism( G, B : Cent := Cent, Method := Method, Order := Order );
 end intrinsic;

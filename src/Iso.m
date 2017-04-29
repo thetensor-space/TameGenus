@@ -1,4 +1,4 @@
-import "Util.m" : __GL2ActionOnPolynomial, __PermutationDegreeMatrix, __FindPermutation, __GetStarAlg, __WhichMethod;
+import "Util.m" : __GL2ActionOnPolynomial, __PermutationDegreeMatrix, __FindPermutation, __GetStarAlg, __WhichMethod, __WriteMatrixOverPrimeField;
 import "Pfaffian.m" : __Pfaffian_ISO;
 import "sloped.m" : IsPseudoIsometricAdjointTensor;
 import "LiftFlat.m" : __LiftFlatGenus2;
@@ -140,7 +140,7 @@ __IsPseudoSG := function( B, C : Constructive := false, Method := 0, Print := fa
   sloped := Sort( [ d : d in dims1 | IsEven(d) ] );
   sorted_dims := flats cat sloped;
   adjten := __WhichMethod(Method,#k,sloped);
-  vprintf SmallGenus, 1 : "%o sloped blocks and %o flat blocks.\nDims: %o", #sloped, #flats, sorted_dims;
+  vprintf SmallGenus, 1 : "%o sloped blocks and %o flat blocks.\nDims: %o\n", #sloped, #flats, sorted_dims;
   //Sprintf( "%o sloped blocks and %o flat blocks.\nDims: %o", #sloped, #flats, sorted_dims );
   if not Constructive and sloped eq [] then 
     return true,_; 
@@ -182,6 +182,7 @@ __IsPseudoSG := function( B, C : Constructive := false, Method := 0, Print := fa
     vprintf SmallGenus, 1 : "Using adjoint-tensor method... ";
     tt := Cputime();
     isit,X := __IsPseudoSGAdjTens( flats, sloped, bB, bC );
+    X := [* X[1], Transpose(X[2]) *]; // fixes a transpose issue with adj-tens
   else
     vprintf SmallGenus, 1 : "Using Pfaffian method... ";
     tt := Cputime();
@@ -194,7 +195,7 @@ __IsPseudoSG := function( B, C : Constructive := false, Method := 0, Print := fa
   end if;
 
   X[1] := M2^-1 * DiagonalJoin( T2^-1 * P2^-1 * X[1] * P1 * T1, IdentityMatrix(k, Dimension(R1) ) ) * M1;
-  
+
   // sanity check
   assert [ X[1] * F * Transpose(X[1]) : F in SystemOfForms(B) ] eq [ &+[ X[2][j][i]*SystemOfForms(C)[j] : j in [1..2] ] : i in [1..2] ];
   return true, DiagonalJoin(X[1],X[2]);
@@ -202,8 +203,8 @@ end function;
 
 // Intrinsics ----------------------------------------------------------
 
-intrinsic IsPseudoIsometricSG( B::TenSpcElt, C::TenSpcElt : Cent := false, Constructive := true, Method := 0, Print := false ) -> BoolElt
-{Determine if two genus 2 bimaps are pseduo isometric.}
+intrinsic IsPseudoIsometricSG( B::TenSpcElt, C::TenSpcElt : Cent := true, Constructive := true, Method := 0, Print := false ) -> BoolElt
+{Determine if two genus 2 bimaps are pseduo-isometric.}
   k := BaseRing(B);
   l := BaseRing(C);
   require ISA(Type(k),FldFin) and ISA(Type(l),FldFin) : "Base rings must be finite fields.";
@@ -221,24 +222,60 @@ intrinsic IsPseudoIsometricSG( B::TenSpcElt, C::TenSpcElt : Cent := false, Const
     error "Cannot compute structure constants.";
   end try;
 
+  // write bimaps over their centroids.
   if Cent then
     vprintf SmallGenus, 1 : "Rewriting bimap over its centroid... ";
     tt := Cputime();
-    B := TensorOverCentroid(B);
-    C := TensorOverCentroid(C);
+    T, Hmt_T := TensorOverCentroid(B);
+    S, Hmt_S := TensorOverCentroid(C);
     vprintf SmallGenus, 1 : "%o seconds.\n", Cputime(tt);
-    if BaseRing(B) ne BaseRing(C) then
-      return false,_;
-    end if;
-    require IsPrimeField(BaseRing(B)) : "Currently only accepting prime fields.";
+  else
+    T := B;
+    S := C;
   end if;
-  if Dimension(B`Domain[1]) ne Dimension(C`Domain[1]) or Dimension(B`Codomain) ne Dimension(C`Codomain) then
+
+  // check obvious things.
+  if BaseRing(T) ne BaseRing(S) then
+    vprint SmallGenus, 1 : "Base rings are not isormorphic.";
+    return false,_;
+  end if;
+  if Dimension(T`Domain[1]) ne Dimension(S`Domain[1]) or Dimension(T`Codomain) ne Dimension(S`Codomain) then
     vprint SmallGenus, 1 : "Domains or codomains not isormorphic.";
     return false,_;
   end if;
-  require Dimension(B`Codomain) le 2 : "Bimaps have genus greater than 2.";
-  return __IsPseudoSG( B, C : Constructive := Constructive, Method := Method, Print := Print );
+
+  require Dimension(T`Codomain) le 2 : "Bimaps have genus greater than 2.";
+
+  // if Cent is not prime field, do adj-ten method.
+  if not IsPrimeField(BaseRing(T)) then
+    Method := 1; 
+    vprintf SmallGenus, 1 : "Centroid is not a prime field, applying adjoint-tensor method.\n";
+  end if;
+
+  isit, X := __IsPseudoSG( T, S : Constructive := Constructive, Method := Method, Print := Print );
+
+  if Constructive and isit then
+    vprintf SmallGenus, 1 : "Putting everything together... ";
+    tt := Cputime();
+    Y := [* ExtractBlock(X,1,1,Dimension(T`Domain[1]),Dimension(T`Domain[1])), 
+      ExtractBlock(X,1+Dimension(T`Domain[1]),1+Dimension(T`Domain[1]),Dimension(T`Codomain),Dimension(T`Codomain)) *];
+    assert [ Y[1] * F * Transpose(Y[1]) : F in SystemOfForms(T) ] eq [ &+[ Y[2][j][i]*SystemOfForms(S)[j] : j in [1..2] ] : i in [1..2] ];
+
+    // if the centroid is an extension of the prime field convert back to prime field
+    if Cent and not IsPrimeField(BaseRing(Y[1])) then
+      V := Domain(Domain(Hmt_T))[1];
+      W := Codomain(Domain(Hmt_T));
+      Y1 := Matrix([ ((V.i @ Hmt_T.2)*Y[1])@@Hmt_S.2 : i in [1..Dimension(V)] ])^-1;
+      Y2 := Matrix([ ((W.i @ Hmt_T.0)*Y[2])@@Hmt_S.0 : i in [1..Dimension(W)] ])^-1;
+    end if;
+    H := Homotopism( B, C, [* Hom(V,V)!Y1, Hom(V,V)!Y1, Hom(W,W)!Y2 *] );
+    vprintf SmallGenus, 1 : "%o seconds.\n", Cputime(tt);
+    return true, H;
+  end if;
+
+  return isit,_;
 end intrinsic;
+
 
 intrinsic IsIsomorphicSG( G::GrpPC, H::GrpPC : Cent := true, Constructive := true, Method := 0 ) -> BoolElt
 {For genus 2 p-groups G and H, determine if G is isomorphic to H.}
@@ -249,10 +286,12 @@ intrinsic IsIsomorphicSG( G::GrpPC, H::GrpPC : Cent := true, Constructive := tru
   require NilpotencyClass(G) le 2 : "Groups are not class 2.";
   require IsOdd(#G) : "Groups must have odd order.";
 
+  // class 1 case...
   if IsAbelian(G) then 
     return IsIsomorphic(G,H);
   end if;
   
+  // compute the system of forms.
   vprintf SmallGenus, 1 : "Getting tensor info... ";
   tt := Cputime();
 	B := pCentralTensor( G, 1, 1 );
@@ -260,31 +299,52 @@ intrinsic IsIsomorphicSG( G::GrpPC, H::GrpPC : Cent := true, Constructive := tru
   _ := Eltseq(B);
   _ := Eltseq(C);
   vprintf SmallGenus, 1 : "%o seconds.\n", Cputime(tt);
+
+  // write the bimaps over their centroids.
   if Cent then
     vprintf SmallGenus, 1 : "Rewriting bimap over its centroid... ";
     tt := Cputime();
-    B := TensorOverCentroid(B);
-    C := TensorOverCentroid(C);
+    B, Hmt_B := TensorOverCentroid(B);
+    C, Hmt_C := TensorOverCentroid(C);
     vprintf SmallGenus, 1 : "%o seconds.\n", Cputime(tt);
-    if BaseRing(B) ne BaseRing(C) then
-      return false,_;
-    end if;
-    require IsPrimeField(BaseRing(B)) : "Currently only accepting prime fields.";
+  end if;
+
+  // check obvious things.
+  if BaseRing(B) ne BaseRing(C) then
+    vprint SmallGenus, 1 : "Base rings are not isormorphic.";
+    return false,_;
   end if;
   if Dimension(B`Domain[1]) ne Dimension(C`Domain[1]) or Dimension(B`Codomain) ne Dimension(C`Codomain) then
     vprint SmallGenus, 1 : "Domains or codomains not isormorphic.";
     return false,_;
   end if;
+
   require Dimension(B`Codomain) le 2 : "Groups have genus greater than 2.";
+
+  // if Cent is not prime field, do adj-ten method.
+  if not IsPrimeField(BaseRing(B)) then
+    Method := 1; 
+    vprintf SmallGenus, 1 : "Centroid is not a prime field, applying adjoint-tensor method.\n";
+  end if;
+
   isit, X := __IsPseudoSG( B, C : Constructive := Constructive, Method := Method );
 
   if Constructive and isit then
     vprintf SmallGenus, 1 : "Putting everything together... ";
     tt := Cputime();
-    M := ExtractBlock(X,1,1,Dimension(B`Domain[1]),Dimension(B`Domain[1]))^-1;
-    phi := hom< G -> H | [ <G.i,&*[H.j^(Integers()!M[i][j]) : j in [1..Dimension(B`Domain[1])]]> : i in [1..Dimension(B`Domain[1])] ] : Check:=false >; 
+    Y := [* ExtractBlock(X,1,1,Dimension(B`Domain[1]),Dimension(B`Domain[1])), 
+      ExtractBlock(X,1+Dimension(B`Domain[1]),1+Dimension(B`Domain[1]),Dimension(B`Codomain),Dimension(B`Codomain)) *];
+    assert [ Y[1] * F * Transpose(Y[1]) : F in SystemOfForms(B) ] eq [ &+[ Y[2][j][i]*SystemOfForms(C)[j] : j in [1..2] ] : i in [1..2] ];
+
+    // if the centroid is an extension of the prime field convert back to prime field
+    if Cent and not IsPrimeField(BaseRing(Y[1])) then
+      V := Domain(Domain(Hmt_B))[1];
+      Y1 := Matrix([ ((V.i @ Hmt_B.2)*Y[1])@@Hmt_C.2 : i in [1..Dimension(V)] ])^-1;
+    end if;
+    phi := hom< G -> H | [ <G.i,&*[H.j^(Integers()!Y1[i][j]) : j in [1..Ngens(G)]]> : i in [1..Ngens(G)] ] >; // eventually set Check:=false
     vprintf SmallGenus, 1 : "%o seconds.\n", Cputime(tt);
     return true, phi;
   end if;
+
   return isit,_;
 end intrinsic;
