@@ -11,6 +11,17 @@ intrinsic Genus( G::GrpPC ) -> RngIntElt
 	return Dimension(overC`Codomain);
 end intrinsic;
 
+intrinsic Genus( T::TenSpcElt ) -> RngIntElt
+{Computes the genus of T.}
+  try 
+    _ := Eltseq(T);
+  catch err
+    error "Cannot compute structure constants.";
+  end try;
+  overC := TensorOverCentroid( T );
+	return Dimension(overC`Codomain);
+end intrinsic;
+
 __GetGenus2Signature := function( B )
   k := BaseRing(B);
   if not IsNondegenerate(B) then

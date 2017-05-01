@@ -196,21 +196,31 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
   if Cent then
     vprintf SmallGenus, 1 : "Rewriting bimap over its centroid... ";
     tt := Cputime();
-    B := TensorOverCentroid(B);
+    T, H := TensorOverCentroid(B);
     vprintf SmallGenus, 1 : "%o seconds.\n", Cputime(tt);
+  else
+    T := B;
   end if;
-  require Dimension(B`Codomain) le 2 : "Bimap is not genus 1 or 2.";
+  require Dimension(T`Codomain) le 2 : "Bimap is not genus 1 or 2.";
 
-  // if genus 1, do the simple algorithm.
-  if Dimension(B`Codomain) eq 1 then
-    return __G1_PIsometry( B );
+  // if genus 1, do a simpler algorithm.
+  if Dimension(T`Codomain) eq 1 then
+    PIsom := __G1_PIsometry(T);
+  else
+    // if Cent is not prime field, do adj-ten method.
+    if not IsPrimeField(BaseRing(T)) then
+      Method := 1; 
+      vprintf SmallGenus, 1 : "Centroid is not a prime field, applying adjoint-tensor method.\n";
+    end if;
+    PIsom := __G2_PIsometry( T : Method := Method );
   end if;
 
-  // if Cent is not prime field, do adj-ten method.
-  if not IsPrimeField(BaseRing(B)) then
-    Method := 1; 
-    vprintf SmallGenus, 1 : "Centroid is not a prime field, applying adjoint-tensor method.\n";
+  // check if non-trivial centroid.
+  if BaseRing(T) ne BaseRing(B) then
+    gens := Generators(PIsom);
+    new_gens := [];
+    "Full automorphism has not been constructed--still potentially missing Galois actions.";
   end if;
 
-  return __G2_PIsometry( B : Method := Method );
+  return PIsom;
 end intrinsic;

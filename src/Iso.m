@@ -182,7 +182,9 @@ __IsPseudoSG := function( B, C : Constructive := false, Method := 0, Print := fa
     vprintf SmallGenus, 1 : "Using adjoint-tensor method... ";
     tt := Cputime();
     isit,X := __IsPseudoSGAdjTens( flats, sloped, bB, bC );
-    X := [* X[1], Transpose(X[2]) *]; // fixes a transpose issue with adj-tens
+    if isit then
+      X := [* X[1], Transpose(X[2]) *]; // fixes a transpose issue with adj-tens
+    end if;
   else
     vprintf SmallGenus, 1 : "Using Pfaffian method... ";
     tt := Cputime();

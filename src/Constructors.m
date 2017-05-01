@@ -154,3 +154,24 @@ intrinsic RandomGenus1Group( q::RngIntElt, d::RngIntElt, r::RngIntElt : Exponent
   B := __WriteOverPrimeField( [F] );
   return __FormsToGroup( B : ExponentP := Exponentp );
 end intrinsic;
+
+intrinsic Genus2Group( f::RngMPolElt ) -> GrpPC
+{Returns a genus 2 group whose Pfaffian is equivalent to the homogeneous polynomial f.}
+  require IsHomogeneous(f) : "Polynomial must be homogeneous";
+  R := Parent(f);
+  require ISA(Type(BaseRing(R)),FldFin) : "Coefficients must come from a finite field.";
+  phi := hom< R -> R | R.1, -1 >;
+  _,g := IsUnivariate(f@phi);
+  return Genus2Group(g);
+end intrinsic;
+
+intrinsic Genus2Group( f::RngUPolElt ) -> GrpPC
+{Returns a genus 2 group whose Pfaffian is equivalent to f.}
+  K := BaseRing(f);
+  require ISA(Type(K),FldFin) : "Coefficients must come from a finite field.";  
+  C := CompanionMatrix(f);
+  I := IdentityMatrix(K, Nrows(C));
+  Forms := __WriteOverPrimeField([ __Scharlau(I), __Scharlau(C) ]);
+  T := Tensor(Forms, 2, 1);
+  return HeisenbergGroupPC(T);
+end intrinsic;
