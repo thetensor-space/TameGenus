@@ -7,15 +7,11 @@ import "sloped.m" : PseudoIsometryGroupAdjointTensor;
 __G1_PIsometry := function( B : Print := false )
   k := BaseRing(B);
   Form := SystemOfForms(B);
-  if Print then
-    printf "Computing the isometry group... ";
-  end if;
+  vprintf SmallGenus, 1 : "Computing the isometry group... ";
   tt := Cputime();
   Isom := IsometryGroup( Form );
   timing := Cputime(tt);
-  if Print then
-    printf "%o\n", timing;
-  end if;
+  vprintf SmallGenus, 1 : "%o seconds.\n", timing;
 
   prim := PrimitiveElement(k);
   gens := [ DiagonalJoin( X, IdentityMatrix( k, 1 ) ) : X in Generators(Isom) ]; 
@@ -33,7 +29,7 @@ Method: if set to 0, it uses the established cut offs for determining which meth
 	If set to 1, then we use the polynomial method, and if set to 2, we use the adjoint tensor method. 
 */
 
-__G2_PIsometry := function( B : Method := 0, Print := false )
+__G2_PIsometry := function( B : Method := 0 )
   k := BaseRing(B);
 
   /* Step 0.5: Remove the radical. */
@@ -51,26 +47,18 @@ __G2_PIsometry := function( B : Method := 0, Print := false )
   end if; 
 
   /* Step 1: Compute the adjoint algebra of the forms. */
-  if Print then
-    printf "Computing the adjoint algebra...";
-  end if;
+  vprintf SmallGenus, 1 : "Computing the adjoint algebra...";
   tt := Cputime();
   A := AdjointAlgebra( nB );
   timing := Cputime(tt);
-  if Print then
-    printf " %o seconds.\n", timing;
-  end if;
+  vprintf SmallGenus, 1 : " %o seconds.\n", timing;
 
 	/* Step 2: Get a perp-decomposition and organize blocks. */
-  if Print then
-    printf "Computing perp-decomposition...";
-  end if;
+  vprintf SmallGenus, 1 : "Computing perp-decomposition...";
   tt := Cputime();
 	T, dims := PerpDecomposition( nB );
   timing := Cputime(tt);
-  if Print then
-    printf " %o seconds.\n", timing;
-  end if;
+  vprintf SmallGenus, 1 : " %o seconds.\n", timing;
 	F := [ T * nForms[i] * Transpose( T ) : i in [1..2] ];
   flatdims := [ d : d in dims | IsOdd(d) ];
   slopeddims := [ d : d in dims | IsEven(d) ];
@@ -79,9 +67,8 @@ __G2_PIsometry := function( B : Method := 0, Print := false )
   dims_sorted := flatdims cat slopeddims;
   adjten := __WhichMethod(Method,#k,slopeddims);
 
-  if Print then 
-    Sprintf( "%o sloped blocks and %o flat blocks.\nDims: %o", #slopeddims, #flatdims, dims_sorted );
-  end if;
+  vprintf SmallGenus, 1 : "%o sloped blocks and %o flat blocks.\nDims: %o\n", #slopeddims, #flatdims, dims_sorted;
+  //Sprintf( "%o sloped blocks and %o flat blocks.\nDims: %o", #slopeddims, #flatdims, dims_sorted );
 
   P := __PermutationDegreeMatrix( k, dims, __FindPermutation( dims_sorted, dims ) ); 
   F := [ P * F[i] * Transpose( P ) : i in [1..2] ];
@@ -105,24 +92,18 @@ __G2_PIsometry := function( B : Method := 0, Print := false )
     // determine which method to use
     if adjten then
       // Adjoint-tensor method
-      if Print then
-        printf "Adjoint-tensor method...";
-        tt := Cputime();
-      end if;
+      vprintf SmallGenus, 1 : "Adjoint-tensor method...";
+      tt := Cputime();
 		  inner_s, outer := PseudoIsometryGroupAdjointTensor( sB );
       outer := [ Transpose(outer[k]) : k in [1..#outer] ];
     else
       // Pfaffian method
-      if Print then
-        printf "Pfaffian method...";
-        tt := Cputime();
-      end if;
+      vprintf SmallGenus, 1 : "Pfaffian method...";
+      tt := Cputime();
       inner_s, outer := __Pfaffian_AUT( sB, slopeddims );
     end if;
-    if Print then
-      timing := Cputime(tt);
-      printf " %o seconds.\n", timing;
-    end if;
+    timing := Cputime(tt);
+    vprintf SmallGenus, 1 : " %o seconds.\n", timing;
   else
     inner_s := [ IdentityMatrix( k, 0 ) : i in [1..2] ];
     outer := [ x : x in Generators( GL(2, k) ) ];
@@ -159,14 +140,10 @@ __G2_PIsometry := function( B : Method := 0, Print := false )
 	
 	/* Step 5: Construct generators for isometry group */
   tt := Cputime();
-  if Print then
-    printf "Constructing the isometries...";
-    isom := IsometryGroup( SystemOfForms(nB) : DisplayStructure := false, Adjoint := A );
-    timing := Cputime(tt);
-    printf " %o seconds.\n", timing;
-  else
-    isom := IsometryGroup( SystemOfForms(nB)  : DisplayStructure := false, Adjoint := A );
-  end if;
+  vprintf SmallGenus, 1 : "Constructing the isometries...";
+  isom := IsometryGroup( SystemOfForms(nB) : DisplayStructure := false, Adjoint := A );
+  timing := Cputime(tt);
+  vprintf SmallGenus, 1 : " %o seconds.\n", timing;
   // Sanity
   for i in [1..Ngens(isom)] do
     assert [ isom.i * nForms[j] * Transpose( isom.i ) : j in [1..2] ] eq nForms;
@@ -205,9 +182,9 @@ end function;
 
 // Intrinsics ----------------------------------------------------------
 
-intrinsic PseudoIsometryGroupSG( B::TenSpcElt : Cent := false, Method := 0, Print := false ) -> GrpMat
+intrinsic PseudoIsometryGroupSG( B::TenSpcElt : Cent := true, Method := 0 ) -> GrpMat
 {Construct the pseudo-isometry group for an alternating bimap of genus 1 or 2. 
-To use a specific method for genus 2, set Method to 1 for adjoint tensor method or 2 for determinant method.}
+To use a specific method for genus 2, set Method to 1 for adjoint-tensor method or 2 for Pfaffian method.}
   require forall{ X : X in Frame(B) | Type(X) eq ModTupFld } : "Domain and codomain must be vector spaces.";
   require B`Valence eq 3 : "Tensor must be a bimap.";
   require IsAlternating(B) : "Bimap must be alternating.";
@@ -215,20 +192,35 @@ To use a specific method for genus 2, set Method to 1 for adjoint tensor method 
   require ISA(Type(k),FldFin) : "Base ring must be a finite field.";
   require Characteristic(k) ne 2 : "Must be odd characteristic.";
 
+  // write bimap over its centroid. 
   if Cent then
-    if Print then
-      printf "Rewriting bimap over its centroid... ";
-      tt := Cputime();
-    end if;
-    B := TensorOverCentroid(B);
-    if Print then
-      printf "%o seconds.\n", Cputime(tt);
-    end if;
-    require IsPrimeField(BaseRing(B)) : "Currently only accepting prime fields.";
+    vprintf SmallGenus, 1 : "Rewriting bimap over its centroid... ";
+    tt := Cputime();
+    T, H := TensorOverCentroid(B);
+    vprintf SmallGenus, 1 : "%o seconds.\n", Cputime(tt);
+  else
+    T := B;
   end if;
-  require Dimension(B`Codomain) le 2 : "Bimap is not genus 1 or 2.";
-  if Dimension(B`Codomain) eq 1 then
-    return __G1_PIsometry( B : Print := Print );
+  require Dimension(T`Codomain) le 2 : "Bimap is not genus 1 or 2.";
+
+  // if genus 1, do a simpler algorithm.
+  if Dimension(T`Codomain) eq 1 then
+    PIsom := __G1_PIsometry(T);
+  else
+    // if Cent is not prime field, do adj-ten method.
+    if not IsPrimeField(BaseRing(T)) then
+      Method := 1; 
+      vprintf SmallGenus, 1 : "Centroid is not a prime field, applying adjoint-tensor method.\n";
+    end if;
+    PIsom := __G2_PIsometry( T : Method := Method );
   end if;
-  return __G2_PIsometry( B : Method := Method, Print := Print );
+
+  // check if non-trivial centroid.
+  if BaseRing(T) ne BaseRing(B) then
+    gens := Generators(PIsom);
+    new_gens := [];
+    "Full automorphism has not been constructed--still potentially missing Galois actions.";
+  end if;
+
+  return PIsom;
 end intrinsic;

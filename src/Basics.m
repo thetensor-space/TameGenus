@@ -11,6 +11,17 @@ intrinsic Genus( G::GrpPC ) -> RngIntElt
 	return Dimension(overC`Codomain);
 end intrinsic;
 
+intrinsic Genus( T::TenSpcElt ) -> RngIntElt
+{Computes the genus of T.}
+  try 
+    _ := Eltseq(T);
+  catch err
+    error "Cannot compute structure constants.";
+  end try;
+  overC := TensorOverCentroid( T );
+	return Dimension(overC`Codomain);
+end intrinsic;
+
 __GetGenus2Signature := function( B )
   k := BaseRing(B);
   if not IsNondegenerate(B) then
@@ -45,9 +56,9 @@ __GetGenus2Signature := function( B )
   end function;
   act := OrbitAction( GL(2,k), LineOrbits(GL(2,k))[1][1] ); // The action GL on the line (1,0)
   Perms := Image( act ); // PGL(2,k)
-  pfaff := &*polys;
 
   // Get canonical Pfaffian.
+  pfaff := &*polys;
   orbits := [ pfaff ];
   for Z in Perms do
     X := cleartop(Z @@ act, k);

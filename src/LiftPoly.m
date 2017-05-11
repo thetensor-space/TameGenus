@@ -1,4 +1,4 @@
-import "Util.m": __GL2ActionOnPolynomial, __Scharlau;
+import "Util.m": __GL2ActionOnPolynomial, __Scharlau, __WriteMatrixOverPrimeField;
 
 /*
 Input polynomials f,g in K[x,y] and Z in GL(2,K), and
@@ -6,7 +6,7 @@ returns an isotopism <X,Y,Z> such that
 		X (Ix+C_gy) Y = (Ix+C_fy)^Z.
 */
 
-__LiftSlopeGenus2 := function( f,g,Z : Sanity := false )
+__LiftSlopeGenus2 := function( f,g,Z : Sanity := false, Gal := 0 )
 	R:=Parent(f);
 	K:=BaseRing(Z);
 	G:=Parent(Z);
@@ -104,6 +104,7 @@ __LiftSlopeGenus2 := function( f,g,Z : Sanity := false )
       C := __Scharlau(MA!1);
       D := __Scharlau(Cg);
   end if;
+
   M := DiagonalJoin( X, Transpose(Y) );
   LHS := [ M * C * Transpose(M), M * D * Transpose(M) ];
   RHS := [ Z[1][i]*A + Z[2][i]*B : i in [1..2] ];

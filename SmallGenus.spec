@@ -1,6 +1,7 @@
 {
 	src
 	{
+    GlobalVars.m
   	Util.m
  		LiftPoly.m
   	Pfaffian.m

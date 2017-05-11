@@ -73,9 +73,10 @@ __WriteOverPrimeField := function( Forms )
     return (< x[i] @ maps_D[i] : i in [1..#x] > @ M) @ map_C;
   end function;
   N := Tensor( D_new, C_new, F );
-  //assert forall{ b : b in CartesianProduct( < [ c*K.1^i : i in [0..e-1], c in Basis(D) ] : D in D_old > ) | 
-    //(b @ M) @ map_C eq < b[i] @@ maps_D[i] : i in [1..#b] > @ N };
-  return SystemOfForms(N);
+//  assert forall{ b : b in CartesianProduct( < [ c*K.1^i : i in [0..e-1], c in Basis(D) ] : D in D_old > ) | 
+//    (b @ M) @ map_C eq < b[i] @@ maps_D[i] : i in [1..#b] > @ N };
+  sys := SystemOfForms(N);
+  return sys;
 end function;
 
 intrinsic RandomGroupSG( q::RngIntElt, n::RngIntElt, g::RngIntElt : Exponentp := false ) -> GrpPC
@@ -152,4 +153,25 @@ intrinsic RandomGenus1Group( q::RngIntElt, d::RngIntElt, r::RngIntElt : Exponent
   F := X*F*Transpose(X);
   B := __WriteOverPrimeField( [F] );
   return __FormsToGroup( B : ExponentP := Exponentp );
+end intrinsic;
+
+intrinsic Genus2Group( f::RngMPolElt ) -> GrpPC
+{Returns a genus 2 group whose Pfaffian is equivalent to the homogeneous polynomial f.}
+  require IsHomogeneous(f) : "Polynomial must be homogeneous";
+  R := Parent(f);
+  require ISA(Type(BaseRing(R)),FldFin) : "Coefficients must come from a finite field.";
+  phi := hom< R -> R | R.1, -1 >;
+  _,g := IsUnivariate(f@phi);
+  return Genus2Group(g);
+end intrinsic;
+
+intrinsic Genus2Group( f::RngUPolElt ) -> GrpPC
+{Returns a genus 2 group whose Pfaffian is equivalent to f.}
+  K := BaseRing(f);
+  require ISA(Type(K),FldFin) : "Coefficients must come from a finite field.";  
+  C := CompanionMatrix(f);
+  I := IdentityMatrix(K, Nrows(C));
+  Forms := __WriteOverPrimeField([ __Scharlau(I), __Scharlau(C) ]);
+  T := Tensor(Forms, 2, 1);
+  return HeisenbergGroupPC(T);
 end intrinsic;
