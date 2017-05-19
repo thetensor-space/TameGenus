@@ -13,12 +13,18 @@ __G1_PIsometry := function( B : Print := false )
   timing := Cputime(tt);
   vprintf SmallGenus, 1 : "%o seconds.\n", timing;
 
+  // Sanity check
+  for X in Generators(Isom) do
+    _ := Homotopism(B, B, [* X, X, IdentityMatrix(k, 1) *]);
+  end for;
+
   prim := PrimitiveElement(k);
   gens := [ DiagonalJoin( X, IdentityMatrix( k, 1 ) ) : X in Generators(Isom) ]; 
-  gens cat:= [ DiagonalJoin( prim^2 * IdentityMatrix( k, Nrows(Form[1]) ), prim*IdentityMatrix( k, 1 ) ) ];
-  PIsom := sub< Generic( GL( Nrows(Form[1])+1, k ) ) | gens >;
-  PIsom`DerivedFrom := < B, [2,3] >;
-  return PIsom;
+  gens cat:= [ DiagonalJoin( prim * IdentityMatrix( k, Nrows(Form[1]) ), prim^2*IdentityMatrix( k, 1 ) ) ];
+
+  pseudo_in := [ ExtractBlock(X, 1, 1, Nrows(Form[1]), Nrows(Form[1])) : X in gens ];
+  pseudo_out := [ ExtractBlock(X, 1+Nrows(Form[1]), 1+Nrows(Form[1]), 1, 1) : X in gens ];
+  return pseudo_in, pseudo_out;
 end function;
 
 
@@ -32,34 +38,20 @@ Method: if set to 0, it uses the established cut offs for determining which meth
 __G2_PIsometry := function( B : Method := 0 )
   k := BaseRing(B);
 
-  /* Step 0.5: Remove the radical. */
-  Rad := Radical(B,1);
-  Forms := SystemOfForms(B);
-  if Dimension(Rad) gt 0 then
-    C := Complement( Generic(Rad), Rad );
-    RadPerm := GL(Dimension(B`Domain[1]),k)!Matrix(Basis(C) cat Basis(Rad));
-    nForms := [ RadPerm*Forms[1]*Transpose(RadPerm), RadPerm*Forms[2]*Transpose(RadPerm) ];
-    nForms := [ ExtractBlock( nForms[i], 1, 1, Ncols(Forms[1])-Dimension(Rad), Ncols(Forms[1])-Dimension(Rad) ) : i in [1..2] ];  
-    nB := Tensor( nForms, 2, 1 );
-  else
-    nForms := Forms;
-    nB := B;
-  end if; 
-
   /* Step 1: Compute the adjoint algebra of the forms. */
   vprintf SmallGenus, 1 : "Computing the adjoint algebra...";
   tt := Cputime();
-  A := AdjointAlgebra( nB );
+  A := AdjointAlgebra( B );
   timing := Cputime(tt);
   vprintf SmallGenus, 1 : " %o seconds.\n", timing;
 
 	/* Step 2: Get a perp-decomposition and organize blocks. */
   vprintf SmallGenus, 1 : "Computing perp-decomposition...";
   tt := Cputime();
-	T, dims := PerpDecomposition( nB );
+	T, dims := PerpDecomposition( B );
   timing := Cputime(tt);
   vprintf SmallGenus, 1 : " %o seconds.\n", timing;
-	F := [ T * nForms[i] * Transpose( T ) : i in [1..2] ];
+	F := [ T * X * Transpose( T ) : X in SystemOfForms(B) ];
   flatdims := [ d : d in dims | IsOdd(d) ];
   slopeddims := [ d : d in dims | IsEven(d) ];
   Sort(~flatdims);
@@ -68,7 +60,6 @@ __G2_PIsometry := function( B : Method := 0 )
   adjten := __WhichMethod(Method,#k,slopeddims);
 
   vprintf SmallGenus, 1 : "%o sloped blocks and %o flat blocks.\nDims: %o\n", #slopeddims, #flatdims, dims_sorted;
-  //Sprintf( "%o sloped blocks and %o flat blocks.\nDims: %o", #slopeddims, #flatdims, dims_sorted );
 
   P := __PermutationDegreeMatrix( k, dims, __FindPermutation( dims_sorted, dims ) ); 
   F := [ P * F[i] * Transpose( P ) : i in [1..2] ];
@@ -133,51 +124,36 @@ __G2_PIsometry := function( B : Method := 0 )
     inner_f := [ IdentityMatrix( k, 0 ) : i in [1..#outer] ];
   end if;
   inner := [ ( P * T )^-1 * DiagonalJoin( inner_f[i], inner_s[i] ) * P * T : i in [1..#outer] ];
-  // Sanity
+  // Sanity check
   for i in [1..#inner] do
-    assert [ inner[i] * nForms[j] * Transpose( inner[i] ) : j in [1..2] ] eq [ &+[ outer[i][y][x]*nForms[y] : y in [1..2] ] : x in [1..2] ];
+    Forms := SystemOfForms(B);
+    assert [ inner[i] * Forms[j] * Transpose( inner[i] ) : j in [1..2] ] eq [ &+[ outer[i][y][x]*Forms[y] : y in [1..2] ] : x in [1..2] ];
   end for;
 	
 	/* Step 5: Construct generators for isometry group */
   tt := Cputime();
   vprintf SmallGenus, 1 : "Constructing the isometries...";
-  isom := IsometryGroup( SystemOfForms(nB) : DisplayStructure := false, Adjoint := A );
+  isom := IsometryGroup( SystemOfForms(B) : DisplayStructure := false, Adjoint := A );
   timing := Cputime(tt);
   vprintf SmallGenus, 1 : " %o seconds.\n", timing;
   // Sanity
   for i in [1..Ngens(isom)] do
-    assert [ isom.i * nForms[j] * Transpose( isom.i ) : j in [1..2] ] eq nForms;
+    Forms := SystemOfForms(B);
+    assert [ isom.i * Forms[j] * Transpose( isom.i ) : j in [1..2] ] eq Forms;
   end for;
 
   /* Step 6: Combine everything from steps 3 - 5. */
   pseudo_in := inner cat [ x : x in Generators(isom) ];
   pseudo_out := outer cat [ IdentityMatrix( k, 2 ) : i in [1..Ngens(isom)] ];
 
-  /* Step 6.5: Add the radical stuff */
-  if Dimension(Rad) gt 0 then
-    Radgens := [ DiagonalJoin( IdentityMatrix( k, Ncols(nForms[1]) ), x ) : x in Generators( GL( Dimension(Rad), k ) ) ];
-    Radcentrals := [];
-    for i in [1..Ncols(nForms[1])] do
-      for j in [1..Dimension(Rad)] do
-        X := IdentityMatrix( k, Ncols(nForms[1]) + Dimension(Rad) );
-        X[i][Ncols(nForms[1])+j] := 1;
-        Append(~Radcentrals, X);
-      end for;
-    end for;
-    pseudo_in := [ DiagonalJoin( X, IdentityMatrix( k, Dimension(Rad) ) ) : X in pseudo_in ] cat Radgens cat Radcentrals;
-    pseudo_in := [ RadPerm^-1 * pseudo_in[i] * RadPerm : i in [1..#pseudo_in] ];
-    pseudo_out := pseudo_out cat [ IdentityMatrix( k, 2 ) : i in [1..#Radgens+#Radcentrals] ];
-  end if;
-
   // Sanity check
   for i in [1..#pseudo_in] do
+    Forms := SystemOfForms(B);
     assert [ pseudo_in[i] * Forms[j] * Transpose( pseudo_in[i] ) : j in [1..2] ] eq 
         [ &+[ pseudo_out[i][y][x]*Forms[y] : y in [1..2] ] : x in [1..2] ];
   end for;
 
-  PIsom := sub< GL( Ncols(Forms[1])+2, k ) | [ DiagonalJoin( pseudo_in[i], pseudo_out[i] ) : i in [1..#pseudo_in] ] >;
-  PIsom`DerivedFrom := < B, [2,3] >;
-	return PIsom;
+  return pseudo_in, pseudo_out;
 end function;
 
 // Intrinsics ----------------------------------------------------------
@@ -192,35 +168,87 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
   require ISA(Type(k),FldFin) : "Base ring must be a finite field.";
   require Characteristic(k) ne 2 : "Must be odd characteristic.";
 
+  // remove the radical.
+  vprintf SmallGenus, 1 : "Removing the radical... ";
+  tt := Cputime();
+  Rad := Radical(B, 2);
+  Forms := SystemOfForms(B);
+  if Dimension(Rad) gt 0 then
+    C := Complement(Generic(Rad), Rad);
+    RadPerm := GL(Dimension(B`Domain[1]), k)!Matrix(Basis(C) cat Basis(Rad));
+    nForms := [ RadPerm*X*Transpose(RadPerm) : X in Forms ];
+    nForms := [ ExtractBlock(X, 1, 1, Ncols(Forms[1])-Dimension(Rad), Ncols(Forms[1])-Dimension(Rad)) : X in nForms ];  
+    nB := Tensor( nForms, 2, 1 );
+  else
+    nForms := Forms;
+    nB := B;
+  end if; 
+  timing := Cputime(tt);
+  vprintf SmallGenus, 1 : "%o seconds.\n", timing;
+
   // write bimap over its centroid. 
   if Cent then
     vprintf SmallGenus, 1 : "Rewriting bimap over its centroid... ";
     tt := Cputime();
-    T, H := TensorOverCentroid(B);
+    T, H := TensorOverCentroid(nB);
     vprintf SmallGenus, 1 : "%o seconds.\n", Cputime(tt);
   else
-    T := B;
+    T := nB;
   end if;
   require Dimension(T`Codomain) le 2 : "Bimap is not genus 1 or 2.";
 
   // if genus 1, do a simpler algorithm.
   if Dimension(T`Codomain) eq 1 then
-    PIsom := __G1_PIsometry(T);
+    IN, OUT := __G1_PIsometry(T);
   else
     // if Cent is not prime field, do adj-ten method.
     if not IsPrimeField(BaseRing(T)) then
       Method := 1; 
       vprintf SmallGenus, 1 : "Centroid is not a prime field, applying adjoint-tensor method.\n";
     end if;
-    PIsom := __G2_PIsometry( T : Method := Method );
+    IN, OUT := __G2_PIsometry( T : Method := Method );
   end if;
+
+  vprint SmallGenus, 1 : "Putting everything together... ";
+  tt := Cputime();
 
   // check if non-trivial centroid.
   if BaseRing(T) ne BaseRing(B) then
-    gens := Generators(PIsom);
-    new_gens := [];
-    "Full automorphism has not been constructed--still potentially missing Galois actions.";
+    "WARNING: Full pseudo-isometry group has not been constructed.  The centroid is a proper field extension, so there are potential Galois actions missing.";
+    V := Domain(H.2);
+    IN := [ Matrix([ Eltseq(((V.i@H.2)*X)@@H.2) : i in [1..Dimension(V)] ]) : X in IN ];
+    W := Domain(H.0);
+    OUT := [ Matrix([ Eltseq(((W.i@H.0)*X)@@H.0) : i in [1..Dimension(W)] ]) : X in OUT ]; 
   end if;
+
+  // add pseudo-isometries on radical.
+  if Dimension(Rad) gt 0 then
+    Radgens := [ DiagonalJoin(IdentityMatrix(k, Ncols(nForms[1])), x) : x in Generators(GL(Dimension(Rad), k)) ];
+    Radcentrals := [];
+    for i in [1..Ncols(nForms[1])] do
+      for j in [1..Dimension(Rad)] do
+        X := IdentityMatrix( k, Ncols(nForms[1]) + Dimension(Rad) );
+        X[i][Ncols(nForms[1])+j] := 1;
+        Append(~Radcentrals, X);
+      end for;
+    end for;
+    pseudo_in := [ DiagonalJoin( X, IdentityMatrix( k, Dimension(Rad) ) ) : X in IN ] cat Radgens cat Radcentrals;
+    pseudo_in := [ RadPerm^-1 * pseudo_in[i] * RadPerm : i in [1..#pseudo_in] ];
+    pseudo_out := OUT cat [ IdentityMatrix( k, #Forms ) : i in [1..#Radgens+#Radcentrals] ];
+  else
+    pseudo_in := IN;
+    pseudo_out := OUT;
+  end if;
+
+  // Sanity check
+  for i in [1..#pseudo_in] do
+    _ := Homotopism(B, B, [* pseudo_in[i], pseudo_in[i], pseudo_out[i] *]);
+  end for;
+
+  PIsom := sub< GL( Ncols(Forms[1])+#Forms, k ) | [ DiagonalJoin( pseudo_in[i], pseudo_out[i] ) : i in [1..#pseudo_in] ] >;
+  PIsom`DerivedFrom := < B, [2,3] >;
+  timing := Cputime(tt);
+  vprint SmallGenus, 1 : "%o seconds.\n", timing;
 
   return PIsom;
 end intrinsic;
