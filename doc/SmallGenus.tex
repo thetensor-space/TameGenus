@@ -1,27 +1,4 @@
-\documentclass{amsart}
-
-\NeedsTeXFormat{LaTeX2e}
-
-\usepackage{hyperref}
-\usepackage[shortalphabetic]{amsrefs}
-\usepackage{amsmath}
-\usepackage{amsthm}
-\usepackage{amssymb}
-\usepackage{mathdots}
-\usepackage{multirow} 
-\usepackage{enumerate}
-\usepackage[all]{xy}
-\usepackage[matha,mathx]{mathabx}
-\usepackage{graphicx}
-\usepackage{comment}
-\usepackage{xcolor}
-\usepackage{listings}
-
-\newtheorem{thm}{Theorem}
-\newtheorem{lem}{Lemma}
-\newtheorem{remark}{Remark}
-\newtheorem{prop}{Proposition}
-\newtheorem{cor}{Corollary}
+\documentclass{documentation}
 
 \DeclareMathOperator{\End}{End}
 \DeclareMathOperator{\Aut}{Aut}
@@ -29,57 +6,38 @@
 \DeclareMathOperator{\Adj}{Adj}
 \DeclareMathOperator{\GL}{{\rm GL}}
 \DeclareMathOperator{\PGL}{{\rm PGL}}
-\DeclareMathOperator{\diag}{{\rm diag}}
-
-\newcommand{\bmto}{\rightarrowtail}
-\newcommand{\F}{\Bbb{F}_q}
-\newcommand{\K}{\Bbb{F}_{q^f}}
-\newcommand{\la}{\langle}
-\newcommand{\ra}{\rangle}
-\newcommand{\tr}{{\rm tr}}
-\newcommand{\op}{{\rm op}}
 \newcommand{\pseudo}{\Psi\hspace*{-1mm}\isom}
-\newcommand{\V}{\F^{\,d}}
-\newcommand{\W}{\F^{\,2}}
 
-\title{Small Genus}
+\title{Small Genus Package}
+
 \author{Peter A. Brooksbank}
-\address{
-	Department of Mathematics\\
-	Bucknell University\\
-	Lewisberg, PA 17837\\
-	USA
-}
+\address{Bucknell University}
 \email{pbrooksb@bucknell.edu}
-\author{Joshua Maglione}
-\address{
-	Department of Mathematics\\
-	Colorado State University\\
-	Fort Collins, CO 80523\\
-	USA
-}
-\email{maglione@math.colostate.edu}
-\author{James B. Wilson}
-\address{
-	Department of Mathematics\\
-	Colorado State University\\
-	Fort Collins, CO 80523\\
-	USA
-}
-\email{James.Wilson@ColoState.Edu}
-\date{\today}
 
+\author{Joshua Maglione}
+\address{Colorado State University}
+\email{josh.maglione@gmail.com}
+
+\author{James B. Wilson}
+\address{Colorado State University}
+\email{James.Wilson@ColoState.Edu}
+
+\date{\today}
+\version{0.1}
+\copyrightyear{2015}
+
+% ------------------------------------------------------------------------------
 
 \begin{document}
 
-\begin{abstract}
-We provide new intrinsics for {\sc Magma} for groups and bimaps of genus $\leq 2$.
-\end{abstract}
+\frontmatter
 
 \maketitle
 \tableofcontents
 
-\section{Overview}
+\mainmatter
+
+\chapter{Introduction}
 
 The goal of this package is to provide {\sc Magma} \cite{Magma} with high performance functionality for groups with small genus. 
 The uniqueness of organizing groups by genus allows for a seemless transition to systems of forms.
@@ -90,7 +48,7 @@ Details of these algorithms can be found in \cite{BMW}.
 There are a few intrinsics which are not included in {\sc Magma}; specifically, those dealing with systems of forms. 
 We have attempted to make these intrinsics applicable to general systems of forms. However, if the genus is larger than 2, then it resorts to a (basic) brute force algorithm. 
 
-\section{Automorphism groups}
+\chapter{Automorphism groups}
 
 \color{blue}
 \begin{verbatim}
@@ -137,7 +95,7 @@ method, set {\tt Method} to $2$. The default will try to find the optimal method
 The default is set to {\tt false}. To get a print out of the process, set {\tt Print} to {\tt true}. 
 \end{description}
 
-\subsection{Examples}
+\section{Examples}
 We list some examples to illustrate the functionality of the automorphism intrinsics.
 
 \begin{lstlisting}[frame=single,basicstyle=\ttfamily\color{black!30!teal},backgroundcolor=\color{white!70!gray}]
@@ -240,7 +198,7 @@ Constructing the isometries... 0.010 seconds.
 \end{lstlisting}
 
 \color{black}
-\section{Isomorphisms}
+\chapter{Isomorphisms}
 
 \color{blue}
 \begin{verbatim}
@@ -282,7 +240,7 @@ When set to {\tt true} and $F$ is pseudo-isometric to $G$, the algorithm returns
 \end{description}
 
 
-\subsection{Examples}
+\section{Examples}
 We list some examples to illustrate the functionality of the isomorphism intrinsics.
 
 \begin{lstlisting}[frame=single,basicstyle=\ttfamily\color{black!30!teal},backgroundcolor=\color{white!70!gray}]
@@ -361,7 +319,7 @@ true
 [0 0 0 0 0 0 1 0]
 \end{lstlisting}
 
-\section{Miscellaneous}
+\chapter{Miscellaneous}
 
 \color{blue}
 \begin{verbatim}
@@ -404,7 +362,7 @@ EquivalentSignatures( S1, S2 ) : Rec, Rec -> BoolElt
 \color{black}
 Given a pair of genus 2 signatures $S1$ and $S2$, decide if they are equivalent.
 
-\subsection{Examples}
+\section{Examples}
 We list some examples to illustrate the functionality of these intrinsics.
 
 \begin{lstlisting}[frame=single,basicstyle=\ttfamily\color{black!30!teal},backgroundcolor=\color{white!70!gray}]
@@ -562,8 +520,13 @@ PC-Relations:
    author={Brooksbank, Peter A.},
    author={Maglione, Joshua},
    author={Wilson, James B.},
-   title={Groups of prime power order for use in the local-global analysis of isomorphism},
-   note={in preparation},
+   title={A fast isomorphism test for groups whose Lie algebra has genus 2},
+   journal={J. Algebra},
+   volume={473},
+   date={2017},
+   pages={545--590},
+   issn={0021-8693},
+   review={\MR{3591162}},
 }
 
 \end{biblist}
