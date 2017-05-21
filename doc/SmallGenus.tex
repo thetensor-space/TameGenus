@@ -48,12 +48,36 @@ Details of these algorithms can be found in \cite{BMW}.
 There are a few intrinsics which are not included in {\sc Magma}; specifically, those dealing with systems of forms. 
 We have attempted to make these intrinsics applicable to general systems of forms. However, if the genus is larger than 2, then it resorts to a (basic) brute force algorithm. 
 
+\section{Verbose Printing and Version}
+
+We have included intrinsics to allow for verbose printing. 
+Currently, there is only one level of printing, so either it is on of off. 
+
+\index{SetVerbose}
+\begin{intrinsics}
+SetVerbose(MonStgElt, RngIntElt) : -> 
+\end{intrinsics}
+
+{\tt SetVerbose} is a built in Magma function, but with this package, this intrinsic accepts the string {\tt "SmallGenus"} and an integer in $\{0,1\}$. 
+
+We have included an intrinsic to check which version of SmallGenus you have attached in Magma.
+
+\index{SmallGenusVersion}
+\begin{intrinsics}
+SmallGenusVersion() : -> MonStgElt
+\end{intrinsics}
+
+Returns the version number for the SmallGenus package attached in Magma.
+
+
 \chapter{Automorphism groups}
 
-\color{blue}
-\begin{verbatim}
-SGAutomorphismGroup( G, p ) : GrpPC, RngIntElt -> GrpAuto
-\end{verbatim}
+\begin{intrinsics}
+AutomorphismGroupSG(G : parameters) : GrpPC -> GrpAuto
+    Cent : BoolElt : true
+    Method : RngIntElt : 0 
+    Order : BoolElt : false
+\end{intrinsics}
 
 \color{black}
 Given a $p$-group $G$, returns $\Aut(G)$.

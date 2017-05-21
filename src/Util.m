@@ -1,3 +1,5 @@
+import "GlobalVars.m" : __VERSION;
+
 /*
 Input a field k, a sequence of matrix degrees, and a permutation (#deg eq #perm)
 returns a permutation matrix that acts on blocks of a prescribed size as the given permutation
@@ -197,3 +199,8 @@ __WriteMatrixOverPrimeField := function( M )
                            y :-> V!(&cat[Eltseq(y[i]) : i in [1..n]]) >;
   return Matrix(K, [ Eltseq(((V.i @ phi)*M) @@ phi) : i in [1..n*d] ]);
 end function;
+
+intrinsic SmallGenusVersion() -> MonStgElt
+{Returns the version number of small genus.}
+  return __VERSION;
+end intrinsic;
