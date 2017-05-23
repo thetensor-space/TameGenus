@@ -85,23 +85,27 @@ __GetGenus2Signature := function( B )
   return [* flats, terms *];
 end function;
 
-intrinsic Genus2Signature( Forms::[Mtrx] : Adjoint := 0, Cent := false ) -> List
-{Returns the canonical genus 2 signature.
-The first entry is the sequence of flat dimensions, and the second entry is the list of coefficients for the Pfaffians.}
-  B := Tensor( Forms, 2, 1 );
-  require IsAlternating(B) : "Forms must be alternating.";
-  K := BaseRing(B);
-  require Type(K) ne BoolElt : "Forms must be defined over the same field.";
-  require ISA(Type(K),FldFin) : "Field must be finite.";
-  B`Adjoint := Adjoint;
-  if Cent then
-    overC := TensorOverCentroid( B );
-  else
-    overC := B;
-  end if;
-  require Dimension(overC`Codomain) eq 2 : "Forms must be genus 2.";
-  return __GetGenus2Signature( overC );
-end intrinsic;
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//                                  Intrinsics
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//intrinsic Genus2Signature( Forms::[Mtrx] : Adjoint := 0, Cent := false ) -> List
+//{Returns the canonical genus 2 signature.
+//The first entry is the sequence of flat dimensions, and the second entry is the list of coefficients for the Pfaffians.}
+//  B := Tensor( Forms, 2, 1 );
+//  require IsAlternating(B) : "Forms must be alternating.";
+//  K := BaseRing(B);
+//  require Type(K) ne BoolElt : "Forms must be defined over the same field.";
+//  require ISA(Type(K),FldFin) : "Field must be finite.";
+//  B`Adjoint := Adjoint;
+//  if Cent then
+//    overC := TensorOverCentroid( B );
+//  else
+//    overC := B;
+//  end if;
+//  require Dimension(overC`Codomain) eq 2 : "Forms must be genus 2.";
+//  return __GetGenus2Signature( overC );
+//end intrinsic;
 
 intrinsic Genus2Signature( G::GrpPC : Cent := false ) -> List
 {Returns the canonical genus 2 signature.

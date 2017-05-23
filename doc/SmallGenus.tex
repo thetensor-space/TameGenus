@@ -40,13 +40,9 @@
 \chapter{Introduction}
 
 The goal of this package is to provide {\sc Magma} \cite{Magma} with high performance functionality for groups with small genus. 
-The uniqueness of organizing groups by genus allows for a seemless transition to systems of forms.
-When appropriate, all intrinsics dealing with groups also work for systems of forms. 
-This package includes intrinsics for automorphism and isomorphism computations as well as constructing random groups of genus 1 or 2 and exponent $p$.
-Details of these algorithms can be found in \cite{BMW}.
-
-There are a few intrinsics which are not included in {\sc Magma}; specifically, those dealing with systems of forms. 
-We have attempted to make these intrinsics applicable to general systems of forms. However, if the genus is larger than 2, then it resorts to a (basic) brute force algorithm. 
+When appropriate, all intrinsics dealing with groups also work for tensors ({\tt TenSpcElt}). 
+This package includes intrinsics for automorphism and isomorphism computations, canonical labeling, and constructing random groups of genus 1 or 2 of exponent  $\leq p^2$. 
+Mathematical details of these algorithms can be found in \cite{BMW}.
 
 \section{Verbose Printing and Version}
 
@@ -70,8 +66,77 @@ SmallGenusVersion() : -> MonStgElt
 Returns the version number for the SmallGenus package attached in Magma.
 
 
+\chapter{Constructors}
+
+We introduce intrinsics to construct nonabelian groups of genus $\leq 2$. 
+We provide some algorithms to construct random groups, and we make no attempt at asserting any analysis of these algorithms.
+In particular, these random constructors may not select groups in a uniform distribution. 
+
+\index{RandomGroupSG}
+\begin{intrinsics}
+RandomGroupSG(q, n, g : parameters) : RngIntElt, RngIntElt, RngIntElt -> GrpPC
+    Exponentp : BoolElt : true
+\end{intrinsics}
+
+Given $q=p^m$, $n>0$, and $g>0$, returns a $p$-group $G$ with genus $\leq g$ and order $q^{n+g}=p^{m(n+g)}$. 
+If $q$ is not a prime, then the centroid of the group will be a proper field extension of $\mathbb{F}_p$, isomorphic to $\mathbb{F}_q$. 
+If $\circ: V\times V\rightarrowtail W$ is the commutation tensor of $G$, then $\dim_{\mathcal{C}(\circ)}(V)=n$ and $\dim_{\mathcal{C}(\circ)}(W)=g$, where $\mathcal{C}(\circ)$ is the centroid of $\circ$. 
+The algorithm is based on the Universal Coefficients Theorem, see \cite{LGM:book}*{Chapter~9} the statement and proof.
+There is one optional parameter: {\tt Exponentp}. 
+
+\begin{description}
+\item[\textcolor{blue}{\tt Exponentp}]
+The default is set to {\tt true}.
+Set to false if you want the returned group to have exponent $\leq p^2$.  
+\end{description}
+
+\index{RandomGenus2Group}
+\begin{intrinsics}
+RandomGenus2Group(q, d : parameters) : RngIntElt, [RngIntElt] -> GrpPC
+    Exponentp : BoolElt : true
+\end{intrinsics}
+
+Given $q=p^m$ and $d=[d_1, \dots, d_k]$, where $d_i>0$, it returns a genus 2 group $G$ whose commutation tensor $\circ : V\times V\rightarrowtail W$ has centroid $\mathcal{C}(\circ)\cong \mathbb{F}_q$ and whose $\perp$-decomposition has blocks of dimensions $d_1,\dots,d_k$ (over $\mathcal{C}(\circ)$).
+If $d_i=1$, then this increases the dimension of the radical by 1 (over $\mathcal{C}(\circ)$).
+There is one optional parameter: {\tt Exponentp}. 
+
+\begin{description}
+\item[\textcolor{blue}{\tt Exponentp}]
+The default is set to {\tt true}.
+Set to false if you want the returned group to have exponent $\leq p^2$.  
+\end{description}
+
+\index{RandomGenus1Group}
+\begin{intrinsics}
+RandomGenus1Group(q, d, r : parameters) : RngIntElt, RngIntElt, RngIntElt -> GrpPC
+    Exponentp : BoolElt : true
+\end{intrinsics}
+
+Given $q=p^m$, $d>0$, and $r\geq 0$, it returns a group $G$ with genus 1 and of order $q^{2d+r+1}$.
+The center of $G$ has order $q^{r+1}$, and $G$ is $dm$-generated.
+There is one optional parameter: {\tt Exponentp}. 
+
+\begin{description}
+\item[\textcolor{blue}{\tt Exponentp}]
+The default is set to {\tt true}.
+Set to false if you want the returned group to have exponent $\leq p^2$.  
+\end{description}
+
+\index{Genus2Group}
+\begin{intrinsics}
+Genus2Group(f) : RngUPolElt -> GrpPC
+Genus2Group(f) : RngMPolElt -> GrpPC
+\end{intrinsics}
+
+Given either a univariate or homogeneous multivariate polynomial in $x$ (and $y$), it returns a group $G$ whose tensor from communtation has a Pfaffian equivalent to $f$.
+
+\section{Examples}
+
 \chapter{Automorphism groups}
 
+We have two intrinsics for constructing automorphism groups: one with group inputs and the other with tensor inputs. 
+
+\index{AutomorphismGroupSG}
 \begin{intrinsics}
 AutomorphismGroupSG(G : parameters) : GrpPC -> GrpAuto
     Cent : BoolElt : true
@@ -79,447 +144,158 @@ AutomorphismGroupSG(G : parameters) : GrpPC -> GrpAuto
     Order : BoolElt : false
 \end{intrinsics}
 
-\color{black}
-Given a $p$-group $G$, returns $\Aut(G)$.
-If $G$ has genus 1 or 2 and exponent $p$, then it takes advantage of this structure 
-to compute the automorphism group with much more efficient algorithms.
-This intrinsic provides three optional parameters: {\tt Method}, {\tt Print}, and {\tt Order}, 
-which are only used when the genus of $G$ is either 1 or 2.
+Given a $p$-group $G$, of class 2, exponent $p$, and genus $\leq 2$, this returns $\Aut(G)$.
+This currently does not work with $p=2$.
+This intrinsic provides three optional parameters: {\tt Cent}, {\tt Method}, and {\tt Order}.
 
 \begin{description}
+\item[\textcolor{blue}{\tt Cent}]
+This parameter is a flag for the algorithm to rewrite the tensor over its centroid. 
+In order to rewrite over the centroid, we assume the centroid is a local ring, see \cite{eMAGma} for details.
+The default is set to {\tt true}, so by default, the algorithm computes the centroid and rewrites the tensor over the residue field.
+If you know the centroid is trivial, set {\tt Cent} to {\tt false} to save time.
+WARNING: if the centroid is a proper field extension of $\mathbb{F}_p$, then the full automorphism group may not be constructed (this is a bug we will fix in the near future).
 \item[\textcolor{blue}{\tt Method}]
 The default is $0$, and it accepts any input from $\{ 0,1,2\}$. 
-For a genus 2 group, this will set the method for handling the sloped part of the bimap.
-If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian
-method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input. 
-\item[\textcolor{blue}{\tt Print}]
-The default is set to {\tt false}. To get a print out of the process, set {\tt Print} to {\tt true}. 
+This will set the method for handling the sloped part of the tensor.
+If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not optimally tuned.
 \item[\textcolor{blue}{\tt Order}]
-Finally, {\tt Order} is included so you have the order of the returned automorphism group. The data structure of {\tt GrpAuto} makes it hard to compute the order of the group. Using the LMG functions, we are able to do this at the end of the computation. The default is set to {\tt false}. Warning: if set to {\tt true} this step will likely take the majority of the computation time.
+Finally, {\tt Order} is included so you have the order of the returned automorphism group. 
+The data structure of {\tt GrpAuto} makes it hard to compute the order of the group. 
+However, when computing $\Aut(G)$, we construct a (linear) representation of the group. 
+We can take advantage of the LMG functions \cite{LMG} in Magma to compute the order of the representation. 
+The default is set to {\tt false}. 
+WARNING: if set to {\tt true} this step could take the majority of the computation time.
 \end{description}
 
-\color{blue}
-\begin{verbatim}
-PseudoIsomtryGroup( F ) : SeqEnum[AlgMatElt] -> GrpMat
-\end{verbatim}
+\index{PseudoIsometryGroupSG}
+\begin{intrinsics}
+PseudoIsometryGroupSG(T : parameters) : TenSpcElt -> GrpMat
+    Cent : BoolElt : true
+    Method : RngIntElt : 0
+\end{intrinsics}
 
-\color{black}
-%Given a pair of alternating forms or a single alternating form $F$ over $\mathbb{Z}_p$ ($p>2$), returns $\pseudo(F)$.
-Given a system of forms $F$ over $\mathbb{F}_q$, returns the pseudo-isometry group $\pseudo(F)$.
-This intrinsic provides two optional parameters: {\tt Method} and {\tt Print}. 
-For systems of 3 or more forms, for nonalternating systems, or when the characteristic is 2, the algorithm uses brute force. 
+Given an alternating tensor $T : V \times V \rightarrowtail W$, where $V$ and $W$ are $\mathbb{F}_q$-vector spaces, returns the pseudo-isometry group $\pseudo(T)\leq \GL(V)\times \GL(W)$.
+This currently does not work for even $q$. 
+This intrinsic provides two optional parameters: {\tt Cent} and {\tt Method}. 
 
 \begin{description}
+\item[\textcolor{blue}{\tt Cent}]
+This parameter is a flag for the algorithm to rewrite the tensor over its centroid. 
+In order to rewrite over the centroid, we assume the centroid is a local ring, see \cite{eMAGma} for details.
+The default is set to {\tt true}, so by default, the algorithm computes the centroid and rewrites the tensor over the residue field.
+If you know the centroid is trivial, set {\tt Cent} to {\tt false} to save time.
+WARNING: if the centroid is a proper field extension of $\mathbb{F}_q$, then the full pseudo-isometry group may not be constructed (this is a bug we will fix in the near future).
 \item[\textcolor{blue}{\tt Method}]
 The default is $0$, and it accepts any input from $\{ 0,1,2\}$. 
-For a pair of alternating forms, this will set the method for handling the sloped part of the bimap.
-If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian
-method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input. 
-\item[\textcolor{blue}{\tt Print}]
-The default is set to {\tt false}. To get a print out of the process, set {\tt Print} to {\tt true}. 
+This will set the method for handling the sloped part of the tensor.
+If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not optimally tuned.
 \end{description}
 
 \section{Examples}
 We list some examples to illustrate the functionality of the automorphism intrinsics.
 
-\begin{lstlisting}[frame=single,basicstyle=\ttfamily\color{black!30!teal},backgroundcolor=\color{white!70!gray}]
-> G;
-GrpPC : G of order 2187 = 3^7
-PC-Relations:
-    G.2^G.1 = G.2 * G.6, 
-    G.3^G.1 = G.3 * G.7, 
-    G.4^G.2 = G.4 * G.6^2
-> A := SGAutomorphismGroup(G,3);
-> A.6;
-Automorphism of GrpPC : G which maps:
-    G.1 |--> G.1 * G.3^2
-    G.2 |--> G.2
-    G.3 |--> G.3
-    G.4 |--> G.4
-    G.5 |--> G.5
-    G.6 |--> G.6
-    G.7 |--> G.7
-\end{lstlisting}
-
-
-\begin{lstlisting}[frame=single,basicstyle=\ttfamily\color{black!30!teal},backgroundcolor=\color{white!70!gray}]
-> G;
-GrpPC : G of order 531441 = 3^12
-PC-Relations:
-    G.2^G.1 = G.2 * G.11, 
-    G.3^G.2 = G.3 * G.12, 
-    G.4^G.1 = G.4 * G.12, 
-    G.4^G.2 = G.4 * G.11, 
-    G.7^G.6 = G.7 * G.11^2, 
-    G.9^G.5 = G.9 * G.12, 
-    G.10^G.8 = G.10 * G.11^2
-> A := SGAutomorphismGroup(G,3 : Print:=true);
-Computing the adjoint algebra... 0.020 seconds.
-Computing perp-decomposition... 0.000 seconds.
-4 sloped blocks and 0 flat blocks.
-Using the Pfaffian method... 0.010 seconds.
-Constructing the isometries... 0.000 seconds.
->
-> A := SGAutomorphismGroup(G,3 : 
-       Method:=1,Print:=true);
-Computing the adjoint algebra... 0.020 seconds.
-Computing perp-decomposition... 0.010 seconds.
-4 sloped blocks and 0 flat blocks.
-Using the adjoint tensor method... 0.060 seconds.
-Constructing the isometries... 0.010 seconds.
->
-> A := SGAutomorphismGroup(G,3 : 
-       Print:=true,Order:=true);
-Computing the adjoint algebra... 0.020 seconds.
-Computing perp-decomposition... 0.010 seconds.
-4 sloped blocks and 0 flat blocks.
-Using the Pfaffian method... 0.010 seconds.
-Constructing the isometries... 0.010 seconds.
-Computing the order... 0.030 seconds.
-> #A;
-910796483224456888320
-\end{lstlisting}
-
-\begin{lstlisting}[frame=single,basicstyle=\ttfamily\color{black!30!teal},backgroundcolor=\color{white!70!gray}]
-> F;
-[
-    [0 2 3 1 4 3 4 2]
-    [3 0 2 0 4 0 1 4]
-    [2 3 0 1 3 2 1 3]
-    [4 0 4 0 4 4 0 4]
-    [1 1 2 1 0 0 3 2]
-    [2 0 3 1 0 0 1 1]
-    [1 4 4 0 2 4 0 1]
-    [3 1 2 1 3 4 4 0],
-
-    [0 1 1 0 4 4 2 0]
-    [4 0 2 1 2 3 2 3]
-    [4 3 0 2 4 1 4 2]
-    [0 4 3 0 0 1 2 4]
-    [1 3 1 0 0 0 2 1]
-    [1 2 4 4 0 0 1 1]
-    [3 3 1 3 3 4 0 1]
-    [0 2 3 1 4 4 4 0]
-]
-> PI := PseudoIsometryGroup(F);
-> Random(PI);
-[3 3 0 0 0 2 1 4 0 0]
-[2 0 2 0 0 0 4 2 0 0]
-[1 2 2 3 3 3 1 2 0 0]
-[0 4 1 1 0 0 4 1 0 0]
-[3 3 3 0 4 1 3 0 0 0]
-[3 3 1 4 2 1 3 0 0 0]
-[0 4 3 2 0 1 2 1 0 0]
-[1 2 1 1 0 4 1 2 0 0]
-[0 0 0 0 0 0 0 0 1 2]
-[0 0 0 0 0 0 0 0 0 4]
-> PI := PseudoIsometryGroup(F : Print:=true);
-Computing the adjoint algebra... 0.010 seconds.
-Computing perp-decomposition... 0.000 seconds.
-3 sloped blocks and 0 flat blocks.
-Using the Pfaffian method... 0.010 seconds.
-Constructing the isometries... 0.010 seconds.
-\end{lstlisting}
-
-\color{black}
 \chapter{Isomorphisms}
 
-\color{blue}
-\begin{verbatim}
-SGIsIsomorphic( G, H, p ) : GrpPC, GrpPC, RngIntElt -> BoolElt
-\end{verbatim}
+\index{IsIsomorphicSG}
+\begin{intrinsics}
+IsIsomorphicSG(G, H : parameters) : GrpPC, GrpPC -> BoolElt
+    Cent : BoolElt : true
+    Constructive : BoolElt : true
+    Method : RngIntElt : 0
+\end{intrinsics}
 
-\color{black}
-Given $p$-groups $G$ and $H$, decides if $G\cong H$.
-This intrinsic provides one optional parameters: {\tt Constructive}. 
-If $G$ and $H$ have genus 1 or 2 and exponent $p$, then it takes advantage of this structure 
-to decide isomorphism with much more efficient algorithms. 
-For this case, the algorithm defaults to the Pfaffian method at the moment. 
-Eventually, the adjoint-tensor method will be incorporated.
-For groups of genus greater than 2 or exponent greater than $p$, the algorithm defaults to the standard algorithm in {\sc Magma}.
+Given class 2, exponent $p$, $p$-groups $G$ and $H$ of genus $\leq 2$, decides if $G\cong H$.
+If $G\cong H$, then an isomorphism is provided unless specified otherwise.
+Currently this does not work for $p=2$.  
+There are three optional parameters: {\tt Cent}, {\tt Constructive}, and {\tt Method}.
 
 \begin{description}
+\item[\textcolor{blue}{\tt Cent}]
+This parameter is a flag for the algorithm to rewrite the tensors over their centroids. 
+In order to rewrite over the centroid, we assume the centroid is a local ring, see \cite{eMAGma} for details.
+The default is set to {\tt true}, so by default, the algorithm computes the centroid and rewrites the tensor over the residue field.
+If you know the centroid is trivial, set {\tt Cent} to {\tt false} to save time.
+WARNING: if the centroid is a proper field extension of $\mathbb{F}_p$, then the full coset of (potential) isomorphisms are not fully exhausted. 
+That is, it is possible the algorithm concludes {\tt false} when $G\cong H$ (this is a bug we will fix in the near future).
 \item[\textcolor{blue}{\tt Constructive}]
-The default is {\tt false}. 
-When set to {\tt true} and $G\cong H$, the algorithm returns an isomorphism from $G$ to $H$.
+The default is {\tt true}. 
+Set to {\tt false} if you do not want the algorithm to explicitly construct an isomorphism.
+\item[\textcolor{blue}{\tt Method}]
+The default is $0$, and it accepts any input from $\{ 0,1,2\}$. 
+This will set the method for handling the sloped part of the tensor.
+If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not optimally tuned.
 \end{description}
 
-\color{blue}
-\begin{verbatim}
-IsPseudoIsometric( F, G ) : SeqEnum[AlgMatElt], SeqEnum[AlgMatElt] -> BoolElt
-\end{verbatim}
+\index{IsPseudoIsometricSG}
+\begin{intrinsics}
+IsPseudoIsometricSG(T, S : parameters) : TenSpcElt, TenSpcElt -> BoolElt
+    Cent : BoolElt : true
+    Constructive : BoolElt : true
+    Method : RngIntElt : 0
+\end{intrinsics}
 
 \color{black}
-Given a system of forms $F$ and $G$ over $\mathbb{F}_q$, decides if $F$ is pseudo-isometric to $G$.
-This intrinsic provides one optional parameters: {\tt Constructive}. 
-If $F$ and $G$ are genus 1 or 2 over their centroids, then the algorithm uses this structure to decide pseudo-isometry with much more efficient algorithms.
-For this case, the algorithm defaults to the Pfaffian method at the moment. 
-Eventually, the adjoint-tensor method will be incorporated.
-For systems forms with genus greater than 2, for nonalternating systems, or when the characteristic is 2, the algorithm uses brute force. 
+Given alternating tensors $T, S : V\times V \rightarrowtail W$, where $V$ and $W$ are $\mathbb{F}_q$-vector spaces, it decides if $T$ is pseudo-isometric to $S$.
+If $T$ is pseudo-isometric to $S$, then a pseudo-isometry is provided (as an element of $\GL(V)\times \GL(W)$) unless specified otherwise. 
+Currently this does not work for even $q$. 
+There are three optional parameters: {\tt Cent}, {\tt Constructive}, and {\tt Method}.
 
 \begin{description}
+\item[\textcolor{blue}{\tt Cent}]
+This parameter is a flag for the algorithm to rewrite the tensors over their centroids. 
+In order to rewrite over the centroid, we assume the centroid is a local ring, see \cite{eMAGma} for details.
+The default is set to {\tt true}, so by default, the algorithm computes the centroid and rewrites the tensor over the residue field.
+If you know the centroid is trivial, set {\tt Cent} to {\tt false} to save time.
+WARNING: if the centroid is a proper field extension of $\mathbb{F}_q$, then the full coset of (potential) pseudo-isometries are not fully exhausted. 
+That is, it is possible the algorithm concludes {\tt false} when $T$ is pseudo-isometric to $S$ (this is a bug we will fix in the near future).
 \item[\textcolor{blue}{\tt Constructive}]
-The default is {\tt false}. 
-When set to {\tt true} and $F$ is pseudo-isometric to $G$, the algorithm returns a pseudo-isometry from $F$ to $G$.
+The default is {\tt true}. 
+Set to {\tt false} if you do not want the algorithm to explicitly construct an isomorphism.
+\item[\textcolor{blue}{\tt Method}]
+The default is $0$, and it accepts any input from $\{ 0,1,2\}$. 
+This will set the method for handling the sloped part of the tensor.
+If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not optimally tuned.
 \end{description}
 
 
 \section{Examples}
 We list some examples to illustrate the functionality of the isomorphism intrinsics.
 
-\begin{lstlisting}[frame=single,basicstyle=\ttfamily\color{black!30!teal},backgroundcolor=\color{white!70!gray}]
-> G,H;
-GrpPC : G of order 729 = 3^6
-PC-Relations:
-    G.2^G.1 = G.2 * G.5, 
-    G.3^G.1 = G.3 * G.6, 
-    G.3^G.2 = G.3 * G.5, 
-    G.4^G.1 = G.4 * G.5 * G.6, 
-    G.4^G.2 = G.4 * G.6^2, 
-    G.4^G.3 = G.4 * G.5^2 * G.6
 
-GrpPC : H of order 729 = 3^6
-PC-Relations:
-    H.2^H.1 = H.2 * H.5, 
-    H.3^H.1 = H.3 * H.5, 
-    H.3^H.2 = H.3 * H.6, 
-    H.4^H.1 = H.4 * H.5^2, 
-    H.4^H.2 = H.4 * H.5 * H.6
-> SGIsIsomorphic(G,H,3);
-true
-> SGIsIsomorphic(G,H,3 : Constructive:=true);
-true Homomorphism of GrpPC : G into GrpPC : H induced by
-    G.1 |--> H.2^2 * H.3 * H.4^2
-    G.2 |--> H.1 * H.2 * H.3
-    G.3 |--> H.1^2 * H.2^2 * H.3^2 * H.4^2
-    G.4 |--> H.1 * H.2 * H.4^2
-    G.5 |--> H.6^2
-    G.6 |--> H.5 * H.6^2
-\end{lstlisting}
+\chapter{Canonical Labeling}
 
-\begin{lstlisting}[frame=single,basicstyle=\ttfamily\color{black!30!teal},backgroundcolor=\color{white!70!gray}]
-> F,G;
-[
-    [0 4 2 1 1 3]
-    [1 0 3 3 3 1]
-    [3 2 0 2 2 0]
-    [4 2 3 0 4 1]
-    [4 2 3 1 0 3]
-    [2 4 0 4 2 0],
+\index{Genus!groups}\index{Genus!tensors}
+\begin{intrinsics}
+Genus(G) : GrpPC -> RngIntElt
+Genus(T) : TenSpcElt -> RngIntElt
+\end{intrinsics}
 
-    [0 3 0 1 0 2]
-    [2 0 2 3 4 1]
-    [0 3 0 0 0 2]
-    [4 2 0 0 3 4]
-    [0 1 0 2 0 0]
-    [3 4 3 1 0 0]
-]
-[
-    [0 0 3 4 3 2]
-    [0 0 2 0 4 4]
-    [2 3 0 2 0 3]
-    [1 0 3 0 3 1]
-    [2 1 0 2 0 0]
-    [3 1 2 4 0 0],
+Given a $p$-group $G$, returns the genus of $G$. 
+That is, the dimension of $[G,G]$ over its centroid.
+For a tensor $T$, it returns the dimension of its image over its centroid. 
 
-    [0 1 0 3 3 3]
-    [4 0 4 0 3 0]
-    [0 1 0 1 2 4]
-    [2 0 4 0 2 1]
-    [2 2 3 3 0 2]
-    [2 0 1 4 3 0]
-]
-> IsPseudoIsometric(F,G);
-true
-> IsPseudoIsometric(F,G : Constructive:=true);
-true 
-[3 2 0 1 4 4 0 0]
-[0 0 2 4 2 1 0 0]
-[3 3 2 2 3 3 0 0]
-[0 4 2 4 2 3 0 0]
-[1 4 0 0 2 0 0 0]
-[0 3 1 3 0 1 0 0]
-[0 0 0 0 0 0 2 2]
-[0 0 0 0 0 0 1 0]
-\end{lstlisting}
+\index{Genus2Signature!groups}\index{Genus2Signature!tensors}
+\begin{intrinsics}
+Genus2Signature(G) : GrpPC -> List
+Genus2Signature(T) : TenSpcElt -> List
+\end{intrinsics}
 
-\chapter{Miscellaneous}
+Given a genus 2 group or tensor, returns the canonical genus 2 signature. 
+The list has two parts.
+The first entry is a sequence of odd integers corresponding to the dimensions of the flat indecomposable spaces.
+The second entry is a list of sequences in $\mathbb{F}_q$, the field the given data is defined over.
+The sequences in  the second entry are the coefficients of the homogeneous polynomial in $x$ and $y$ in degree $d$:
+\[ c_1x^d + c_2 x^{d-1}y + c_3 x^{d-2}y^2 + \cdots + c_{d+1}y^d. \]
+Because this is a canonical label, two groups (or tensors) are isoclinic (or pseudo-isometric) if, and only if, their genus 2 signatures are equal. 
 
-\color{blue}
-\begin{verbatim}
-Genus( G, p ) : GrpPC, RngIntElt -> RngIntElt
-\end{verbatim}
-
-\color{black}
-Given a $p$-group $G$, returns the genus of $G$ over $\mathbb{Z}_p$.
-
-\color{blue}
-\begin{verbatim}
-SGRandomGroup( p, n, g ) : RngIntElt, RngIntElt, RngIntElt -> GrpPC
-\end{verbatim}
-
-\color{black}
-Given a prime $p$ and natural numbers $n,g\geq 1$, return a random $p$-group $G$ with $|G|=p^{n+g}$ with genus $g$ over $\mathbb{Z}_p$ and exponent $p$.
-
-\color{blue}
-\begin{verbatim}
-Genus2RandomGroupWithBlocks( p, d ) : RngIntElt, SeqEnum[RngIntElt] -> GrpPC
-\end{verbatim}
-
-\color{black}
-Given a prime $p$ and a sequence $d$ of integers $\geq 1$, return a random genus 2 $p$-group $G$ with block structure given by $d$. An entry of 1 will add a dimension to the radical (ie center).
-
-\color{blue}
-\begin{verbatim}
-Genus2Signature( G, p ) : GrpPC, RngIntElt -> Rec
-Genus2Signature( F ) : SeqEnum[AlgMatElt] -> Rec
-\end{verbatim}
-
-\color{black}
-Given either a genus 2 $p$-group $G$ with $p>2$ or a pair of forms over $\mathbb{F}_q$ (with odd characteristic), returns the genus 2 signature.
-
-\color{blue}
-\begin{verbatim}
-EquivalentSignatures( S1, S2 ) : Rec, Rec -> BoolElt
-\end{verbatim}
-
-\color{black}
-Given a pair of genus 2 signatures $S1$ and $S2$, decide if they are equivalent.
+Currently, this does not work for even $q$. 
+WARNING: if the centroid is a proper field extension of $\mathbb{F}_q$, the field the data is defined over, then this is not a canonical label. 
+That is, two groups can be isomorphic but have two different genus 2 signatures. 
+This is a bug we will fix in the near future.
 
 \section{Examples}
 We list some examples to illustrate the functionality of these intrinsics.
-
-\begin{lstlisting}[frame=single,basicstyle=\ttfamily\color{black!30!teal},backgroundcolor=\color{white!70!gray}]
-> G;
-GrpPC : G of order 729 = 3^6
-PC-Relations:
-    G.2^G.1 = G.2 * G.5, 
-    G.3^G.1 = G.3 * G.6, 
-    G.3^G.2 = G.3 * G.5^2, 
-    G.4^G.1 = G.4 * G.6^2, 
-    G.4^G.2 = G.4 * G.5^2, 
-    G.4^G.3 = G.4 * G.5 * G.6^2
-> Genus(G,3);
-2
-> H;
-GrpPC : H of order 2187 = 3^7
-PC-Relations:
-    H.2^H.1 = H.2 * H.5, 
-    H.3^H.1 = H.3 * H.5, 
-    H.3^H.2 = H.3 * H.6, 
-    H.4^H.3 = H.4 * H.7
-> Genus(H,3);
-3
-\end{lstlisting}
-
-\begin{lstlisting}[frame=single,basicstyle=\ttfamily\color{black!30!teal},backgroundcolor=\color{white!70!gray}]
-> SGRandomGroup(5,4,2);                        
-GrpPC of order 15625 = 5^6
-PC-Relations:
-    $.2^$.1 = $.2 * $.5, 
-    $.3^$.1 = $.3 * $.6, 
-    $.3^$.2 = $.3 * $.6^4, 
-    $.4^$.1 = $.4 * $.5^2 * $.6, 
-    $.4^$.2 = $.4 * $.5^2 * $.6, 
-    $.4^$.3 = $.4 * $.5^4 * $.6^3
-> SGRandomGroup(5,8,1);
-GrpPC of order 1953125 = 5^9
-PC-Relations:
-    $.2^$.1 = $.2 * $.9, 
-    $.3^$.1 = $.3 * $.9^2, 
-    $.3^$.2 = $.3 * $.9^2, 
-    $.4^$.1 = $.4 * $.9^3, 
-    $.5^$.2 = $.5 * $.9^2, 
-    $.5^$.3 = $.5 * $.9^4, 
-    $.5^$.4 = $.5 * $.9^3, 
-    $.6^$.1 = $.6 * $.9, 
-    $.6^$.2 = $.6 * $.9^2, 
-    $.6^$.3 = $.6 * $.9^4, 
-    $.6^$.4 = $.6 * $.9^3, 
-    $.6^$.5 = $.6 * $.9^3, 
-    $.7^$.1 = $.7 * $.9, 
-    $.7^$.2 = $.7 * $.9, 
-    $.7^$.3 = $.7 * $.9^2, 
-    $.7^$.4 = $.7 * $.9^3, 
-    $.8^$.1 = $.8 * $.9, 
-    $.8^$.2 = $.8 * $.9^3, 
-    $.8^$.3 = $.8 * $.9^4, 
-    $.8^$.4 = $.8 * $.9^2, 
-    $.8^$.5 = $.8 * $.9, 
-    $.8^$.6 = $.8 * $.9
-\end{lstlisting}
-
-\begin{lstlisting}[frame=single,basicstyle=\ttfamily\color{black!30!teal},backgroundcolor=\color{white!70!gray}]
-> G := Genus2RandomGroupWithBlocks(3,[2,4]);  
-> G;
-GrpPC : G of order 6561 = 3^8
-PC-Relations:
-    G.2^G.1 = G.2 * G.7, 
-    G.3^G.1 = G.3 * G.8, 
-    G.3^G.2 = G.3 * G.7^2 * G.8, 
-    G.4^G.1 = G.4 * G.8^2, 
-    G.4^G.2 = G.4 * G.8, 
-    G.4^G.3 = G.4 * G.7^2, 
-    G.5^G.1 = G.5 * G.7 * G.8^2, 
-    G.5^G.2 = G.5 * G.7, 
-    G.5^G.3 = G.5 * G.7^2, 
-    G.5^G.4 = G.5 * G.7^2, 
-    G.6^G.1 = G.6 * G.8^2, 
-    G.6^G.3 = G.6 * G.8, 
-    G.6^G.4 = G.6 * G.7^2, 
-    G.6^G.5 = G.6 * G.7 * G.8^2
-> sig := Genus2Signature(G,3);
-> sig`flatdims;
-[]
-> sig`pfaffians;
-[
-    $.2,
-    $.1^2 + 2*$.1*$.2 + 2*$.2^2
-]
-\end{lstlisting}
-
-\begin{lstlisting}[frame=single,basicstyle=\ttfamily\color{black!30!teal},backgroundcolor=\color{white!70!gray}]
-> G := Genus2RandomGroupWithBlocks(3,[1,1,3,3]);
-> G;
-GrpPC : G of order 59049 = 3^10
-PC-Relations:
-    G.2^G.1 = G.2 * G.9, 
-    G.3^G.2 = G.3 * G.10, 
-    G.4^G.2 = G.4 * G.9^2, 
-    G.4^G.3 = G.4 * G.10^2, 
-    G.5^G.1 = G.5 * G.10, 
-    G.5^G.2 = G.5 * G.10, 
-    G.5^G.3 = G.5 * G.9^2 * G.10^2, 
-    G.5^G.4 = G.5 * G.10^2, 
-    G.6^G.1 = G.6 * G.9^2, 
-    G.6^G.2 = G.6 * G.10^2, 
-    G.6^G.3 = G.6 * G.9, 
-    G.6^G.4 = G.6 * G.9^2 * G.10^2, 
-    G.6^G.5 = G.6 * G.10^2, 
-    G.7^G.1 = G.7 * G.10^2, 
-    G.7^G.2 = G.7 * G.10^2, 
-    G.7^G.3 = G.7 * G.9^2 * G.10^2, 
-    G.7^G.4 = G.7 * G.10, 
-    G.7^G.5 = G.7 * G.9 * G.10, 
-    G.7^G.6 = G.7 * G.9^2 * G.10, 
-    G.8^G.1 = G.8 * G.9, 
-    G.8^G.2 = G.8 * G.9^2, 
-    G.8^G.3 = G.8 * G.10, 
-    G.8^G.4 = G.8 * G.9, 
-    G.8^G.6 = G.8 * G.9 * G.10^2
-> sig := Genus2Signature(G,3);
-> sig`flatdims;
-[ 3, 3 ]
-> sig`pfaffians;
-[]
-> Center(G);
-GrpPC of order 81 = 3^4
-PC-Relations:
-    $.1^3 = Id($), 
-    $.2^3 = Id($), 
-    $.3^3 = Id($), 
-    $.4^3 = Id($)
-\end{lstlisting}
 
 \begin{bibdiv}
 \begin{biblist}
@@ -537,7 +313,6 @@ PC-Relations:
    pages={235--265},
    issn={0747-7171},
    review={\MR{1484478}},
-   doi={10.1006/jsco.1996.0125},
 }
 
 \bib{BMW}{article}{
@@ -553,7 +328,38 @@ PC-Relations:
    review={\MR{3591162}},
 }
 
+\bib{LMG}{unpublished}{
+   author={Holt, Derek F.}
+   author={O'Brien, E. A.}
+   author={MORE???}
+   title={The Large Matrix Group Package},
+   status={\url{http://magma.maths.usyd.edu.au/magma/handbook/text/680}},
+}
+
+\bib{LGM:book}{book}{
+   author={Leedham-Green, C. R.},
+   author={McKay, S.},
+   title={The structure of groups of prime power order},
+   series={London Mathematical Society Monographs. New Series},
+   volume={27},
+   note={Oxford Science Publications},
+   publisher={Oxford University Press, Oxford},
+   date={2002},
+   pages={xii+334},
+   isbn={0-19-853548-1},
+   review={\MR{1918951}},
+}
+
+\bib{eMAGma}{unpublished}{
+   author={Maglione, Joshua}
+   author={Wilson, James B.}
+   title={The eMAGma Package},
+   status={\url{https://github.com/algeboy/eMAGma}},
+}
+
 \end{biblist}
 \end{bibdiv}
+
+\printindex
 
 \end{document}

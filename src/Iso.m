@@ -205,7 +205,7 @@ end function;
 
 // Intrinsics ----------------------------------------------------------
 
-intrinsic IsPseudoIsometricSG( B::TenSpcElt, C::TenSpcElt : Cent := true, Constructive := true, Method := 0, Print := false ) -> BoolElt
+intrinsic IsPseudoIsometricSG( B::TenSpcElt, C::TenSpcElt : Cent := true, Constructive := true, Method := 0 ) -> BoolElt
 {Determine if two genus 2 bimaps are pseduo-isometric.}
   k := BaseRing(B);
   l := BaseRing(C);

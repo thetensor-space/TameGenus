@@ -26,7 +26,7 @@
 % Defines `intrinsics' environment---similar to verbatim
 \newenvironment{intrinsics}%
   {
-    \endgraf\color{black!20!blue}\small
+    \endgraf\color{black!20!blue}
     \endgraf\verbatim
   }
   {

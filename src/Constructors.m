@@ -79,7 +79,11 @@ __WriteOverPrimeField := function( Forms )
   return sys;
 end function;
 
-intrinsic RandomGroupSG( q::RngIntElt, n::RngIntElt, g::RngIntElt : Exponentp := false ) -> GrpPC
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//                                  Intrinsics
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+intrinsic RandomGroupSG( q::RngIntElt, n::RngIntElt, g::RngIntElt : Exponentp := true ) -> GrpPC
 {Returns a random p-group with genus no larger than g of order q^(n+g), where q is a power of p.}
   require q ge 2 : "Argument 1 must be greater than 1.";
   require IsPrimePower(q) : "Argument 1 must be prime power.";
@@ -90,7 +94,7 @@ intrinsic RandomGroupSG( q::RngIntElt, n::RngIntElt, g::RngIntElt : Exponentp :=
   return __FormsToGroup( Forms : ExponentP := Exponentp );
 end intrinsic;
 
-intrinsic RandomGenus2Group( q::RngIntElt, d::[RngIntElt] : Exponentp := false ) -> GrpPC
+intrinsic RandomGenus2Group( q::RngIntElt, d::[RngIntElt] : Exponentp := true ) -> GrpPC
 {Returns a random genus 2 p-group with prescribed block structure given by the sequence d, where q is a power of p.}
   require q ge 2 : "Argument 1 must be greater than 1.";
   require IsPrimePower(q) : "Argument 1 must be prime power.";
@@ -137,18 +141,16 @@ intrinsic RandomGenus2Group( q::RngIntElt, d::[RngIntElt] : Exponentp := false )
   return __FormsToGroup( B : ExponentP := Exponentp );
 end intrinsic;
 
-intrinsic RandomGenus1Group( q::RngIntElt, d::RngIntElt, r::RngIntElt : Exponentp := false ) -> GrpPC
-{Returns a random genus 1 p-group of order q^(d+r+1) where d is the rank of the form, r the dimension of the radical, and q a power of p.}
+intrinsic RandomGenus1Group( q::RngIntElt, d::RngIntElt, r::RngIntElt : Exponentp := true ) -> GrpPC
+{Returns a random genus 1 p-group of order q^(2d+r+1) where 2d is the rank of the form, r the dimension of the radical, and q a power of p.}
   require q ge 2 : "Argument 1 must be larger than 1.";
   require IsPrimePower(q) : "Argument 1 must be prime power.";
-  require d ge 2 : "Argument 2 must be larger than 1.";
-  require IsEven(d) : "Argument 2 must be even.";
+  require d ge 1 : "Argument 2 must be positive.";
   require r ge 0 : "Argument 3 must be nonnegative.";
   
   K := GF(q);
-  n := d div 2;
   J := Matrix(K, [[0,1],[-1,0]] );
-  F := DiagonalJoin( DiagonalJoin( < J : i in [1..n] > ), ZeroMatrix( K, r, r ) );
+  F := DiagonalJoin( DiagonalJoin( < J : i in [1..d] > ), ZeroMatrix( K, r, r ) );
   X := Matrix(Random(GL(Ncols(F),K)));
   F := X*F*Transpose(X);
   B := __WriteOverPrimeField( [F] );
