@@ -8,7 +8,7 @@
 \DeclareMathOperator{\PGL}{{\rm PGL}}
 \newcommand{\pseudo}{\Psi\hspace*{-1mm}\isom}
 
-\title{Small Genus Package}
+\title{Tame Genus Package}
 
 \author{Peter A. Brooksbank}
 \address{Bucknell University}
@@ -39,7 +39,7 @@
 
 \chapter{Introduction}
 
-The goal of this package is to provide {\sc Magma} \cite{Magma} with high performance functionality for groups with small genus. 
+The goal of this package is to provide {\sc Magma} \cite{Magma} with high performance functionality for groups with tame genus. 
 When appropriate, all intrinsics dealing with groups also work for tensors ({\tt TenSpcElt}). 
 This package includes intrinsics for automorphism and isomorphism computations, canonical labeling, and constructing random groups of genus 1 or 2 of exponent  $\leq p^2$. 
 Mathematical details of these algorithms can be found in \cite{BMW}.
@@ -54,16 +54,16 @@ Currently, there is only one level of printing, so either it is on of off.
 SetVerbose(MonStgElt, RngIntElt) : -> 
 \end{intrinsics}
 
-{\tt SetVerbose} is a built in Magma function, but with this package, this intrinsic accepts the string {\tt "SmallGenus"} and an integer in $\{0,1\}$. 
+{\tt SetVerbose} is a built in Magma function, but with this package, this intrinsic accepts the string {\tt "TameGenus"} and an integer in $\{0,1\}$. 
 
-We have included an intrinsic to check which version of SmallGenus you have attached in Magma.
+We have included an intrinsic to check which version of TameGenus you have attached in Magma.
 
-\index{SmallGenusVersion}
+\index{TameGenusVersion}
 \begin{intrinsics}
-SmallGenusVersion() : -> MonStgElt
+TameGenusVersion() : -> MonStgElt
 \end{intrinsics}
 
-Returns the version number for the SmallGenus package attached in Magma.
+Returns the version number for the TameGenus package attached in Magma.
 
 
 \chapter{Constructors}
@@ -72,9 +72,9 @@ We introduce intrinsics to construct nonabelian groups of genus $\leq 2$.
 We provide some algorithms to construct random groups, and we make no attempt at asserting any analysis of these algorithms.
 In particular, these random constructors may not select groups in a uniform distribution. 
 
-\index{RandomGroupSG}
+\index{TGRandomGroup}
 \begin{intrinsics}
-RandomGroupSG(q, n, g : parameters) : RngIntElt, RngIntElt, RngIntElt -> GrpPC
+TGRandomGroup(q, n, g : parameters) : RngIntElt, RngIntElt, RngIntElt -> GrpPC
     Exponentp : BoolElt : true
 \end{intrinsics}
 
@@ -136,9 +136,9 @@ Given either a univariate or homogeneous multivariate polynomial in $x$ (and $y$
 
 We have two intrinsics for constructing automorphism groups: one with group inputs and the other with tensor inputs. 
 
-\index{AutomorphismGroupSG}
+\index{TGAutomorphismGroup}
 \begin{intrinsics}
-AutomorphismGroupSG(G : parameters) : GrpPC -> GrpAuto
+TGAutomorphismGroup(G : parameters) : GrpPC -> GrpAuto
     Cent : BoolElt : true
     Method : RngIntElt : 0 
     Order : BoolElt : false
@@ -168,9 +168,9 @@ The default is set to {\tt false}.
 WARNING: if set to {\tt true} this step could take the majority of the computation time.
 \end{description}
 
-\index{PseudoIsometryGroupSG}
+\index{TGPseudoIsometryGroup}
 \begin{intrinsics}
-PseudoIsometryGroupSG(T : parameters) : TenSpcElt -> GrpMat
+TGPseudoIsometryGroup(T : parameters) : TenSpcElt -> GrpMat
     Cent : BoolElt : true
     Method : RngIntElt : 0
 \end{intrinsics}
@@ -197,9 +197,9 @@ We list some examples to illustrate the functionality of the automorphism intrin
 
 \chapter{Isomorphisms}
 
-\index{IsIsomorphicSG}
+\index{TGIsIsomorphic}
 \begin{intrinsics}
-IsIsomorphicSG(G, H : parameters) : GrpPC, GrpPC -> BoolElt
+TGIsIsomorphic(G, H : parameters) : GrpPC, GrpPC -> BoolElt
     Cent : BoolElt : true
     Constructive : BoolElt : true
     Method : RngIntElt : 0
@@ -227,9 +227,9 @@ This will set the method for handling the sloped part of the tensor.
 If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not optimally tuned.
 \end{description}
 
-\index{IsPseudoIsometricSG}
+\index{TGIsPseudoIsometric}
 \begin{intrinsics}
-IsPseudoIsometricSG(T, S : parameters) : TenSpcElt, TenSpcElt -> BoolElt
+TGIsPseudoIsometric(T, S : parameters) : TenSpcElt, TenSpcElt -> BoolElt
     Cent : BoolElt : true
     Constructive : BoolElt : true
     Method : RngIntElt : 0

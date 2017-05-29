@@ -16,11 +16,11 @@ Method: if set to 0, it uses the established cut offs for determining which meth
 If set to 1, then we use the polynomial method, and if set to 2, we use the adjoint tensor method. 
 */
 
-__SmallGenusAutomorphism := function( G : Cent := true, Method := 0, Order := false )
+__TameGenusAutomorphism := function( G : Cent := true, Method := 0, Order := false )
 
   B := pCentralTensor(G);
 
-  PIsom := PseudoIsometryGroupSG( B : Cent := Cent, Method := Method );
+  PIsom := TGPseudoIsometryGroup( B : Cent := Cent, Method := Method );
   k := BaseRing(B);
   V := B`Domain[1];
   f := B`Coerce[1];
@@ -89,9 +89,9 @@ end function;
 
 // Intrinsics ----------------------------------------------------------
 
-intrinsic AutomorphismGroupSG( G::GrpPC : Cent := true, Method := 0, Order := false ) -> GrpAuto
-{Construct generators for the automorphism group of a small genus group G.
-To use a specific method regardless of structure, set Method to 1 for adjoint-tensor method or 2 for Pfaffian method.}
+intrinsic TGAutomorphismGroup( G::GrpPC : Cent := true, Method := 0, Order := false ) -> GrpAuto
+{Construct generators for the automorphism group of a group G with tame genus.
+To use a specific method, in the case of genus 2, regardless of structure set Method to 1 for adjoint-tensor method or 2 for Pfaffian method.}
   require IsPrime(Exponent(G)) : "Group must have exponent p.";
   require NilpotencyClass(G) le 2 : "Group is not class 2.";
   
@@ -99,20 +99,6 @@ To use a specific method regardless of structure, set Method to 1 for adjoint-te
     return AutomorphismGroup(G);
   end if;
 
-//  B := pCentralTensor( G, 1, 1 );
-//  if Cent then
-//    vprintf SmallGenus, 1 : "Rewriting bimap over its centroid... ";
-//    tt := Cputime();
-//    B := TensorOverCentroid(B);
-//    timing := Cputime(tt);
-//    vprintf SmallGenus, 1 : "%o seconds.\n", timing;
-//  end if;
-//  require Dimension(B`Codomain) le 2 : "Group is not genus 1 or 2.";
-//  if not IsPrimeField(BaseRing(B)) then
-//    Method := 1; 
-//    vprintf SmallGenus, 1 : "Centroid is not a prime field, applying adjoint-tensor method.\n";
-//  end if;
-
-	return __SmallGenusAutomorphism( G : Cent := Cent, Method := Method, Order := Order );
+	return __TameGenusAutomorphism( G : Cent := Cent, Method := Method, Order := Order );
 end intrinsic;
 

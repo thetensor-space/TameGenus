@@ -200,7 +200,7 @@ __WriteMatrixOverPrimeField := function( M )
   return Matrix(K, [ Eltseq(((V.i @ phi)*M) @@ phi) : i in [1..n*d] ]);
 end function;
 
-intrinsic SmallGenusVersion() -> MonStgElt
-{Returns the version number of small genus.}
+intrinsic TameGenusVersion() -> MonStgElt
+{Returns the version number of TameGenus.}
   return __VERSION;
 end intrinsic;

@@ -79,11 +79,12 @@ __WriteOverPrimeField := function( Forms )
   return sys;
 end function;
 
+
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //                                  Intrinsics
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-intrinsic RandomGroupSG( q::RngIntElt, n::RngIntElt, g::RngIntElt : Exponentp := true ) -> GrpPC
+intrinsic TGRandomGroup( q::RngIntElt, n::RngIntElt, g::RngIntElt : Exponentp := true ) -> GrpPC
 {Returns a random p-group with genus no larger than g of order q^(n+g), where q is a power of p.}
   require q ge 2 : "Argument 1 must be greater than 1.";
   require IsPrimePower(q) : "Argument 1 must be prime power.";

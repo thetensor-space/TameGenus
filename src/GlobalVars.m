@@ -1,3 +1,3 @@
 __VERSION := "0.1";
 
-declare verbose SmallGenus, 1;
+declare verbose TameGenus, 1;

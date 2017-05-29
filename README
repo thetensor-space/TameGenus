@@ -7,7 +7,7 @@ Wilson, Copyright 2016. GNU Public Liscence v. 3.
 
 Contents:
 
-SmallGenus.spec  — magma specification file.
+TameGenus.spec  — magma specification file.
 
 src/
 	Source Code for package.
