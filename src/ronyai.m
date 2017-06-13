@@ -1,3 +1,10 @@
+/* 
+    Copyright 2015--2017, Peter A. Brooksbank, Joshua Maglione, James B. Wilson.
+    Distributed under GNU GPLv3.
+*/
+
+
+
 /*--- implementation of Ronyai's trick: finding a suitable translate ---*/
 
 /*

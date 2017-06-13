@@ -1,3 +1,9 @@
+/* 
+    Copyright 2015--2017, Peter A. Brooksbank, Joshua Maglione, James B. Wilson.
+    Distributed under GNU GPLv3.
+*/
+
+
 import "Util.m" : __GL2ActionOnPolynomial, __PermutationDegreeMatrix, __FindPermutation, __GetStarAlg, __WhichMethod, __WriteMatrixOverPrimeField;
 import "Pfaffian.m" : __Pfaffian_ISO;
 import "sloped.m" : IsPseudoIsometricAdjointTensor;

@@ -1,3 +1,8 @@
+/* 
+    Copyright 2015--2017, Peter A. Brooksbank, Joshua Maglione, James B. Wilson.
+    Distributed under GNU GPLv3.
+*/
+
 import "prelims.m": IsomorphismWithField;
 
 // functions to compute the automorphism group of a truncated polynomial ring

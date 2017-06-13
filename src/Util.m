@@ -1,3 +1,9 @@
+/* 
+    Copyright 2015--2017, Peter A. Brooksbank, Joshua Maglione, James B. Wilson.
+    Distributed under GNU GPLv3.
+*/
+
+
 import "GlobalVars.m" : __VERSION;
 
 /*

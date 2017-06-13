@@ -1,3 +1,10 @@
+/* 
+    Copyright 2015--2017, Peter A. Brooksbank, Joshua Maglione, James B. Wilson.
+    Distributed under GNU GPLv3.
+*/
+
+
+
 /*
 Input two pairs of systems of alternating forms B1=[F1,G1], B2=[F2,G2] over k
 if there exists pseudo-isometry (X,Z) such that 

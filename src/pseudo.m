@@ -1,4 +1,11 @@
 /* 
+    Copyright 2015--2017, Peter A. Brooksbank, Joshua Maglione, James B. Wilson.
+    Distributed under GNU GPLv3.
+*/
+
+
+
+/* 
    Given a nondegenerate bimap of genus 2 (represented by a <pair> of
    alternating forms), return generators for its pseudo-isometry group.
 */ 

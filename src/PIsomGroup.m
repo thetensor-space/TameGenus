@@ -1,3 +1,9 @@
+/* 
+    Copyright 2015--2017, Peter A. Brooksbank, Joshua Maglione, James B. Wilson.
+    Distributed under GNU GPLv3.
+*/
+
+
 import "Pfaffian.m" : __Pfaffian_AUT;
 import "Util.m" : __FindPermutation, __PermutationDegreeMatrix, __GetStarAlg, __WhichMethod;
 import "Flat.m" : __TransformFIPair, __LiftFlatGenus2;

@@ -1,3 +1,9 @@
-__VERSION := "0.1";
+/* 
+    Copyright 2015--2017, Peter A. Brooksbank, Joshua Maglione, James B. Wilson.
+    Distributed under GNU GPLv3.
+*/
+
+
+__VERSION := "1.0";
 
 declare verbose TameGenus, 1;
