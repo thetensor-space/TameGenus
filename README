@@ -43,7 +43,7 @@ authors.
   
     Attach the spec file during a Magma run and the intrinsics will be available
   to use.  To attach the spec file run the following, where <location> is the 
-  directory containing the eMAGma directory,
+  directory containing the TameGenus directory,
 
     > AttachSpec("<location>/TameGenus/TameGenus.spec");
 
