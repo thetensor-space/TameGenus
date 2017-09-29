@@ -124,3 +124,18 @@ The first entry is the sequence of flat dimensions, and the second entry is the 
   require Dimension(B`Codomain) eq 2 : "Not a genus 2 tensor.";
   return __GetGenus2Signature( B );
 end intrinsic;
+
+intrinsic Genus2Signature( S::[Mtrx] : Cent := false ) -> List
+{Returns the canonical genus 2 signature.
+The first entry is the sequence of flat dimensions, and the second entry is the list of coefficients for the Pfaffians.}
+  B := Tensor(S, 2, 1);
+  require IsAlternating(B) : "Forms must be alternating.";
+  K := BaseRing(B);
+  require Type(K) ne BoolElt : "Forms must be defined over the same field.";
+  require ISA(Type(K),FldFin) : "Field must be finite.";
+  if Cent then
+    B := TensorOverCentroid( B );
+  end if;
+  require Dimension(B`Codomain) eq 2 : "Not a genus 2 tensor.";
+  return __GetGenus2Signature( B );
+end intrinsic;

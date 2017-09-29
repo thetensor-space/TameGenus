@@ -58,7 +58,7 @@ __FormsToGroup := function( Forms : ExponentP := false )
 end function;
 
 __WriteOverPrimeField := function( Forms )
-  M := Tensor(Forms,2,1);
+  M := Tensor(Forms, 2, 1, TensorCategory([1,1,1], {{0},{1,2}}));
   K := BaseRing(M);
   if IsPrimeField(K) then
     return Forms;
@@ -78,7 +78,7 @@ __WriteOverPrimeField := function( Forms )
   F := function(x)
     return (< x[i] @ maps_D[i] : i in [1..#x] > @ M) @ map_C;
   end function;
-  N := Tensor( D_new, C_new, F );
+  N := Tensor(D_new, C_new, F, TensorCategory([1,1,1], {{0},{1,2}}));
 //  assert forall{ b : b in CartesianProduct( < [ c*K.1^i : i in [0..e-1], c in Basis(D) ] : D in D_old > ) | 
 //    (b @ M) @ map_C eq < b[i] @@ maps_D[i] : i in [1..#b] > @ N };
   sys := SystemOfForms(N);
@@ -181,6 +181,6 @@ intrinsic Genus2Group( f::RngUPolElt ) -> GrpPC
   C := CompanionMatrix(f);
   I := IdentityMatrix(K, Nrows(C));
   Forms := __WriteOverPrimeField([ __Scharlau(I), __Scharlau(C) ]);
-  T := Tensor(Forms, 2, 1);
-  return HeisenbergGroupPC(T);
+  t := Tensor(Forms, 2, 1, TensorCategory([1,1,1], {{0},{1,2}}));
+  return HeisenbergGroupPC(t);
 end intrinsic;
