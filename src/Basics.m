@@ -42,7 +42,7 @@ __GetGenus2Signature := function( B )
   bForms := [ P*T*F*Transpose(P*T) : F in SystemOfForms(B) ];
   start := &+(flats cat [0]) + 1;
   R := PolynomialRing( k, 2 );
-  polys := [];
+  polys := [R!1];
   for d in sloped do
     X := ExtractBlock( bForms[1], start, start + d div 2, d div 2, d div 2);
     Y := ExtractBlock( bForms[2], start, start + d div 2, d div 2, d div 2);
