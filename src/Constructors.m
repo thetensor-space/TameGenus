@@ -85,6 +85,29 @@ __WriteOverPrimeField := function( Forms )
   return sys;
 end function;
 
+// Takes a homogeneous multivariate polynomial in 2 vars and returns a system of forms.
+__PolynomialToForms := function(f)
+  R := Parent(f);
+  K := BaseRing(R);
+  n := 1;
+  while f/(R.2^n) in R do
+    n +:= 1;
+  end while;
+  g := f/(R.2^(n-1));
+  h := Evaluate(g, [R.1, -1]);
+  _, h := IsUnivariate(R!h);
+  coeffs := Coefficients(h);
+  C := CompanionMatrix((coeffs[#coeffs]^-1)*h);
+  I := IdentityMatrix(K, Nrows(C));
+  if n gt 1 then
+    C := DiagonalJoin(C, IdentityMatrix(K, n-1));
+    _, r := IsUnivariate(R.2^(n-1));
+    I := DiagonalJoin(I, CompanionMatrix(r));
+  end if;
+  Forms := __WriteOverPrimeField([ __Scharlau(I), __Scharlau(C) ]);
+  return Forms;
+end function;
+
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //                                  Intrinsics
@@ -169,18 +192,12 @@ intrinsic Genus2Group( f::RngMPolElt ) -> GrpPC
   require IsHomogeneous(f) : "Polynomial must be homogeneous";
   R := Parent(f);
   require ISA(Type(BaseRing(R)),FldFin) : "Coefficients must come from a finite field.";
-  phi := hom< R -> R | R.1, -1 >;
-  _,g := IsUnivariate(f@phi);
-  return Genus2Group(g);
+  C := TensorCategory([1,1,1], {{0}, {1,2}});
+  t := Tensor(__PolynomialToForms(f), 2, 1, C);
+  return HeisenbergGroupPC(t);
 end intrinsic;
 
 intrinsic Genus2Group( f::RngUPolElt ) -> GrpPC
 {Returns a genus 2 group whose Pfaffian is equivalent to f.}
-  K := BaseRing(f);
-  require ISA(Type(K),FldFin) : "Coefficients must come from a finite field.";  
-  C := CompanionMatrix(f);
-  I := IdentityMatrix(K, Nrows(C));
-  Forms := __WriteOverPrimeField([ __Scharlau(I), __Scharlau(C) ]);
-  t := Tensor(Forms, 2, 1, TensorCategory([1,1,1], {{0},{1,2}}));
-  return HeisenbergGroupPC(t);
+  return Genus2Group(__Homogenization(f));
 end intrinsic;

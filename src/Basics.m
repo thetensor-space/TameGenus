@@ -72,7 +72,7 @@ __GetGenus2Signature := function( B )
   end for;
   canonical_poly := Sort(orbits)[1]; // internal Magma ordering on K[x,y].
   factored_poly := Factorization(canonical_poly);
-  can_polys := [ f[1] : f in factored_poly ]; 
+  can_polys := &cat[ [f[1] : i in [1..f[2]]] : f in factored_poly ]; 
 
   // Polynomials are annoying to compare... Here's the (possibly temporary) fix.
   terms := [* [ 0 : i in [0..Degree(f)] ] : f in can_polys *];
