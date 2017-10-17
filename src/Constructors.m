@@ -94,11 +94,16 @@ __PolynomialToForms := function(f)
     n +:= 1;
   end while;
   g := f/(R.2^(n-1));
-  h := Evaluate(g, [R.1, -1]);
-  _, h := IsUnivariate(R!h);
-  coeffs := Coefficients(h);
-  C := CompanionMatrix((coeffs[#coeffs]^-1)*h);
-  I := IdentityMatrix(K, Nrows(C));
+  if g eq R!1 then
+    C := IdentityMatrix(K, 0);
+    I := IdentityMatrix(K, 0);
+  else
+    h := Evaluate(g, [R.1, 1]);
+    _, h := IsUnivariate(R!h);
+    coeffs := Coefficients(h);
+    C := CompanionMatrix((coeffs[#coeffs]^-1)*h);
+    I := IdentityMatrix(K, Nrows(C));
+  end if;
   if n gt 1 then
     C := DiagonalJoin(C, IdentityMatrix(K, n-1));
     _, r := IsUnivariate(R.2^(n-1));
