@@ -10,21 +10,21 @@
 
 \title{Tame Genus Package}
 
+\author{Joshua Maglione}
+\address{Colorado State University}
+\email{jmaglion@math.kent.edu}
+
 \author{Peter A. Brooksbank}
 \address{Bucknell University}
 \email{pbrooksb@bucknell.edu}
-
-\author{Joshua Maglione}
-\address{Colorado State University}
-\email{josh.maglione@gmail.com}
 
 \author{James B. Wilson}
 \address{Colorado State University}
 \email{James.Wilson@ColoState.Edu}
 
 \date{\today}
-\version{0.1}
-\copyrightyear{2015}
+\version{1.0}
+\copyrightyear{2015--2017}
 
 % ------------------------------------------------------------------------------
 
@@ -43,6 +43,28 @@ The goal of this package is to provide {\sc Magma} \cite{Magma} with high perfor
 When appropriate, all intrinsics dealing with groups also work for tensors ({\tt TenSpcElt}). 
 This package includes intrinsics for automorphism and isomorphism computations, canonical labeling, and constructing random groups of genus 1 or 2 of exponent  $\leq p^2$. 
 Mathematical details of these algorithms can be found in \cite{BMW}.
+
+Users will need to attach the latest versions of \texttt{eMAGma} \cite{eMAGma} and \texttt{StarAlge} \cite{StarAlge} to use all the features of this package. 
+
+\subsection*{Citing TameGenus} 
+To cite the Tame Genus package, please use the following\\
+\\
+Joshua Maglione, Peter A. Brooksbank, and James B. Wilson, \emph{Tame Genus}, version 1.0, GitHub, 2017. \url{https://github.com/algeboy/TameGenus}. \\
+\\
+For AMSRefs:
+\begin{verbatim}
+\bib{eMAGma}{misc}{
+   author={Maglione, Joshua},
+   author={Brooksbank, Peter A.},
+   author={Wilson, James B.},
+   title={Tame Genus},
+   publisher={GitHub},
+   year={2017},
+   edition={version 1.0},
+   note={\texttt{https://github.com/algeboy/TameGenus}},
+}
+\end{verbatim}
+
 
 \section{Verbose Printing and Version}
 
@@ -328,12 +350,25 @@ We list some examples to illustrate the functionality of these intrinsics.
    review={\MR{3591162}},
 }
 
-\bib{LMG}{unpublished}{
-   author={Holt, Derek F.}
-   author={O'Brien, E. A.}
-   author={MORE???}
+\bib{StarAlge}{misc}{
+   author={Brooksbank, Peter A.},
+   author={Wilson, James B.},
+   title={Star Algebra},
+   publisher={GitHub},
+   year={2017},
+%   edition={version 1.2.3},
+   note={\url{https://github.com/algeboy/StarAlge}},
+}
+
+\bib{LMG}{misc}{
+   author={B\"{a}\"{a}rnhielm, Henrik},
+   author={Holt, Derek F.},
+   author={Leedham-Green, C. R.}
+   author={O'Brien, E. A.},
    title={The Large Matrix Group Package},
-   status={\url{http://magma.maths.usyd.edu.au/magma/handbook/text/680}},
+   publisher={\textsc{Magma}},
+   year={2017},
+   note={\url{http://magma.maths.usyd.edu.au/magma/handbook/text/680}},
 }
 
 \bib{LGM:book}{book}{
@@ -351,11 +386,14 @@ We list some examples to illustrate the functionality of these intrinsics.
 }
 
 \bib{eMAGma}{misc}{
-   author={Maglione, Joshua}
-   author={Wilson, James B.}
+   author={Maglione, Joshua},
+   author={Wilson, James B.},
    title={Experimental Multilinear Algebra Group},
-   status={version 1.2.2, GitHub, 2017},
-   note={\url{https://github.com/algeboy/eMAGma}},
+   publisher={GitHub},
+   year={2017},
+   edition={version 1.2.3},
+   note={Contributions from Peter A. Brooksbank,
+    \url{https://github.com/algeboy/eMAGma}},
 }
 
 \end{biblist}

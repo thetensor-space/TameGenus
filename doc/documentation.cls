@@ -6,8 +6,15 @@
 
 % Packages required
 \RequirePackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=blue,      
+    urlcolor=blue,
+    citecolor=blue,
+}
 \RequirePackage[shortalphabetic]{amsrefs}
-\RequirePackage[margin=1in]{geometry}
+\RequirePackage[margin=0.75in]{geometry}
 \RequirePackage{amsmath}
 \RequirePackage{amsthm}
 \RequirePackage{amssymb}
@@ -18,6 +25,13 @@
 \RequirePackage{verbatim}
 
 \makeindex
+\numberwithin{section}{chapter}
+\numberwithin{subsection}{section}
+%\numberwithin{subsubsection}{subsection}
+
+% Show subsections in TOC
+\setcounter{tocdepth}{2}
+\def\l@subsection{\@tocline{2}{0pt}{2pc}{5pc}{}} % redefined so subsections indent further
 
 % Version number of the package
 \newcommand{\version}[1]{\def \@versionnumber{#1}}
@@ -26,7 +40,7 @@
 % Defines `intrinsics' environment---similar to verbatim
 \newenvironment{intrinsics}%
   {
-    \endgraf\color{black!20!blue}
+    \endgraf\color{black!20!blue}\small
     \endgraf\verbatim
   }
   {
@@ -44,6 +58,7 @@
   }
   {
     \end{framed}
+    \bigskip
   }
 \numberwithin{examplecounter}{chapter}
 
@@ -102,7 +117,7 @@
 %      \@ifnotempty{##1}{, \ignorespaces##1\unskip}\/:\space
 %      ##2\par}\endgroup}%
   \def\email##1##2{\begingroup
-    \@ifnotempty{##2}{\nobreak\indent %\emailaddrname
+    \@ifnotempty{##2}{\nobreak%\indent %\emailaddrname
       \@ifnotempty{##1}{, \ignorespaces##1\unskip} %\/:\space
       \ttfamily##2\par}\vspace{50pt}\endgroup}% Added spacing
 %  \def\urladdr##1##2{\begingroup
@@ -178,7 +193,7 @@
   \null\vfil
   \begingroup
     \centering 
-    \copyright \@copyrightyear\; \authors \par
+    Copyright \@copyrightyear\; \authors \par
   \endgroup
   \endgroup}
 
