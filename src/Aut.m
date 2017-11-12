@@ -35,7 +35,7 @@ __TameGenusAutomorphism := function( G : Cent := true, Method := 0, Order := fal
   d := Dimension(V);
   genus := Dimension(W);
 
-  vprintf SmallGenus, 1 : "Putting everything together... ";
+  vprintf TameGenus, 1 : "Putting everything together... ";
   tt := Cputime();
 
   /* Step 6: Construct generators for Aut(G) */
@@ -70,23 +70,23 @@ __TameGenusAutomorphism := function( G : Cent := true, Method := 0, Order := fal
 
   
   //Sanity check
-//  for im in AutGens do
-//    beta := hom< G -> G | [<G.i,im[i]> : i in [1..Ngens(G)]] >;
-//  end for;
+  for im in AutGens do
+    beta := hom< G -> G | [<G.i,im[i]> : i in [1..Ngens(G)]] >;
+  end for;
 
   aut := AutomorphismGroup( G, dom, AutGens );
   aut`MatrixGroup := AutMat;
 
   timing := Cputime(tt);
-  vprintf SmallGenus, 1 : "%o seconds.\n", timing;
+  vprintf TameGenus, 1 : "%o seconds.\n", timing;
 
   /* Optional */
   if Order then
-    vprintf SmallGenus, 1 : "Computing the order...";
+    vprintf TameGenus, 1 : "Computing the order...";
     tt := Cputime();
     aut`Order := LMGOrder( AutMat );
     timing := Cputime(tt);
-    vprintf SmallGenus, 1 : " %o seconds.\n", timing;
+    vprintf TameGenus, 1 : " %o seconds.\n", timing;
   end if;
 
 	return aut;

@@ -217,7 +217,7 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
     IN, OUT := __G2_PIsometry( T : Method := Method );
   end if;
 
-  vprint TameGenus, 1 : "Putting everything together... ";
+  vprintf TameGenus, 1 : "Putting everything together... ";
   tt := Cputime();
 
   // check if non-trivial centroid.
@@ -256,7 +256,7 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
   PIsom := sub< GL( Ncols(Forms[1])+#Forms, k ) | [ DiagonalJoin( pseudo_in[i], pseudo_out[i] ) : i in [1..#pseudo_in] ] >;
   PIsom`DerivedFrom := < B, [2,3] >;
   timing := Cputime(tt);
-  vprint TameGenus, 1 : "%o seconds.\n", timing;
+  vprintf TameGenus, 1 : "%o seconds.\n", timing;
 
   return PIsom;
 end intrinsic;

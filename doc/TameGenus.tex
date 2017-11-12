@@ -45,6 +45,7 @@ This package includes intrinsics for automorphism and isomorphism computations, 
 Mathematical details of these algorithms can be found in \cite{BMW}.
 
 Users will need to attach the latest versions of \texttt{eMAGma} \cite{eMAGma} and \texttt{StarAlge} \cite{StarAlge} to use all the features of this package. 
+The URLs are found in the bibliography. 
 
 \subsection*{Citing TameGenus} 
 To cite the Tame Genus package, please use the following\\
@@ -77,6 +78,23 @@ SetVerbose(MonStgElt, RngIntElt) : ->
 \end{intrinsics}
 
 {\tt SetVerbose} is a built in Magma function, but with this package, this intrinsic accepts the string {\tt "TameGenus"} and an integer in $\{0,1\}$. 
+
+\begin{example}[VerbosePrinting]
+  We demonstrate the verbose printing by constructing a random genus 2 group of order $3^{22}$.
+
+\begin{code}
+> G := RandomGenus2Group(3, [4, 6, 10]);
+> #G eq 3^22;
+true
+> Genus(G);
+2
+\end{code}
+
+With the verbose printing, we can see how long each part of the algorithm takes and the information it obtains about the input.
+\begin{code}
+
+\end{code}
+\end{example}
 
 We have included an intrinsic to check which version of TameGenus you have attached in Magma.
 
