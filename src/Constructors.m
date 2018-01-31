@@ -124,6 +124,7 @@ intrinsic TGRandomGroup( q::RngIntElt, n::RngIntElt, g::RngIntElt : Exponentp :=
   require IsPrimePower(q) : "Argument 1 must be prime power.";
   require n gt 0 : "Argument 2 must be positive.";
   require g gt 0 : "Argument 3 must be positive.";
+  require Type(Exponentp) eq BoolElt : "Exponentp must be true or false.";
 
   Forms := __WriteOverPrimeField( [ M - Transpose(M) : M in [RandomMatrix(GF(q),n,n) : i in [1..g]] ] );
   return __FormsToGroup( Forms : ExponentP := Exponentp );
@@ -133,6 +134,8 @@ intrinsic RandomGenus2Group( q::RngIntElt, d::[RngIntElt] : Exponentp := true ) 
 {Returns a random genus 2 p-group with prescribed block structure given by the sequence d, where q is a power of p.}
   require q ge 2 : "Argument 1 must be greater than 1.";
   require IsPrimePower(q) : "Argument 1 must be prime power.";
+  require Type(Exponentp) eq BoolElt : "Exponentp must be true or false.";
+
   K := GF(q);
   b1 := <>;
   b2 := <>;
@@ -182,6 +185,7 @@ intrinsic RandomGenus1Group( q::RngIntElt, d::RngIntElt, r::RngIntElt : Exponent
   require IsPrimePower(q) : "Argument 1 must be prime power.";
   require d ge 1 : "Argument 2 must be positive.";
   require r ge 0 : "Argument 3 must be nonnegative.";
+  require Type(Exponentp) eq BoolElt : "Exponentp must be true or false.";
   
   K := GF(q);
   J := Matrix(K, [[0,1],[-1,0]] );
@@ -194,7 +198,7 @@ end intrinsic;
 
 intrinsic Genus2Group( f::RngMPolElt ) -> GrpPC
 {Returns a genus 2 group whose Pfaffian is equivalent to the homogeneous polynomial f.}
-  require IsHomogeneous(f) : "Polynomial must be homogeneous";
+  require IsHomogeneous(f) : "Polynomial must be homogeneous.";
   R := Parent(f);
   require ISA(Type(BaseRing(R)),FldFin) : "Coefficients must come from a finite field.";
   C := TensorCategory([1,1,1], {{0}, {1,2}});
@@ -205,4 +209,22 @@ end intrinsic;
 intrinsic Genus2Group( f::RngUPolElt ) -> GrpPC
 {Returns a genus 2 group whose Pfaffian is equivalent to f.}
   return Genus2Group(__Homogenization(f));
+end intrinsic;
+
+intrinsic Genus2Group( P::[RngMPolElt] ) -> GrpPC
+{Returns a central product of genus 2 groups where each group corresponds to a Pfaffian in the sequence.}
+  require forall{f : f in P | IsHomogeneous(f)} : "Polynomials must be homogeneous.";
+  R := Parent(P[1]);
+  require ISA(Type(BaseRing(R)),FldFin) : "Coefficients must come from a finite field.";
+  C := TensorCategory([1,1,1], {{0}, {1,2}});
+  Blocks := [*__PolynomialToForms(f) : f in P*];
+  Forms := [DiagonalJoin(<Blocks[i][j] : i in [1..#Blocks]>) : j in [1..#Blocks[1]]];
+  t := Tensor(Forms, 2, 1, C);  
+  return HeisenbergGroupPC(t);
+end intrinsic;
+
+intrinsic Genus2Group( P::[RngUPolElt] ) -> GrpPC
+{Returns a central product of genus 2 groups where each group corresponds to a Pfaffian in the sequence.}
+  R := Parent(__Homogenization(P[1]));
+  return Genus2Group([R!__Homogenization(f) : f in P]);
 end intrinsic;

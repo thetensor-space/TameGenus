@@ -6,49 +6,27 @@
 
 import "Util.m" : __FindPermutation, __PermutationDegreeMatrix, __GL2ActionOnPolynomial;
 
-intrinsic Genus( G::GrpPC ) -> RngIntElt
-{Computes the genus of G.}
-  require pClass(G) le 2 : "G is not p-class 2.";
-  if IsAbelian(G) then
-    return 0;
+__GetGenus2Signature := function( t )
+  k := BaseRing(t);
+  if not IsNondegenerate(t) then
+    t := NondegenerateTensor(t);
   end if;
-  B := pCentralTensor(G,1,1);
-  overC := TensorOverCentroid( B );
-	return Dimension(overC`Codomain);
-end intrinsic;
-
-intrinsic Genus( T::TenSpcElt ) -> RngIntElt
-{Computes the genus of T.}
-  try 
-    _ := Eltseq(T);
-  catch err
-    error "Cannot compute structure constants.";
-  end try;
-  overC := TensorOverCentroid( T );
-	return Dimension(overC`Codomain);
-end intrinsic;
-
-__GetGenus2Signature := function( B )
-  k := BaseRing(B);
-  if not IsNondegenerate(B) then
-    B := NondegenerateTensor(B);
-  end if;
-  A := AdjointAlgebra( B );
-  T,dims := PerpDecomposition( SystemOfForms(B) : Adjoint := A );
-  flats := Sort( [ d : d in dims | IsOdd(d) ] );
-  sloped := Sort( [ d : d in dims | IsEven(d) ] );
+  A := AdjointAlgebra(t);
+  T, dims := PerpDecomposition(SystemOfForms(t) : Adjoint := A);
+  flats := Sort([ d : d in dims | IsOdd(d) ]);
+  sloped := Sort([ d : d in dims | IsEven(d) ]);
   sorted_dims := flats cat sloped;
   P := __PermutationDegreeMatrix( k, dims, __FindPermutation( sorted_dims, dims ) );
-  bForms := [ P*T*F*Transpose(P*T) : F in SystemOfForms(B) ];
+  bForms := [ P*T*F*Transpose(P*T) : F in SystemOfForms(t) ];
   start := &+(flats cat [0]) + 1;
   R := PolynomialRing( k, 2 );
-  polys := [R!1];
+  polys := {@@};
   for d in sloped do
     X := ExtractBlock( bForms[1], start, start + d div 2, d div 2, d div 2);
     Y := ExtractBlock( bForms[2], start, start + d div 2, d div 2, d div 2);
     start +:= d;
-    det := Determinant( X*R.1 + Y*R.2 );
-    Append(~polys, Coefficients(det)[1]^-1 * det );
+    det := R!Determinant( X*R.1 + Y*R.2 );
+    Include(~polys, (Coefficients(det)[1])^-1 * det);
   end for;
 
   //Needed for PGL
@@ -64,17 +42,21 @@ __GetGenus2Signature := function( B )
   Perms := Image( act ); // PGL(2,k)
 
   // Get canonical Pfaffian.
-  pfaff := &*polys;
-  orbits := [ pfaff ];
+  pfaff_orbits := {@ polys @};
   for Z in Perms do
     X := cleartop(Z @@ act, k);
-    Include(~orbits, __GL2ActionOnPolynomial( pfaff, X ));
+    polys_new := {@@};
+    for f in polys do
+      Include(~polys_new, __GL2ActionOnPolynomial(f, X));
+    end for;
+    Include(~pfaff_orbits, polys_new);
   end for;
-  canonical_poly := Sort(orbits)[1]; // internal Magma ordering on K[x,y].
-  factored_poly := Factorization(canonical_poly);
-  can_polys := &cat[ [f[1] : i in [1..f[2]]] : f in factored_poly ]; 
+  pfaff_prod := {@ &*(P) : P in pfaff_orbits @};
+  ind := Index(pfaff_prod, Minimum(pfaff_prod)); // internal Magma ordering on K[x,y].
+  can_polys := [f : f in pfaff_orbits[ind]];
 
-  // Polynomials are annoying to compare... Here's the (possibly temporary) fix.
+  // Polynomials are annoying to compare in Magma. 
+  // Here's the (possibly temporary) fix.
   terms := [* [ 0 : i in [0..Degree(f)] ] : f in can_polys *];
   for i in [1..#can_polys] do
     f := can_polys[i];
@@ -96,46 +78,69 @@ end function;
 //                                  Intrinsics
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-intrinsic Genus2Signature( G::GrpPC : Cent := false ) -> List
+intrinsic Genus( G::GrpPC ) -> RngIntElt
+{Computes the genus of p-group G.}
+  require pClass(G) le 2 : "G is not p-class 2.";
+  if IsAbelian(G) then
+    return 0;
+  end if;
+  t := pCentralTensor(G);
+  t := TensorOverCentroid(t);
+	return Dimension(t`Codomain);
+end intrinsic;
+
+intrinsic Genus( t::TenSpcElt ) -> RngIntElt
+{Computes the genus of a tensor t.}
+  try 
+    _ := Eltseq(t);
+  catch err
+    error "Cannot compute structure constants.";
+  end try;
+  t := TensorOverCentroid(t);
+	return Dimension(t`Codomain);
+end intrinsic;
+
+intrinsic Genus2Signature( G::GrpPC : Cent := true ) -> List
 {Returns the canonical genus 2 signature.
 The first entry is the sequence of flat dimensions, and the second entry is the list of coefficients for the Pfaffians.}
+  require Type(Cent) eq BoolElt : "`Cent' must be true or false.";
   require pClass(G) eq 2 : "G is not p-class 2.";
-  B := pCentralTensor( G, 1, 1 );
+  t := pCentralTensor(G);
   if Cent then
-    overC := TensorOverCentroid( B );
-  else
-    overC := B;
+    t := TensorOverCentroid(t);
   end if;
-  require Dimension(overC`Codomain) eq 2 : "Not a genus 2 group.";
-  return __GetGenus2Signature( overC );
+  require Dimension(t`Codomain) eq 2 : "Not a genus 2 group.";
+  return __GetGenus2Signature(t);
 end intrinsic;
 
-intrinsic Genus2Signature( B::TenSpcElt : Cent := false ) -> List
+intrinsic Genus2Signature( t::TenSpcElt : Cent := true ) -> List
 {Returns the canonical genus 2 signature.
 The first entry is the sequence of flat dimensions, and the second entry is the list of coefficients for the Pfaffians.}
-  require forall{ X : X in B`Domain cat [*B`Codomain*] | Type(X) eq ModTupFld } : "Domain and codomain must be vector spaces.";
-  require IsAlternating(B) : "Forms must be alternating.";
-  K := BaseRing(B);
+  require Type(Cent) eq BoolElt : "`Cent' must be true or false.";
+  require forall{ X : X in t`Domain cat [*t`Codomain*] | Type(X) eq ModTupFld } : "Domain and codomain must be vector spaces.";
+  require IsAlternating(t) : "Forms must be alternating.";
+  K := BaseRing(t);
   require Type(K) ne BoolElt : "Forms must be defined over the same field.";
-  require ISA(Type(K),FldFin) : "Field must be finite.";
+  require ISA(Type(K), FldFin) : "Field must be finite.";
   if Cent then
-    B := TensorOverCentroid( B );
+    t := TensorOverCentroid(t);
   end if;
-  require Dimension(B`Codomain) eq 2 : "Not a genus 2 tensor.";
-  return __GetGenus2Signature( B );
+  require Dimension(t`Codomain) eq 2 : "Not a genus 2 tensor.";
+  return __GetGenus2Signature(t);
 end intrinsic;
 
-intrinsic Genus2Signature( S::[Mtrx] : Cent := false ) -> List
+intrinsic Genus2Signature( S::[Mtrx] : Cent := true ) -> List
 {Returns the canonical genus 2 signature.
 The first entry is the sequence of flat dimensions, and the second entry is the list of coefficients for the Pfaffians.}
-  B := Tensor(S, 2, 1);
-  require IsAlternating(B) : "Forms must be alternating.";
-  K := BaseRing(B);
+  require Type(Cent) eq BoolElt : "`Cent' must be true or false.";
+  t := Tensor(S, 2, 1);
+  require IsAlternating(t) : "Forms must be alternating.";
+  K := BaseRing(t);
   require Type(K) ne BoolElt : "Forms must be defined over the same field.";
-  require ISA(Type(K),FldFin) : "Field must be finite.";
+  require ISA(Type(K), FldFin) : "Field must be finite.";
   if Cent then
-    B := TensorOverCentroid( B );
+    t := TensorOverCentroid(t);
   end if;
-  require Dimension(B`Codomain) eq 2 : "Not a genus 2 tensor.";
-  return __GetGenus2Signature( B );
+  require Dimension(t`Codomain) eq 2 : "Not a genus 2 tensor.";
+  return __GetGenus2Signature(t);
 end intrinsic;

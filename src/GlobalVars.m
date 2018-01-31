@@ -4,6 +4,6 @@
 */
 
 
-__VERSION := "1.0";
+__VERSION := "1.1";
 
 declare verbose TameGenus, 1;
