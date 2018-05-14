@@ -1,5 +1,5 @@
 /* 
-    Copyright 2015--2017, Peter A. Brooksbank, Joshua Maglione, James B. Wilson.
+    Copyright 2015--2018, Peter A. Brooksbank, Joshua Maglione, James B. Wilson.
     Distributed under GNU GPLv3.
 */
 
