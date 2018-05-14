@@ -280,6 +280,11 @@ intrinsic TGIsPseudoIsometric( B::TenSpcElt, C::TenSpcElt : Cent := true, Constr
       W := Codomain(Domain(Hmt_T));
       Y1 := Matrix([ ((V.i @ Hmt_T.2)*Y[1])@@Hmt_S.2 : i in [1..Dimension(V)] ])^-1;
       Y2 := Matrix([ ((W.i @ Hmt_T.0)*Y[2])@@Hmt_S.0 : i in [1..Dimension(W)] ])^-1;
+    else
+      V := Domain(B)[1];
+      W := Codomain(B);
+      Y1 := Y[1]^-1;
+      Y2 := Y[2]^-1;
     end if;
     H := Homotopism( B, C, [* Hom(V,V)!Y1, Hom(V,V)!Y1, Hom(W,W)!Y2 *] );
     vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
@@ -310,59 +315,22 @@ intrinsic TGIsIsomorphic( G::GrpPC, H::GrpPC : Cent := true, Constructive := tru
   // compute the system of forms.
   vprintf TameGenus, 1 : "Getting tensor info... ";
   tt := Cputime();
-	t := pCentralTensor(G);
-  s := pCentralTensor(H);
+	t, G_maps := pCentralTensor(G);
+  s, H_maps := pCentralTensor(H);
   _ := Eltseq(t);
   _ := Eltseq(s);
   vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
 
-  return TGIsPseudoIsometric(t, s : Cent := Cent, Constructive := Constructive, Method := Method);
+  isit, Hmt := TGIsPseudoIsometric(t, s : Cent := Cent, Constructive := Constructive, Method := Method);
 
-//  // write the bimaps over their centroids.
-//  if Cent then
-//    vprintf TameGenus, 1 : "Rewriting tensors over their centroid... ";
-//    tt := Cputime();
-//    B, Hmt_B := TensorOverCentroid(B);
-//    C, Hmt_C := TensorOverCentroid(C);
-//    vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
-//  end if;
-
-//  // check obvious things.
-//  if BaseRing(B) ne BaseRing(C) then
-//    vprint TameGenus, 1 : "Base rings are not isormorphic.";
-//    return false,_;
-//  end if;
-//  if Dimension(B`Domain[1]) ne Dimension(C`Domain[1]) or Dimension(B`Codomain) ne Dimension(C`Codomain) then
-//    vprint TameGenus, 1 : "Domains or codomains not isormorphic.";
-//    return false,_;
-//  end if;
-
-//  require Dimension(B`Codomain) le 2 : "Groups have genus greater than 2.";
-
-//  // if Cent is not prime field, do adj-ten method.
-//  if not IsPrimeField(BaseRing(B)) then
-//    Method := 1; 
-//    vprintf TameGenus, 1 : "Centroid is not a prime field, applying adjoint-tensor method.\n";
-//  end if;
-
-//  isit, X := __IsPseudoSG( B, C : Constructive := Constructive, Method := Method );
-
-//  if Constructive and isit then
-//    vprintf TameGenus, 1 : "Putting everything together... ";
-//    tt := Cputime();
-//    Y := [* ExtractBlock(X,1,1,Dimension(B`Domain[1]),Dimension(B`Domain[1])), 
-//      ExtractBlock(X,1+Dimension(B`Domain[1]),1+Dimension(B`Domain[1]),Dimension(B`Codomain),Dimension(B`Codomain)) *];
-//    assert [ Y[1] * F * Transpose(Y[1]) : F in SystemOfForms(B) ] eq [ &+[ Y[2][j][i]*SystemOfForms(C)[j] : j in [1..2] ] : i in [1..2] ];
-
-//    // if the centroid is an extension of the prime field convert back to prime field
-//    if Cent and not IsPrimeField(BaseRing(Y[1])) then
-//      V := Domain(Domain(Hmt_B))[1];
-//      Y1 := Matrix([ ((V.i @ Hmt_B.2)*Y[1])@@Hmt_C.2 : i in [1..Dimension(V)] ])^-1;
-//    end if;
-//    phi := hom< G -> H | [ <G.i,&*[H.j^(Integers()!Y1[i][j]) : j in [1..Ngens(G)]]> : i in [1..Ngens(G)] ] >; // eventually set Check:=false
-//    vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
-//    return true, phi;
-//  end if;
-
-//  return isit,_;
+  if Constructive then
+    if isit then
+      phi := [<G.i, ((G.i @ G_maps[1])*(Hmt`Maps[1])) @@ H_maps[1]> : i in [1..Nrows(Hmt`Maps[1])]];
+      return true, hom< G -> H | phi >;
+    else
+      return false, _;
+    end if;
+  else
+    return isit, _;
+  end if;  
 end intrinsic;
