@@ -1,9 +1,10 @@
 /* 
-    Copyright 2015--2018, Peter A. Brooksbank, Joshua Maglione, James B. Wilson.
+    Copyright 2015--2019, Peter A. Brooksbank, Joshua Maglione, James B. Wilson.
     Distributed under GNU GPLv3.
 */
 
 
+import "GlobalVars.m" : __SANITY_CHECK;
 import "Util.m" : __GL2ActionOnPolynomial, __PermutationDegreeMatrix, __FindPermutation, __GetStarAlg, __WhichMethod, __WriteMatrixOverPrimeField;
 import "Pfaffian.m" : __Pfaffian_ISO;
 import "sloped.m" : IsPseudoIsometricAdjointTensor;
@@ -119,7 +120,10 @@ __IsPseudoSG := function( B, C : Constructive := false, Method := 0, Print := fa
       X := < M2^-1 * S2^-1 * T * S1 * M1, IdentityMatrix(k,1) >;
 
       // Sanity check
-      //assert [ X[1] * F * Transpose(X[1]) : F in SystemOfForms(B) ] eq SystemOfForms(B);
+      if __SANITY_CHECK then
+        assert [ X[1] * F * Transpose(X[1]) : F in SystemOfForms(B) ] eq SystemOfForms(B);
+      end if;
+
       return true, DiagonalJoin(X); 
     else
       return true,_;
@@ -205,7 +209,10 @@ __IsPseudoSG := function( B, C : Constructive := false, Method := 0, Print := fa
   X[1] := M2^-1 * DiagonalJoin( T2^-1 * P2^-1 * X[1] * P1 * T1, IdentityMatrix(k, Dimension(R1) ) ) * M1;
 
   // sanity check
-  assert [ X[1] * F * Transpose(X[1]) : F in SystemOfForms(B) ] eq [ &+[ X[2][j][i]*SystemOfForms(C)[j] : j in [1..2] ] : i in [1..2] ];
+  if __SANITY_CHECK then
+    assert [ X[1] * F * Transpose(X[1]) : F in SystemOfForms(B) ] eq [ &+[ X[2][j][i]*SystemOfForms(C)[j] : j in [1..2] ] : i in [1..2] ];
+  end if;
+
   return true, DiagonalJoin(X[1],X[2]);
 end function;
 

@@ -1,9 +1,10 @@
 /* 
-    Copyright 2015--2017, Peter A. Brooksbank, Joshua Maglione, James B. Wilson.
+    Copyright 2015--2019, Peter A. Brooksbank, Joshua Maglione, James B. Wilson.
     Distributed under GNU GPLv3.
 */
 
 
+import "GlobalVars.m" : __SANITY_CHECK;
 import "Pfaffian.m" : __Pfaffian_AUT;
 import "Util.m" : __FindPermutation, __PermutationDegreeMatrix, __GetStarAlg, __WhichMethod;
 import "Flat.m" : __TransformFIPair, __LiftFlatGenus2;
@@ -15,14 +16,16 @@ __G1_PIsometry := function( B : Print := false )
   Form := SystemOfForms(B);
   vprintf TameGenus, 1 : "Computing the isometry group... ";
   tt := Cputime();
-  Isom := IsometryGroup( Form );
+  Isom := IsometryGroup( Form : DisplayStructure := false );
   timing := Cputime(tt);
   vprintf TameGenus, 1 : "%o seconds.\n", timing;
 
   // Sanity check
-  for X in Generators(Isom) do
-    _ := Homotopism(B, B, [* X, X, IdentityMatrix(k, 1) *]);
-  end for;
+  if __SANITY_CHECK then
+    for X in Generators(Isom) do
+      _ := Homotopism(B, B, [* X, X, IdentityMatrix(k, 1) *]);
+    end for;
+  end if;
 
   prim := PrimitiveElement(k);
   gens := [ DiagonalJoin( X, IdentityMatrix( k, 1 ) ) : X in Generators(Isom) ]; 
@@ -30,7 +33,7 @@ __G1_PIsometry := function( B : Print := false )
 
   pseudo_in := [ ExtractBlock(X, 1, 1, Nrows(Form[1]), Nrows(Form[1])) : X in gens ];
   pseudo_out := [ ExtractBlock(X, 1+Nrows(Form[1]), 1+Nrows(Form[1]), 1, 1) : X in gens ];
-  return pseudo_in, pseudo_out;
+  return pseudo_in, pseudo_out, Isom`Order * (#k - 1);
 end function;
 
 
@@ -99,11 +102,13 @@ __G2_PIsometry := function( B : Method := 0 )
       tt := Cputime();
       inner_s, outer := __Pfaffian_AUT( sB, slopeddims );
     end if;
+    pseudo_order := #outer*(#k-1);
     timing := Cputime(tt);
     vprintf TameGenus, 1 : " %o seconds.\n", timing;
   else
     inner_s := [ IdentityMatrix( k, 0 ) : i in [1..2] ];
     outer := [ x : x in Generators( GL(2, k) ) ];
+    pseudo_order := #GL(2, k);
   end if;
 
 	/* Step 4: Lift the flat blocks */
@@ -130,11 +135,14 @@ __G2_PIsometry := function( B : Method := 0 )
     inner_f := [ IdentityMatrix( k, 0 ) : i in [1..#outer] ];
   end if;
   inner := [ ( P * T )^-1 * DiagonalJoin( inner_f[i], inner_s[i] ) * P * T : i in [1..#outer] ];
-  // Sanity check
-  for i in [1..#inner] do
-    Forms := SystemOfForms(B);
-    assert [ inner[i] * Forms[j] * Transpose( inner[i] ) : j in [1..2] ] eq [ &+[ outer[i][y][x]*Forms[y] : y in [1..2] ] : x in [1..2] ];
-  end for;
+
+  // Sanity check 
+  if __SANITY_CHECK then
+    for i in [1..#inner] do
+      Forms := SystemOfForms(B);
+      assert [ inner[i] * Forms[j] * Transpose( inner[i] ) : j in [1..2] ] eq [ &+[ outer[i][y][x]*Forms[y] : y in [1..2] ] : x in [1..2] ];
+    end for; 
+  end if;
 	
 	/* Step 5: Construct generators for isometry group */
   tt := Cputime();
@@ -142,24 +150,28 @@ __G2_PIsometry := function( B : Method := 0 )
   isom := IsometryGroup( SystemOfForms(B) : DisplayStructure := false, Adjoint := A );
   timing := Cputime(tt);
   vprintf TameGenus, 1 : " %o seconds.\n", timing;
+  isom_order := #isom; // Isometry group already stores this.
   // Sanity
   for i in [1..Ngens(isom)] do
     Forms := SystemOfForms(B);
     assert [ isom.i * Forms[j] * Transpose( isom.i ) : j in [1..2] ] eq Forms;
-  end for;
+  end for; 
 
   /* Step 6: Combine everything from steps 3 - 5. */
   pseudo_in := inner cat [ x : x in Generators(isom) ];
   pseudo_out := outer cat [ IdentityMatrix( k, 2 ) : i in [1..Ngens(isom)] ];
+   
 
   // Sanity check
-  for i in [1..#pseudo_in] do
-    Forms := SystemOfForms(B);
-    assert [ pseudo_in[i] * Forms[j] * Transpose( pseudo_in[i] ) : j in [1..2] ] eq 
-        [ &+[ pseudo_out[i][y][x]*Forms[y] : y in [1..2] ] : x in [1..2] ];
-  end for;
+  if __SANITY_CHECK then
+    for i in [1..#pseudo_in] do
+      Forms := SystemOfForms(B);
+      assert [ pseudo_in[i] * Forms[j] * Transpose( pseudo_in[i] ) : j in [1..2] ] eq 
+          [ &+[ pseudo_out[i][y][x]*Forms[y] : y in [1..2] ] : x in [1..2] ];
+    end for;
+  end if;
 
-  return pseudo_in, pseudo_out;
+  return pseudo_in, pseudo_out, isom_order*pseudo_order;
 end function;
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -207,14 +219,14 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
 
   // if genus 1, do a simpler algorithm.
   if Dimension(T`Codomain) eq 1 then
-    IN, OUT := __G1_PIsometry(T);
+    IN, OUT, ORD := __G1_PIsometry(T);
   else
     // if Cent is not prime field, do adj-ten method.
     if not IsPrimeField(BaseRing(T)) then
       Method := 1; 
       vprintf TameGenus, 1 : "Centroid is not a prime field, applying adjoint-tensor method.\n";
     end if;
-    IN, OUT := __G2_PIsometry( T : Method := Method );
+    IN, OUT, ORD := __G2_PIsometry( T : Method := Method );
   end if;
 
   vprintf TameGenus, 1 : "Putting everything together... ";
@@ -249,12 +261,15 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
   end if;
 
   // Sanity check
-  for i in [1..#pseudo_in] do
-    _ := Homotopism(B, B, [* pseudo_in[i], pseudo_in[i], pseudo_out[i] *]);
-  end for;
+  if __SANITY_CHECK then
+    for i in [1..#pseudo_in] do
+      _ := Homotopism(B, B, [* pseudo_in[i], pseudo_in[i], pseudo_out[i] *]);
+    end for;
+  end if;
 
   PIsom := sub< GL( Ncols(Forms[1])+#Forms, k ) | [ DiagonalJoin( pseudo_in[i], pseudo_out[i] ) : i in [1..#pseudo_in] ] >;
   PIsom`DerivedFrom := < B, [2,3] >;
+  PIsom`Order := ORD;
   timing := Cputime(tt);
   vprintf TameGenus, 1 : "%o seconds.\n", timing;
 

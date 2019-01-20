@@ -1,19 +1,8 @@
 /* 
-    Copyright 2015--2017, Peter A. Brooksbank, Joshua Maglione, James B. Wilson.
+    Copyright 2015--2019, Peter A. Brooksbank, Joshua Maglione, James B. Wilson.
     Distributed under GNU GPLv3.
 */
 
-
-// Not used anymore
-__MatrixToAutomorphism := function( G, k, V, f, W, g, M )
-  im := [];
-  for i in [1..Dimension(V)] do
-    vec := Eltseq( M[i] );
-    image := ((V!vec[1..Dimension(V)]) @@ f) * ((W!vec[Dimension(V)+1..Dimension(V)+Dimension(W)]) @@ g);
-    Append(~im, image);
-  end for;
-  return im;
-end function;
 
 
 /*
@@ -58,6 +47,10 @@ __TameGenusAutomorphism := function( G : Cent := true, Method := 0 )
   M := DiagonalJoin(M_f, M_g);
   pseudo := [M*X*M^-1 : X in Generators(PIsom)];
   AutMat := sub< GL(d+e, k) | pseudo, central >;
+
+  if assigned PIsom`Order then
+    AutMat`Order := PIsom`Order * (#k)^(d*e);
+  end if;
 
   timing := Cputime(tt);
   vprintf TameGenus, 1 : "\t%o seconds.\n", timing;
