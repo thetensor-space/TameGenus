@@ -23,16 +23,14 @@ __G1_PIsometry := function( B : Print := false )
   // Sanity check
   if __SANITY_CHECK then
     for X in Generators(Isom) do
-      _ := Homotopism(B, B, [* X, X, IdentityMatrix(k, 1) *]);
+      _ := IsHomotopism(B, B, [* X, X, IdentityMatrix(k, 1) *]);
     end for;
   end if;
 
   prim := PrimitiveElement(k);
-  gens := [ DiagonalJoin( X, IdentityMatrix( k, 1 ) ) : X in Generators(Isom) ]; 
-  gens cat:= [ DiagonalJoin( prim * IdentityMatrix( k, Nrows(Form[1]) ), prim^2*IdentityMatrix( k, 1 ) ) ];
+  pseudo_in := [X : X in Generators(Isom)] cat [prim*IdentityMatrix(k, Nrows(Form[1]))];
+  pseudo_out := [IdentityMatrix(k, 1) : i in [1..Ngens(Isom)]] cat [DiagonalMatrix(k, [prim^2])];
 
-  pseudo_in := [ ExtractBlock(X, 1, 1, Nrows(Form[1]), Nrows(Form[1])) : X in gens ];
-  pseudo_out := [ ExtractBlock(X, 1+Nrows(Form[1]), 1+Nrows(Form[1]), 1, 1) : X in gens ];
   return pseudo_in, pseudo_out, Isom`Order * (#k - 1);
 end function;
 
@@ -255,6 +253,7 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
     pseudo_in := [ DiagonalJoin( X, IdentityMatrix( k, Dimension(Rad) ) ) : X in IN ] cat Radgens cat Radcentrals;
     pseudo_in := [ RadPerm^-1 * pseudo_in[i] * RadPerm : i in [1..#pseudo_in] ];
     pseudo_out := OUT cat [ IdentityMatrix( k, #Forms ) : i in [1..#Radgens+#Radcentrals] ];
+    ORD *:= #GL(Dimension(Rad), k) * (#k)^(Dimension(C)*Dimension(Rad));
   else
     pseudo_in := IN;
     pseudo_out := OUT;
@@ -263,12 +262,12 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
   // Sanity check
   if __SANITY_CHECK then
     for i in [1..#pseudo_in] do
-      _ := Homotopism(B, B, [* pseudo_in[i], pseudo_in[i], pseudo_out[i] *]);
+      _ := IsHomotopism(B, B, [* pseudo_in[i], pseudo_in[i], pseudo_out[i] *]);
     end for;
   end if;
 
   PIsom := sub< GL( Ncols(Forms[1])+#Forms, k ) | [ DiagonalJoin( pseudo_in[i], pseudo_out[i] ) : i in [1..#pseudo_in] ] >;
-  PIsom`DerivedFrom := < B, [2,3] >;
+  DerivedFrom(~PIsom, B, {0..2}, {0, 2});
   PIsom`Order := ORD;
   timing := Cputime(tt);
   vprintf TameGenus, 1 : "%o seconds.\n", timing;

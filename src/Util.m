@@ -1,10 +1,46 @@
 /* 
-    Copyright 2015--2017, Peter A. Brooksbank, Joshua Maglione, James B. Wilson.
+    Copyright 2015--2019, Peter A. Brooksbank, Joshua Maglione, James B. Wilson.
     Distributed under GNU GPLv3.
 */
 
 
 import "GlobalVars.m" : __VERSION;
+
+/*
+  Given a matrix group of pseudo-isometries of G and a tensor constructed via 
+  pCentralTensor(G), construct the corresponding automorphisms of G.
+*/
+__PseudoIsom_to_GrpAuto := function(M, t)
+  assert assigned t`Coerce;
+  phi1 := t`Coerce[1];
+  phi2 := t`Coerce[3];
+  V := Codomain(phi1);
+  W := Codomain(phi2);
+  G := Domain(phi1);
+  pi2 := Induce(M, 2);
+  pi0 := Induce(M, 0);
+  d := Degree(Codomain(pi2));
+  e := Degree(Codomain(pi0));
+  K := BaseRing(t);
+  
+  gen_set := [b @@ phi1 : b in Basis(V)] cat [b @@ phi2 : b in Basis(W)];
+  PI := [
+    [Matrix(X @ pi2)[i] @@ phi1 : i in [1..d]] cat 
+    [Matrix(X @ pi0)[i] @@ phi2 : i in [1..e]] : X in Generators(M)
+  ];
+  Cents := [];
+  for i in [1..d] do
+    for j in [1..e] do
+      C := gen_set;
+      C[i] *:= Basis(W)[j] @@ phi2;
+      Append(~Cents, C);
+    end for;
+  end for;
+
+  A := AutomorphismGroup(G, gen_set, PI cat Cents : Check := false);
+  A`Order := #M * (#K)^(d*e);
+  return A;
+end function;
 
 /*
 Input a field k, a sequence of matrix degrees, and a permutation (#deg eq #perm)

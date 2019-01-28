@@ -4,6 +4,7 @@
 */
 
 
+import "Util.m" : __PseudoIsom_to_GrpAuto;
 
 /*
 This is the function which combines both Pete's and Josh's code into one function for automorphisms.
@@ -21,9 +22,12 @@ __TameGenusAutomorphism := function( G : Cent := true, Method := 0 )
   PIsom := TGPseudoIsometryGroup( t : Cent := Cent, Method := Method );
 
   vprintf TameGenus, 1 : 
-    "Constructing automorphisms from pseudo-isometries:";
+    "Constructing automorphisms from pseudo-isometries...";
   tt := Cputime();
 
+  A := __PseudoIsom_to_GrpAuto(PIsom, t);
+
+/*
   k := BaseRing(t);
   V := t`Domain[1];
   f := t`Coerce[1];
@@ -32,7 +36,7 @@ __TameGenusAutomorphism := function( G : Cent := true, Method := 0 )
   d := Dimension(V);
   e := Dimension(W);
 
-  /* Step 6: Construct generators for Aut(G) */
+  // Step 6: Construct generators for Aut(G) 
   central := [];
   for i in [1..d] do
     for j in [1..e] do
@@ -48,21 +52,19 @@ __TameGenusAutomorphism := function( G : Cent := true, Method := 0 )
   pseudo := [M*X*M^-1 : X in Generators(PIsom)];
   AutMat := sub< GL(d+e, k) | pseudo, central >;
 
-  if assigned PIsom`Order then
-    AutMat`Order := PIsom`Order * (#k)^(d*e);
-  end if;
-
+  AutMat`Order := PIsom`Order * (#k)^(d*e);
+*/
   timing := Cputime(tt);
-  vprintf TameGenus, 1 : "\t%o seconds.\n", timing;
+  vprintf TameGenus, 1 : "%o seconds.\n", timing;
 
-	return AutMat;
+	return A;
 end function;
 
 
 // Intrinsics ----------------------------------------------------------
 
-intrinsic TGAutomorphismGroup( G::GrpPC : Cent := true, Method := 0 ) -> GrpMat
-{Returns the matrix group of automorphisms for the group G with tame genus.
+intrinsic TGAutomorphismGroup( G::GrpPC : Cent := true, Method := 0 ) -> GrpAuto
+{Returns the group of automorphisms of the group G with tame genus.
 To use a specific method, in the case of genus 2, regardless of structure set Method to 1 for adjoint-tensor method or 2 for Pfaffian method.}
   require IsPrime(Exponent(G)) : "Group must have exponent p.";
   require NilpotencyClass(G) le 2 : "Group is not class 2.";
@@ -71,8 +73,8 @@ To use a specific method, in the case of genus 2, regardless of structure set Me
   
   if IsAbelian(G) then
     return AutomorphismGroup(G);
+  else
+    return __TameGenusAutomorphism( G : Cent := Cent, Method := Method );
   end if;
-
-	return __TameGenusAutomorphism( G : Cent := Cent, Method := Method );
 end intrinsic;
 
