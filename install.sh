@@ -11,7 +11,7 @@ ATTACH3="AttachSpec(\"$PKGDIR/StarAlge/StarAlge.spec\");"
 ATTACH4="AttachSpec(\"$PKGDIR/TensorSpace/TensorSpace.spec\");"
 
 
-echo "StarAlge.spec is in $DIR"
+echo "TameGenus.spec is in $DIR"
 
 
 echo "Dependencies will be downloaded to $PKGDIR"
