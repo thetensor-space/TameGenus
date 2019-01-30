@@ -47,7 +47,7 @@ end function;
 Input a field k, a sequence of matrix degrees, and a permutation (#deg eq #perm)
 returns a permutation matrix that acts on blocks of a prescribed size as the given permutation
 */
-__PermutationDegreeMatrix := function(k,deg,perm)
+__PermutationDegreeMatrix := function(k, deg, perm)
 	n:=#perm;
 	P:=[];
 	blocks:=[0 : i in [1..n]];
@@ -63,7 +63,7 @@ __PermutationDegreeMatrix := function(k,deg,perm)
 			Append(~P,D+j);
 		end for;
 	end for;
-	return Transpose( PermutationMatrix(k, P) );
+	return Transpose(PermutationMatrix(k, P));
 end function;
 
 // Returns the permutation from S to T.

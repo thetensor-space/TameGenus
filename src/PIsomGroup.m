@@ -42,86 +42,105 @@ Method: if set to 0, it uses the established cut offs for determining which meth
 	If set to 1, then we use the polynomial method, and if set to 2, we use the adjoint tensor method. 
 */
 
-__G2_PIsometry := function( B : Method := 0 )
-  k := BaseRing(B);
+__G2_PIsometry := function( t : Method := 0 )
 
-  /* Step 1: Compute the adjoint algebra of the forms. */
+  k := BaseRing(t);
+
+  // Step 1: Compute the adjoint algebra of the forms.
   vprintf TameGenus, 1 : "Computing the adjoint algebra...";
   tt := Cputime();
-  A := AdjointAlgebra( B );
+  A := AdjointAlgebra(t);
   timing := Cputime(tt);
   vprintf TameGenus, 1 : " %o seconds.\n", timing;
 
-	/* Step 2: Get a perp-decomposition and organize blocks. */
+
+	// Step 2: Get a perp-decomposition and organize blocks.
   vprintf TameGenus, 1 : "Computing perp-decomposition...";
   tt := Cputime();
-	T, dims := PerpDecomposition( B );
+	T, dims := PerpDecomposition(t);
   timing := Cputime(tt);
   vprintf TameGenus, 1 : " %o seconds.\n", timing;
-	F := [ T * X * Transpose( T ) : X in SystemOfForms(B) ];
+
+
+  // Step 2b: Organize t into two subtensors
   flatdims := [ d : d in dims | IsOdd(d) ];
   slopeddims := [ d : d in dims | IsEven(d) ];
   Sort(~flatdims);
   Sort(~slopeddims);
   dims_sorted := flatdims cat slopeddims;
-  adjten := __WhichMethod(Method,#k,slopeddims);
+  P := __PermutationDegreeMatrix(k, dims, __FindPermutation(dims_sorted, dims)); 
 
-  vprintf TameGenus, 1 : "%o sloped blocks and %o flat blocks.\nDims: %o\n", #slopeddims, #flatdims, dims_sorted;
+  vprintf TameGenus, 1 : "%o sloped blocks and %o flat blocks.\nDims: %o\n", 
+      #slopeddims, #flatdims, dims_sorted;
 
-  P := __PermutationDegreeMatrix( k, dims, __FindPermutation( dims_sorted, dims ) ); 
-  F := [ P * F[i] * Transpose( P ) : i in [1..2] ];
-  if flatdims eq [] then Append(~flatdims,0); end if;
-  if slopeddims eq [] then Append(~slopeddims,0); end if;
-  Flat := [ ExtractBlock( F[i], 1, 1, &+flatdims, &+flatdims ) : i in [1..2] ];
-  if &+flatdims gt 0 then
-    fB := Tensor( Flat, 2, 1 );
-    fB`Adjoint := __GetStarAlg(A,P*T,1,&+flatdims);
-  end if;
-  Sloped := [ ExtractBlock( F[i], &+flatdims+ 1, &+flatdims + 1, &+slopeddims, &+slopeddims ) : i in [1..2] ];
+  // To resolve some bugs about empty sequences:
+  if flatdims eq [] then Append(~flatdims, 0); end if; 
+  if slopeddims eq [] then Append(~slopeddims, 0); end if;
+  H := Homotopism(0*t, 0*t, [* P*T, P*T, IdentityMatrix(k, 2) *], 
+      CohomotopismCategory(3) : Check := false);
+  s := t @ H;
+  Flat := [ExtractBlock(X, 1, 1, &+flatdims, &+flatdims) : 
+      X in SystemOfForms(s)];
+  Sloped := [ExtractBlock(X, &+flatdims+ 1, &+flatdims + 1, &+slopeddims, 
+      &+slopeddims) : X in SystemOfForms(s)];
+
+
+  // Step 3: Lift the sloped
   if &+slopeddims gt 0 then
-    sB := Tensor( Sloped, 2, 1 );
-    if adjten then
-      sB`Adjoint := __GetStarAlg(A,P*T,1+&+flatdims,&+slopeddims);
-    end if;
-  end if;
 
-  /* Step 3: Lift the sloped */
-  if &+slopeddims gt 0 then
+    sloped_t := Tensor(Sloped, 2, 1);
+
     // determine which method to use
+    adjten := __WhichMethod(Method, #k, slopeddims);
+    tt := Cputime();
+
     if adjten then
       // Adjoint-tensor method
       vprintf TameGenus, 1 : "Adjoint-tensor method...";
-      tt := Cputime();
-		  inner_s, outer := PseudoIsometryGroupAdjointTensor( sB );
-      outer := [ Transpose(outer[k]) : k in [1..#outer] ];
+		  inner_s, outer := PseudoIsometryGroupAdjointTensor(sloped_t);
+      outer := [Transpose(outer[k]) : k in [1..#outer]];
     else
       // Pfaffian method
       vprintf TameGenus, 1 : "Pfaffian method...";
-      tt := Cputime();
-      inner_s, outer := __Pfaffian_AUT( sB, slopeddims );
+      inner_s, outer := __Pfaffian_AUT(sloped_t, slopeddims);
     end if;
-    pseudo_order := Factorization(#outer)*Factorization(#k - 1);
+
+    // Maybe I could dig and figure this out, but it's just in a GL2.
+    // Seems like LMG might handle it just fine. 
+    // We can come back if we need. --JM (30.01.2019)
+    pseudo_order := LMGFactoredOrder(sub< GL(2, k) | outer >);
     timing := Cputime(tt);
     vprintf TameGenus, 1 : " %o seconds.\n", timing;
+
   else
-    inner_s := [ IdentityMatrix( k, 0 ) : i in [1..2] ];
-    outer := [ x : x in Generators( GL(2, k) ) ];
+
+    inner_s := [IdentityMatrix( k, 0 ) : i in [1..2]];
+    outer := [x : x in Generators(GL(2, k))];
     pseudo_order := FactoredOrderGL(2, #k);
+
   end if;
 
-	/* Step 4: Lift the flat blocks */
+B := t;
+
+
+	// Step 4: Lift the flat blocks
   if &+flatdims gt 0 then
+
+    flat_t := Tensor(Flat, 2, 1);
     i := 1;
-    S := IdentityMatrix( k, 0 );
+    S := IdentityMatrix(k, 0);
+
     for d in flatdims do
       Flat1 := ExtractBlock( Flat[1], i, i, d, d );
       Flat2 := ExtractBlock( Flat[2], i, i, d, d );
       tempB := Tensor( [Flat1,Flat2], 2, 1 );
-      tempB`Adjoint := __GetStarAlg( AdjointAlgebra(fB), IdentityMatrix(k,&+flatdims), i, d );
+      //tempB`Adjoint := __GetStarAlg( AdjointAlgebra(fB), IdentityMatrix(k,&+flatdims), i, d );
       S := DiagonalJoin( S, __TransformFIPair( tempB ) );
       i +:= d;
     end for;
+
     inner_f := [];
+
     for Z in outer do 
       X := IdentityMatrix( k, 0 );
       for d in flatdims do
@@ -129,10 +148,15 @@ __G2_PIsometry := function( B : Method := 0 )
       end for;
       Append( ~inner_f, S^-1 * X * S );
     end for;
+
   else
+
     inner_f := [ IdentityMatrix( k, 0 ) : i in [1..#outer] ];
+
   end if;
+
   inner := [ ( P * T )^-1 * DiagonalJoin( inner_f[i], inner_s[i] ) * P * T : i in [1..#outer] ];
+
 
   // Sanity check 
   if __SANITY_CHECK then
@@ -142,7 +166,8 @@ __G2_PIsometry := function( B : Method := 0 )
     end for; 
   end if;
 	
-	/* Step 5: Construct generators for isometry group */
+
+	// Step 5: Construct generators for isometry group
   tt := Cputime();
   vprintf TameGenus, 1 : "Constructing the isometries...";
   isom := IsometryGroup( SystemOfForms(B) : DisplayStructure := false, Adjoint := A );
@@ -155,7 +180,8 @@ __G2_PIsometry := function( B : Method := 0 )
     assert [ isom.i * Forms[j] * Transpose( isom.i ) : j in [1..2] ] eq Forms;
   end for; 
 
-  /* Step 6: Combine everything from steps 3 - 5. */
+
+  // Step 6: Combine everything from steps 3 - 5.
   pseudo_in := inner cat [ x : x in Generators(isom) ];
   pseudo_out := outer cat [ IdentityMatrix( k, 2 ) : i in [1..Ngens(isom)] ];
    
@@ -168,6 +194,7 @@ __G2_PIsometry := function( B : Method := 0 )
           [ &+[ pseudo_out[i][y][x]*Forms[y] : y in [1..2] ] : x in [1..2] ];
     end for;
   end if;
+
 
   return pseudo_in, pseudo_out, isom_order*pseudo_order;
 end function;

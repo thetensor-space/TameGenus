@@ -9,6 +9,7 @@ ATTACH1="AttachSpec(\"$DIR/StarAlge.spec\");"
 ATTACH2="AttachSpec(\"$PKGDIR/Sylver/Sylver.spec\");"
 ATTACH3="AttachSpec(\"$PKGDIR/StarAlge/StarAlge.spec\");"
 ATTACH4="AttachSpec(\"$PKGDIR/TensorSpace/TensorSpace.spec\");"
+ATTACH5="AttachSpec(\"$PKGDIR/Homotopism/Homotopism.spec\");"
 
 
 echo "TameGenus.spec is in $DIR"
@@ -55,12 +56,25 @@ fi
 echo "Dependencies downloaded."
 
 
+# Homotopism install/ update
+if [ -f "$PKGDIR/Homotopism/update.sh" ]
+then
+    echo "Dependencies already installed, updating..."
+    sh "$PKGDIR/Homotopism/update.sh"
+else
+    echo "Could not find Homotopism, downloading..."
+    cd "$PKGDIR"
+    git clone -q https://github.com/algeboy/Homotopism
+fi
+
+
+
 # Construct Magma start file
 
 if [ -f "$START" ]
 then
     echo "Found a Magma start file"
-    for A in "$ATTACH1" "$ATTACH2" "$ATTACH3" do
+    for A in "$ATTACH1" "$ATTACH2" "$ATTACH3" "$ATTACH4" "$ATTACH5" do
         if grep -Fxq "$A" "$START"
         then
             echo "Already installed"
@@ -72,7 +86,7 @@ then
 else
     echo "Creating a Magma start file: $START"
     echo "// Created by an install file for Magma start up." > "$START"
-    for A in "$ATTACH1" "$ATTACH2" "$ATTACH3" do
+    for A in "$ATTACH1" "$ATTACH2" "$ATTACH3" "$ATTACH4" "$ATTACH5" do
         echo "$A" >> "$START"
     done
     echo "Successfully installed"
