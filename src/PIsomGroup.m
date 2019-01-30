@@ -31,7 +31,7 @@ __G1_PIsometry := function( B : Print := false )
   pseudo_in := [X : X in Generators(Isom)] cat [prim*IdentityMatrix(k, Nrows(Form[1]))];
   pseudo_out := [IdentityMatrix(k, 1) : i in [1..Ngens(Isom)]] cat [DiagonalMatrix(k, [prim^2])];
 
-  return pseudo_in, pseudo_out, Isom`Order * (#k - 1);
+  return pseudo_in, pseudo_out, FactoredOrder(Isom)*Factorization(#k - 1);
 end function;
 
 
@@ -100,13 +100,13 @@ __G2_PIsometry := function( B : Method := 0 )
       tt := Cputime();
       inner_s, outer := __Pfaffian_AUT( sB, slopeddims );
     end if;
-    pseudo_order := #outer*(#k-1);
+    pseudo_order := Factorization(#outer)*Factorization(#k - 1);
     timing := Cputime(tt);
     vprintf TameGenus, 1 : " %o seconds.\n", timing;
   else
     inner_s := [ IdentityMatrix( k, 0 ) : i in [1..2] ];
     outer := [ x : x in Generators( GL(2, k) ) ];
-    pseudo_order := #GL(2, k);
+    pseudo_order := FactoredOrderGL(2, #k);
   end if;
 
 	/* Step 4: Lift the flat blocks */
@@ -148,7 +148,7 @@ __G2_PIsometry := function( B : Method := 0 )
   isom := IsometryGroup( SystemOfForms(B) : DisplayStructure := false, Adjoint := A );
   timing := Cputime(tt);
   vprintf TameGenus, 1 : " %o seconds.\n", timing;
-  isom_order := #isom; // Isometry group already stores this.
+  isom_order := FactoredOrder(isom); // Isometry group already stores this.
   // Sanity
   for i in [1..Ngens(isom)] do
     Forms := SystemOfForms(B);
@@ -253,7 +253,8 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
     pseudo_in := [ DiagonalJoin( X, IdentityMatrix( k, Dimension(Rad) ) ) : X in IN ] cat Radgens cat Radcentrals;
     pseudo_in := [ RadPerm^-1 * pseudo_in[i] * RadPerm : i in [1..#pseudo_in] ];
     pseudo_out := OUT cat [ IdentityMatrix( k, #Forms ) : i in [1..#Radgens+#Radcentrals] ];
-    ORD *:= #GL(Dimension(Rad), k) * (#k)^(Dimension(C)*Dimension(Rad));
+    ORD *:= FactoredOrderGL(Dimension(Rad), #k);
+    ORD *:= FactoredOrder(#k)^(Dimension(C)*Dimension(Rad));
   else
     pseudo_in := IN;
     pseudo_out := OUT;
@@ -268,7 +269,8 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
 
   PIsom := sub< GL( Ncols(Forms[1])+#Forms, k ) | [ DiagonalJoin( pseudo_in[i], pseudo_out[i] ) : i in [1..#pseudo_in] ] >;
   DerivedFrom(~PIsom, B, {0..2}, {0, 2});
-  PIsom`Order := ORD;
+  PIsom`FactoredOrder := ORD;
+  PIsom`Order := Integers()!ORD;
   timing := Cputime(tt);
   vprintf TameGenus, 1 : "%o seconds.\n", timing;
 

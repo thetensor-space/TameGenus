@@ -6,6 +6,7 @@
 
 import "GlobalVars.m" : __VERSION;
 
+
 /*
   Given a matrix group of pseudo-isometries of G and a tensor constructed via 
   pCentralTensor(G), construct the corresponding automorphisms of G.
@@ -37,7 +38,7 @@ __PseudoIsom_to_GrpAuto := function(M, t)
     end for;
   end for;
 
-  A := AutomorphismGroup(G, gen_set, PI cat Cents : Check := false);
+  A := AutomorphismGroup(G, gen_set, PI cat Cents);
   A`Order := #M * (#K)^(d*e);
   return A;
 end function;
