@@ -120,6 +120,7 @@ __G2_PIsometry := function( t : Method := 0 )
     // Seems like LMG might handle it just fine. 
     // We can come back if we need. --JM (30.01.2019)
     inner_s, outer, pseudo_order := __SmallerGenSet(inner_s, outer);
+    assert pseudo_order eq LMGFactoredOrder(sub<GL(2, k) | outer>);
     timing := Cputime(tt);
     vprintf TameGenus, 1 : " %o seconds.\n", timing;
 
@@ -199,6 +200,7 @@ __G2_PIsometry := function( t : Method := 0 )
   timing := Cputime(tt);
   vprintf TameGenus, 1 : " %o seconds.\n", timing;
   isom_order := FactoredOrder(isom); // Isometry group already stores this.
+  assert isom_order eq LMGFactoredOrder(sub< Generic(isom) | Generators(isom) >);
 
   // Sanity check on isometry group
   if __SANITY_CHECK then

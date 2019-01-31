@@ -18,6 +18,7 @@ __SmallerGenSet := function(X, Y)
   while (#Indices gt 0) and 
       (ORD ne LMGFactoredOrder(sub< GL(2, K) | Y[gens] >)) do
     i := Random(Indices);
+    Append(~gens, i);
     Exclude(~Indices, i);
   end while;
   return X[gens], Y[gens], ORD;
