@@ -53,12 +53,11 @@ __TameGenusAutomorphism := function( G : Cent := true, Method := 0, Mat := true 
     ORD := FactoredOrder(PIsom) * Factorization(#k)^(d*e);
     A`FactoredOrder := ORD;
     A`Order := Integers()!ORD;
-
-    timing := Cputime(tt);
   else
     A := __PseudoIsom_to_GrpAuto(PIsom, t);
   end if;
 
+  timing := Cputime(tt);
   vprintf TameGenus, 1 : "%o seconds.\n", timing;
 
 	return A;
@@ -67,7 +66,7 @@ end function;
 
 // Intrinsics ------------------------------------------------------------------
 
-intrinsic TGAutomorphismGroup( G::GrpPC : Cent := true, Method := 0, Mat := true ) -> GrpAuto
+intrinsic TGAutomorphismGroup( G::GrpPC : Cent := true, Method := 0, Mat := false ) -> GrpAuto
 {Returns the group of automorphisms of the group G with tame genus.
 To use a specific method, in the case of genus 2, regardless of structure set Method to 1 for adjoint-tensor method or 2 for Pfaffian method.}
   require IsPrime(Exponent(G)) : "Group must have exponent p.";
@@ -78,7 +77,8 @@ To use a specific method, in the case of genus 2, regardless of structure set Me
   if IsAbelian(G) then
     return AutomorphismGroup(G);
   else
-    return __TameGenusAutomorphism( G : Cent := Cent, Method := Method, Mat := Mat );
+    P, phi := pQuotient(G, Exponent(G), 2 : Print := 0);
+    return __TameGenusAutomorphism(P : Cent := Cent, Method := Method, Mat := Mat);
   end if;
 end intrinsic;
 

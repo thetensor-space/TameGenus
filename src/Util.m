@@ -7,38 +7,70 @@
 import "GlobalVars.m" : __VERSION;
 
 
+// Input: DiagonalJoin(X, Y) generates PIsom/Isom.
+__SmallerGenSet := function(X, Y)
+  assert #X eq #Y;
+  K := BaseRing(X[1]);
+  Outer := sub< GL(2, K) | Y >;
+  ORD := LMGFactoredOrder(Outer);
+  Indices := {1..#Y};
+  gens := [];
+  while (#Indices gt 0) and 
+      (ORD ne LMGFactoredOrder(sub< GL(2, K) | Y[gens] >)) do
+    i := Random(Indices);
+    Exclude(~Indices, i);
+  end while;
+  return X[gens], Y[gens], ORD;
+end function;
+
+
+// Code due to E. A. O'Brien from 31.01.2019.
+// vector to integer sequence
+__VectorToInt := function (v)
+  r := Eltseq(v);
+  ChangeUniverse(~r, Integers());
+  return r;
+end function;
+
+
+// Code due to E. A. O'Brien from 31.01.2019.
+/* convert matrix A in GL(d, p) describing action on Frattini quotient
+    of d-generator p-group G into automorphism of G */
+__MatrixToAutomorphism := function (P, A)
+  p := FactoredOrder(P)[1][1];
+  d := FrattiniQuotientRank(P);
+  m := Nrows(A);
+  error if m lt d, "Must define action on at least Frattini quotient";
+  zeros := [0: i in [1..NPCgens(P) - m]];
+  Images := [<P.i, P!(__VectorToInt(A[i]) cat zeros)> : i in [1..m]];
+  return hom <P -> P | Images : Check := false >;
+end function;
+
+
 /*
   Given a matrix group of pseudo-isometries of G and a tensor constructed via 
   pCentralTensor(G), construct the corresponding automorphisms of G.
 */
 __PseudoIsom_to_GrpAuto := function(M, t)
   assert assigned t`Coerce;
-  phi1 := t`Coerce[1];
-  phi2 := t`Coerce[3];
-  V := Codomain(phi1);
-  W := Codomain(phi2);
-  G := Domain(phi1);
-  pi2 := Induce(M, 2);
-  pi0 := Induce(M, 0);
-  d := Degree(Codomain(pi2));
-  e := Degree(Codomain(pi0));
+  G := Domain(t`Coerce[1]);
+  d := Dimension(Domain(t)[1]);
+  e := Dimension(Codomain(t));
   K := BaseRing(t);
   
-  gen_set := [b @@ phi1 : b in Basis(V)] cat [b @@ phi2 : b in Basis(W)];
-  PI := [
-    [Matrix(X @ pi2)[i] @@ phi1 : i in [1..d]] cat 
-    [Matrix(X @ pi0)[i] @@ phi2 : i in [1..e]] : X in Generators(M)
-  ];
+  gen_set := Isetseq(PCGenerators(G));
+  assert #gen_set eq d + e;
+  PI := [__MatrixToAutomorphism(G, X) : X in Generators(M)];
   Cents := [];
   for i in [1..d] do
     for j in [1..e] do
       C := gen_set;
-      C[i] *:= Basis(W)[j] @@ phi2;
+      C[i] *:= gen_set[d+j];
       Append(~Cents, C);
     end for;
   end for;
 
-  A := AutomorphismGroup(G, gen_set, PI cat Cents);
+  A := AutomorphismGroup(G, gen_set, [gen_set @ alpha : alpha in PI] cat Cents);
   A`Order := #M * (#K)^(d*e);
   return A;
 end function;

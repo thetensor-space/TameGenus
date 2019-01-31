@@ -6,7 +6,8 @@
 
 import "GlobalVars.m" : __SANITY_CHECK;
 import "Pfaffian.m" : __Pfaffian_AUT;
-import "Util.m" : __FindPermutation, __PermutationDegreeMatrix, __GetStarAlg, __WhichMethod;
+import "Util.m" : __FindPermutation, __PermutationDegreeMatrix, __GetStarAlg, 
+    __WhichMethod, __SmallerGenSet;
 import "Flat.m" : __TransformFIPair, __LiftFlatGenus2;
 import "sloped.m" : PseudoIsometryGroupAdjointTensor;
 
@@ -118,7 +119,7 @@ __G2_PIsometry := function( t : Method := 0 )
     // Maybe I could dig and figure this out, but it's just in a GL2.
     // Seems like LMG might handle it just fine. 
     // We can come back if we need. --JM (30.01.2019)
-    pseudo_order := LMGFactoredOrder(sub< GL(2, k) | outer >);
+    inner_s, outer, pseudo_order := __SmallerGenSet(inner_s, outer);
     timing := Cputime(tt);
     vprintf TameGenus, 1 : " %o seconds.\n", timing;
 
@@ -216,9 +217,9 @@ __G2_PIsometry := function( t : Method := 0 )
 
   // Sanity check
   if __SANITY_CHECK then
+    Forms := SystemOfForms(t);
     for i in [1..#pseudo_in] do
       // Old code:
-      Forms := SystemOfForms(t);
       assert [ pseudo_in[i] * Forms[j] * Transpose( pseudo_in[i] ) : j in [1..2] ] eq 
           [ &+[ pseudo_out[i][y][x]*Forms[y] : y in [1..2] ] : x in [1..2] ];
       //assert IsHomotopism(t, t, [*pseudo_in[i], pseudo_in[i], 
@@ -244,7 +245,8 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
   require ISA(Type(k),FldFin) : "Base ring must be a finite field.";
   require Characteristic(k) ne 2 : "Must be odd characteristic.";
 
-  // remove the radical.
+
+  // Step 0: remove the radical.
   vprintf TameGenus, 1 : "Removing the radical... ";
   tt := Cputime();
   Rad := Radical(B, 2);
@@ -262,7 +264,8 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
   timing := Cputime(tt);
   vprintf TameGenus, 1 : "%o seconds.\n", timing;
 
-  // write bimap over its centroid. 
+
+  // Step 1: write bimap over its centroid. 
   if Cent then
     vprintf TameGenus, 1 : "Rewriting tensor over its centroid... ";
     tt := Cputime();
@@ -271,33 +274,44 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
   else
     T := nB;
   end if;
+  // Check genus <= 2.
   require Dimension(T`Codomain) le 2 : "Tensor is not genus 1 or 2.";
 
-  // if genus 1, do a simpler algorithm.
+
+  // Step 2: Construct pseudo-isometry group
   if Dimension(T`Codomain) eq 1 then
+
+    // if genus 1, do a simpler algorithm.
     IN, OUT, ORD := __G1_PIsometry(T);
+
   else
+
     // if Cent is not prime field, do adj-ten method.
     if not IsPrimeField(BaseRing(T)) then
       Method := 1; 
       vprintf TameGenus, 1 : "Centroid is not a prime field, applying adjoint-tensor method.\n";
     end if;
+
     IN, OUT, ORD := __G2_PIsometry( T : Method := Method );
+
   end if;
 
   vprintf TameGenus, 1 : "Putting everything together... ";
   tt := Cputime();
 
-  // check if non-trivial centroid.
+
+  // Step 3: check if non-trivial centroid.
   if BaseRing(T) ne BaseRing(B) then
-    "WARNING: Full pseudo-isometry group has not been constructed.  The centroid is a proper field extension, so there are potential Galois actions missing.";
+    printf "WARNING: Full pseudo-isometry group has not been constructed.";
+    printf " The centroid is a proper field extension,";
+    printf " so there are potential Galois actions missing.\n";
     V := Domain(H.2);
     IN := [ Matrix([ Eltseq(((V.i@H.2)*X)@@H.2) : i in [1..Dimension(V)] ]) : X in IN ];
     W := Domain(H.0);
     OUT := [ Matrix([ Eltseq(((W.i@H.0)*X)@@H.0) : i in [1..Dimension(W)] ]) : X in OUT ]; 
   end if;
 
-  // add pseudo-isometries on radical.
+  // Step 4: add pseudo-isometries on radical.
   if Dimension(Rad) gt 0 then
     Radgens := [ DiagonalJoin(IdentityMatrix(k, Ncols(nForms[1])), x) : x in Generators(GL(Dimension(Rad), k)) ];
     Radcentrals := [];
@@ -320,15 +334,20 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
 
   // Sanity check
   if __SANITY_CHECK then
+    Forms := SystemOfForms(B);
     for i in [1..#pseudo_in] do
-      _ := IsHomotopism(B, B, [* pseudo_in[i], pseudo_in[i], pseudo_out[i] *]);
+     // _ := IsHomotopism(B, B, [* pseudo_in[i], pseudo_in[i], pseudo_out[i] *]);
+      assert [ pseudo_in[i] * Forms[j] * Transpose( pseudo_in[i] ) : j in [1..2] ] eq 
+          [ &+[ pseudo_out[i][y][x]*Forms[y] : y in [1..2] ] : x in [1..2] ];
     end for;
   end if;
 
+  // Put the group and relevant attributes together.
   PIsom := sub< GL( Ncols(Forms[1])+#Forms, k ) | [ DiagonalJoin( pseudo_in[i], pseudo_out[i] ) : i in [1..#pseudo_in] ] >;
   DerivedFrom(~PIsom, B, {0..2}, {0, 2});
   PIsom`FactoredOrder := ORD;
   PIsom`Order := Integers()!ORD;
+
   timing := Cputime(tt);
   vprintf TameGenus, 1 : "%o seconds.\n", timing;
 
