@@ -220,59 +220,59 @@ end function;
 //                                  Intrinsics
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-intrinsic TGIsPseudoIsometric( B::TenSpcElt, C::TenSpcElt : Cent := true, Constructive := true, Method := 0 ) -> BoolElt
-{Determine if two genus 2 bimaps are pseduo-isometric.}
-  k := BaseRing(B);
-  l := BaseRing(C);
-  require ISA(Type(k),FldFin) and ISA(Type(l),FldFin) : "Base rings must be finite fields.";
-  require #k eq #l : "Base rings must be the same.";
-  require B`Valence eq 3 and C`Valence eq 3 : "Tensors must be bimaps.";
-  require forall{ X : X in Frame(B) cat Frame(C) | Type(X) eq ModTupFld } : 
-    "Domains and codomains must be vector spaces.";
-  require IsAlternating(B) and IsAlternating(C) : "Tensors must be alternating.";
-  require Characteristic(k) ne 2 : "Characteristic must be odd.";
-  require Type(Cent) eq BoolElt : "`Cent' must be true or false.";
-  require Type(Constructive) eq BoolElt : "`Constructive' must be true or false.";
-  require Type(Method) eq RngIntElt : "`Method' must be an integer in {0, 1, 2}.";
+intrinsic TGIsPseudoIsometric( s::TenSpcElt, t::TenSpcElt : Cent := true, Constructive := true, Method := 0 ) -> BoolElt, Hmtp
+{Determine if two genus 2 alternating tensors are pseudo-isometric over a finite field of odd characteristic.}
+  K := BaseRing(s);
+  L := BaseRing(t);
+  require ISA(Type(K), FldFin) and ISA(Type(L), FldFin) : 
+    "Base rings must be finite fields.";
+  require #K eq #L : "Base rings must be the same.";
+  require Valence(s) eq 3 and Valence(t) eq 3 : "Tensors must have valence 3.";
+  require Characteristic(K) ne 2 : "Characteristic must be odd.";
+  require IsAlternating(s) and IsAlternating(t) : "Tensors must be alternating.";
+  require Type(Cent) eq BoolElt : "'Cent' must be true or false.";
+  require Type(Constructive) eq BoolElt : "'Constructive' must be true or false.";
+  require Type(Method) eq RngIntElt : "'Method' must be an integer in {0, 1, 2}.";
 
   try
-    _ := Eltseq(B);
-    _ := Eltseq(C);
+    _ := Eltseq(s);
+    _ := Eltseq(t);
   catch err
     error "Cannot compute structure constants.";
   end try;
 
-  // write bimaps over their centroids.
+  // write tensors over their centroids.
   if Cent then
     vprintf TameGenus, 1 : "Rewriting tensors over their centroid... ";
     tt := Cputime();
-    T, Hmt_T := TensorOverCentroid(B);
-    S, Hmt_S := TensorOverCentroid(C);
+    S, Hmt_S := TensorOverCentroid(s);
+    T, Hmt_T := TensorOverCentroid(t);
     vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
   else
-    T := B;
-    S := C;
+    S := s;
+    T := t;
   end if;
 
-  // check obvious things.
-  if BaseRing(T) ne BaseRing(S) then
+  // Check obvious things
+  if #BaseRing(S) ne #BaseRing(T) then
     vprint TameGenus, 1 : "Base rings are not isormorphic.";
-    return false,_;
+    return false, _;
   end if;
-  if Dimension(T`Domain[1]) ne Dimension(S`Domain[1]) or Dimension(T`Codomain) ne Dimension(S`Codomain) then
+  if (Dimension(Domain(S)[1]) ne Dimension(Domain(T)[1])) or 
+      (Dimension(Codomain(S)) ne Dimension(Codomain(T))) then
     vprint TameGenus, 1 : "Domains or codomains not isormorphic.";
-    return false,_;
+    return false, _;
   end if;
 
-  require Dimension(T`Codomain) le 2 : "Tensors have genus greater than 2.";
+  require Dimension(Codomain(S)) le 2 : "Tensors have genus greater than 2.";
 
   // if Cent is not prime field, do adj-ten method.
-  if not IsPrimeField(BaseRing(T)) then
+  if not IsPrimeField(BaseRing(S)) then
     Method := 1; 
     vprintf TameGenus, 1 : "Centroid is not a prime field, applying adjoint-tensor method.\n";
   end if;
 
-  isit, X := __IsPseudoSG( T, S : Constructive := Constructive, Method := Method, Print := Print );
+  isit, X := __IsPseudoSG( S, T : Constructive := Constructive, Method := Method, Print := Print );
 
   if Constructive and isit then
     vprintf TameGenus, 1 : "Putting everything together... ";
@@ -288,12 +288,12 @@ intrinsic TGIsPseudoIsometric( B::TenSpcElt, C::TenSpcElt : Cent := true, Constr
       Y1 := Matrix([ ((V.i @ Hmt_T.2)*Y[1])@@Hmt_S.2 : i in [1..Dimension(V)] ])^-1;
       Y2 := Matrix([ ((W.i @ Hmt_T.0)*Y[2])@@Hmt_S.0 : i in [1..Dimension(W)] ])^-1;
     else
-      V := Domain(B)[1];
-      W := Codomain(B);
+      V := Domain(s)[1];
+      W := Codomain(s);
       Y1 := Y[1]^-1;
       Y2 := Y[2]^-1;
     end if;
-    H := Homotopism( B, C, [* Hom(V,V)!Y1, Hom(V,V)!Y1, Hom(W,W)!Y2 *] );
+    H := Homotopism( s, t, [*Y1, Y1, Y2*] );
     vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
     return true, H;
   end if;
@@ -305,7 +305,7 @@ end intrinsic;
 intrinsic TGIsIsomorphic( G::GrpPC, H::GrpPC : Cent := true, Constructive := true, Method := 0 ) -> BoolElt
 {For genus 2 p-groups G and H, determine if G is isomorphic to H.}
   if (Exponent(G) ne Exponent(H)) or (#G ne #H) or (NilpotencyClass(G) ne NilpotencyClass(H)) then
-    return false,_;
+    return false, _;
   end if;
   require IsPrime(Exponent(G)) : "Groups do not have exponent p.";
   require NilpotencyClass(G) le 2 : "Groups are not class 2.";
@@ -318,14 +318,22 @@ intrinsic TGIsIsomorphic( G::GrpPC, H::GrpPC : Cent := true, Constructive := tru
   if IsAbelian(G) then 
     return IsIsomorphic(G, H);
   end if;
+
+  // To smooth things out
+  P, phi_G := pQuotient(G, Exponent(G), 2 : Print := 0);
+  Q, phi_H := pQuotient(H, Exponent(H), 2 : Print := 0);
   
-  // compute the system of forms.
+  // Construct the p-central tensors and move to the tensor call.
   vprintf TameGenus, 1 : "Getting tensor info... ";
   tt := Cputime();
-	t, G_maps := pCentralTensor(G);
-  s, H_maps := pCentralTensor(H);
+	t := pCentralTensor(P, 1, 1);
+  s := pCentralTensor(Q, 1, 1);
   _ := Eltseq(t);
   _ := Eltseq(s);
+  t`Reflexive`Alternating := true;
+  t`Reflexive`AntiSymmetric := true;
+  s`Reflexive`Alternating := true;
+  s`Reflexive`AntiSymmetric := true;
   vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
 
   isit, Hmt := TGIsPseudoIsometric(t, s : Cent := Cent, Constructive := Constructive, Method := Method);
@@ -337,7 +345,7 @@ intrinsic TGIsIsomorphic( G::GrpPC, H::GrpPC : Cent := true, Constructive := tru
     else
       return false, _;
     end if;
-  else
-    return isit, _;
-  end if;  
+  end if;
+
+  return isit, _;
 end intrinsic;

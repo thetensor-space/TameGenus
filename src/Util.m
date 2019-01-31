@@ -4,7 +4,7 @@
 */
 
 
-import "GlobalVars.m" : __VERSION;
+import "GlobalVars.m" : __VERSION, __SANITY_CHECK;
 
 
 // Input: DiagonalJoin(X, Y) generates PIsom/Isom.
@@ -44,7 +44,12 @@ __MatrixToAutomorphism := function (P, A)
   error if m lt d, "Must define action on at least Frattini quotient";
   zeros := [0: i in [1..NPCgens(P) - m]];
   Images := [<P.i, P!(__VectorToInt(A[i]) cat zeros)> : i in [1..m]];
-  return hom <P -> P | Images : Check := false >;
+
+  if __SANITY_CHECK then 
+    return hom <P -> P | Images >;
+  else
+    return hom <P -> P | Images : Check := false >;
+  end if;
 end function;
 
 

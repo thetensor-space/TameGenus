@@ -77,18 +77,6 @@ end function;
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //                                  Intrinsics
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-intrinsic Genus( G::GrpPC ) -> RngIntElt
-{Computes the genus of p-group G.}
-  require pClass(G) le 2 : "G is not p-class 2.";
-  if IsAbelian(G) then
-    return 0;
-  end if;
-  t := pCentralTensor(G);
-  t := TensorOverCentroid(t);
-	return Dimension(t`Codomain);
-end intrinsic;
-
 intrinsic Genus( t::TenSpcElt ) -> RngIntElt
 {Computes the genus of a tensor t.}
   try 
@@ -100,17 +88,13 @@ intrinsic Genus( t::TenSpcElt ) -> RngIntElt
 	return Dimension(t`Codomain);
 end intrinsic;
 
-intrinsic Genus2Signature( G::GrpPC : Cent := true ) -> List
-{Returns the canonical genus 2 signature.
-The first entry is the sequence of flat dimensions, and the second entry is the list of coefficients for the Pfaffians.}
-  require Type(Cent) eq BoolElt : "`Cent' must be true or false.";
-  require pClass(G) eq 2 : "G is not p-class 2.";
-  t := pCentralTensor(G);
-  if Cent then
-    t := TensorOverCentroid(t);
+intrinsic Genus( G::GrpPC ) -> RngIntElt
+{Computes the genus of p-group G.}
+  require pClass(G) le 2 : "G is not p-class 2.";
+  if IsAbelian(G) then
+    return 0;
   end if;
-  require Dimension(t`Codomain) eq 2 : "Not a genus 2 group.";
-  return __GetGenus2Signature(t);
+	return Genus(pCentralTensor(G, 1, 1));
 end intrinsic;
 
 intrinsic Genus2Signature( t::TenSpcElt : Cent := true ) -> List
@@ -132,15 +116,11 @@ end intrinsic;
 intrinsic Genus2Signature( S::[Mtrx] : Cent := true ) -> List
 {Returns the canonical genus 2 signature.
 The first entry is the sequence of flat dimensions, and the second entry is the list of coefficients for the Pfaffians.}
-  require Type(Cent) eq BoolElt : "`Cent' must be true or false.";
-  t := Tensor(S, 2, 1);
-  require IsAlternating(t) : "Forms must be alternating.";
-  K := BaseRing(t);
-  require Type(K) ne BoolElt : "Forms must be defined over the same field.";
-  require ISA(Type(K), FldFin) : "Field must be finite.";
-  if Cent then
-    t := TensorOverCentroid(t);
-  end if;
-  require Dimension(t`Codomain) eq 2 : "Not a genus 2 tensor.";
-  return __GetGenus2Signature(t);
+  return Genus2Signature(Tensor(S, 2, 1) : Cent := Cent);
+end intrinsic;
+
+intrinsic Genus2Signature( G::GrpPC : Cent := true ) -> List
+{Returns the canonical genus 2 signature.
+The first entry is the sequence of flat dimensions, and the second entry is the list of coefficients for the Pfaffians.}
+  return Genus2Signature(pCentralTensor(G, 1, 1) : Cent := Cent);
 end intrinsic;

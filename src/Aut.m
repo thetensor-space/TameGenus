@@ -18,8 +18,8 @@ __TameGenusAutomorphism := function( G : Cent := true, Method := 0, Mat := true 
   vprintf TameGenus, 1 : 
     "Extracting the p-central tensor and computing pseudo-isometries.\n";
 
-  t := pCentralTensor(G);
-  PIsom := TGPseudoIsometryGroup( t : Cent := Cent, Method := Method );
+  t := pCentralTensor(G, 1, 1);
+  PIsom := TGPseudoIsometryGroup(t : Cent := Cent, Method := Method);
 
   vprintf TameGenus, 1 : 
     "Constructing automorphisms from pseudo-isometries...";
@@ -74,11 +74,19 @@ To use a specific method, in the case of genus 2, regardless of structure set Me
   require Type(Cent) eq BoolElt : "`Cent' must be true or false.";
   require Type(Method) eq RngIntElt and Method in {0,1,2} : "`Method' must be an integer in {0, 1, 2}."; 
   
+  // Just call Magma funcion for the abelian case.
   if IsAbelian(G) then
     return AutomorphismGroup(G);
-  else
-    P, phi := pQuotient(G, Exponent(G), 2 : Print := 0);
-    return __TameGenusAutomorphism(P : Cent := Cent, Method := Method, Mat := Mat);
   end if;
+
+  P, phi := pQuotient(G, Exponent(G), 2 : Print := 0);
+  A := __TameGenusAutomorphism(P : Cent := Cent, Method := Method, Mat := Mat);
+  G_gens := [x : x in Generators(G)];
+  Aut_G := AutomorphismGroup(G, G_gens, [G_gens @ phi @ alpha @@ phi : 
+      alpha in Generators(A)]);
+  Aut_G`Order := A`Order;
+  Aut_G`Group := G;
+
+  return Aut_G;
 end intrinsic;
 

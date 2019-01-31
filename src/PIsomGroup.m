@@ -328,7 +328,7 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
     pseudo_in := [ RadPerm^-1 * pseudo_in[i] * RadPerm : i in [1..#pseudo_in] ];
     pseudo_out := OUT cat [ IdentityMatrix( k, #Forms ) : i in [1..#Radgens+#Radcentrals] ];
     ORD *:= FactoredOrderGL(Dimension(Rad), #k);
-    ORD *:= FactoredOrder(#k)^(Dimension(C)*Dimension(Rad));
+    ORD *:= Factorization(#k)^(Dimension(C)*Dimension(Rad));
   else
     pseudo_in := IN;
     pseudo_out := OUT;
