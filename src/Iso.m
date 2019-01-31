@@ -326,22 +326,34 @@ intrinsic TGIsIsomorphic( G::GrpPC, H::GrpPC : Cent := true, Constructive := tru
   // Construct the p-central tensors and move to the tensor call.
   vprintf TameGenus, 1 : "Getting tensor info... ";
   tt := Cputime();
-	t := pCentralTensor(P, 1, 1);
-  s := pCentralTensor(Q, 1, 1);
+	t, maps_G := pCentralTensor(P, 1, 1);
+  s, maps_H := pCentralTensor(Q, 1, 1);
   _ := Eltseq(t);
   _ := Eltseq(s);
   t`Reflexive`Alternating := true;
-  t`Reflexive`AntiSymmetric := true;
+  t`Reflexive`Antisymmetric := true;
   s`Reflexive`Alternating := true;
-  s`Reflexive`AntiSymmetric := true;
+  s`Reflexive`Antisymmetric := true;
   vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
 
   isit, Hmt := TGIsPseudoIsometric(t, s : Cent := Cent, Constructive := Constructive, Method := Method);
 
   if Constructive then
     if isit then
-      phi := [<G.i, ((G.i @ G_maps[1])*(Hmt`Maps[1])) @@ H_maps[1]> : i in [1..Nrows(Hmt`Maps[1])]];
-      return true, hom< G -> H | phi >;
+      V := Codomain(maps_H[1]);
+      G_gens := [G.i : i in [1..Dimension(V)]];
+      X := Hmt`Maps[1]; 
+      //phi := [<G.i, ((G.i @ G_maps[1])*(Hmt`Maps[1])) @@ H_maps[1]> : i in [1..Nrows(Hmt`Maps[1])]];
+      //return true, hom< G -> H | phi >;
+      im := [(V!((x @ phi_G @ maps_G[1])*X)) @@ maps_H[1] @@ phi_H : x in G_gens];
+      
+      if __SANITY_CHECK then
+        phi := hom< G -> H | [<G_gens[i], im[i]> : i in [1..#im]] >;
+      else
+        phi := hom< G -> H | [<G_gens[i], im[i]> : i in [1..#im]] : Check := false >;
+      end if;
+
+      return true, phi;
     else
       return false, _;
     end if;
