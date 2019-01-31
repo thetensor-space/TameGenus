@@ -5,6 +5,6 @@
 
 
 __VERSION := "1.2";
-__SANITY_CHECK := false;
+__SANITY_CHECK := true;
 
 declare verbose TameGenus, 1;
