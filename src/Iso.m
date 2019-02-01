@@ -66,7 +66,7 @@ __IsPseudoSGAdjTens := function( flats, sloped, bB, bC )
   return isit,[*X,Z*];
 end function;
 
-__IsPseudoSG := function( B, C : Constructive := false, Method := 0, Print := false )
+__IsPseudoSG := function( B, C : Constructive := true, Method := 0 )
   k := BaseRing(B);
   // Peel off the radicals
   vprintf TameGenus, 1 : "Computing radicals... ";
@@ -75,7 +75,8 @@ __IsPseudoSG := function( B, C : Constructive := false, Method := 0, Print := fa
   R2 := Radical(C,1);
   vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
   if Dimension(R1) ne Dimension(R2) then
-    return false,_;
+    vprintf TameGenus, 1 : "Not isomorphic: radicals of different dimension.";
+    return false, _;
   end if;
   if Dimension(R1) gt 0 then
     V := Generic(R1);
@@ -126,7 +127,7 @@ __IsPseudoSG := function( B, C : Constructive := false, Method := 0, Print := fa
 
       return true, DiagonalJoin(X); 
     else
-      return true,_;
+      return true, _;
     end if;
   end if;
 
@@ -151,7 +152,6 @@ __IsPseudoSG := function( B, C : Constructive := false, Method := 0, Print := fa
   sorted_dims := flats cat sloped;
   adjten := __WhichMethod(Method,#k,sloped);
   vprintf TameGenus, 1 : "%o sloped blocks and %o flat blocks.\nDims: %o\n", #sloped, #flats, sorted_dims;
-  //Sprintf( "%o sloped blocks and %o flat blocks.\nDims: %o", #sloped, #flats, sorted_dims );
   if not Constructive and sloped eq [] then 
     return true,_; 
   end if;
@@ -162,6 +162,7 @@ __IsPseudoSG := function( B, C : Constructive := false, Method := 0, Print := fa
 
   // If it's sloped but the span of the forms is not 2 dimensional use Pfaffian regardless.
   // This is because Pete's code is built on the assumption that the span of the forms is 2 dimensional.
+  // Better way to do this................... (face palm 5 years later)
   if adjten then
     start := &+(flats cat [1]);
     d_s := &+(sloped cat [0]);
@@ -183,10 +184,10 @@ __IsPseudoSG := function( B, C : Constructive := false, Method := 0, Print := fa
 
   bB := Tensor( bForms1, 2, 1 );
   bC := Tensor( bForms2, 2, 1 );
-  if adjten or (#flats gt 0) then
+  /*if adjten or (#flats gt 0) then
     bB`Adjoint := __GetStarAlg( A1, P1*T1, 1, Nrows(bForms1[1]) );
     bC`Adjoint := __GetStarAlg( A2, P2*T2, 1, Nrows(bForms2[1]) );
-  end if;
+  end if;*/
 
   if adjten then
     vprintf TameGenus, 1 : "Using adjoint-tensor method... ";
@@ -272,7 +273,7 @@ intrinsic TGIsPseudoIsometric( s::TenSpcElt, t::TenSpcElt : Cent := true, Constr
     vprintf TameGenus, 1 : "Centroid is not a prime field, applying adjoint-tensor method.\n";
   end if;
 
-  isit, X := __IsPseudoSG( S, T : Constructive := Constructive, Method := Method, Print := Print );
+  isit, X := __IsPseudoSG(S, T : Constructive := Constructive, Method := Method);
 
   if Constructive and isit then
     vprintf TameGenus, 1 : "Putting everything together... ";

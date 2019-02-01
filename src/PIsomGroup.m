@@ -7,9 +7,10 @@
 import "GlobalVars.m" : __SANITY_CHECK;
 import "Pfaffian.m" : __Pfaffian_AUT;
 import "Util.m" : __FindPermutation, __PermutationDegreeMatrix, __GetStarAlg, 
-    __WhichMethod, __SmallerGenSet;
+    __WhichMethod, __SmallerGenSet, __Galois_Cent, __RewriteMat, __RewriteAuto;
 import "Flat.m" : __TransformFIPair, __LiftFlatGenus2;
 import "sloped.m" : PseudoIsometryGroupAdjointTensor;
+import "Iso.m" : __IsPseudoSG;
 
 
 __G1_PIsometry := function( B : Print := false )
@@ -243,9 +244,10 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
   require forall{ X : X in Frame(B) | Type(X) eq ModTupFld } : "Domain and codomain must be vector spaces.";
   require B`Valence eq 3 : "Tensor must have valence 3.";
   require IsAlternating(B) : "Tensor must be alternating.";
-  k := BaseRing(B);
-  require ISA(Type(k),FldFin) : "Base ring must be a finite field.";
-  require Characteristic(k) ne 2 : "Must be odd characteristic.";
+  K := BaseRing(B);
+  require ISA(Type(K),FldFin) : "Base ring must be a finite field.";
+  p := Characteristic(K);
+  require p ne 2 : "Must be odd characteristic.";
 
 
   // Step 0: remove the radical.
@@ -255,7 +257,7 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
   Forms := SystemOfForms(B);
   if Dimension(Rad) gt 0 then
     C := Complement(Generic(Rad), Rad);
-    RadPerm := GL(Dimension(B`Domain[1]), k)!Matrix(Basis(C) cat Basis(Rad));
+    RadPerm := GL(Dimension(B`Domain[1]), K)!Matrix(Basis(C) cat Basis(Rad));
     nForms := [ RadPerm*X*Transpose(RadPerm) : X in Forms ];
     nForms := [ ExtractBlock(X, 1, 1, Ncols(Forms[1])-Dimension(Rad), Ncols(Forms[1])-Dimension(Rad)) : X in nForms ];  
     nB := Tensor( nForms, 2, 1 );
@@ -303,32 +305,56 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
 
 
   // Step 3: check if non-trivial centroid.
-  if BaseRing(T) ne BaseRing(B) then
-    printf "WARNING: Full pseudo-isometry group has not been constructed.";
-    printf " The centroid is a proper field extension,";
-    printf " so there are potential Galois actions missing.\n";
+  E := BaseRing(T);
+  if E ne K then
+
+    // Check which Galois automorphisms lift.
+    Cent := Centroid(nB);
+    X := __Galois_Cent(Cent);
+    Gal := sub< GL(Nrows(X), #E) | X >;
+    Gal`FactoredOrder := FactoredOrder(X);
+    Gal`Order := IntegerRing()!LMGFactoredOrder(Gal);
+    DerivedFrom(~Gal, nB, {0..2}, {0, 2});
+    assert forall{C : C in Generators(Cent) | X^-1*C*X in Cent};
+
+    // Running through everything... eventually change so it's smarter.
+    vprintf TameGenus, 1 : "Handling the potential Galois automorphisms.\n";
+    tr := [];
+    dims := [Dimension(U) : U in Frame(T)];
+    for a in [1..Degree(E, K)-1] do
+      S := Tensor(E, dims, [x^(p^a) : x in Eltseq(T)]);
+      check, M := __IsPseudoSG(T, S : Method := 1);
+      if check then
+        Append(~tr, <a, M>);
+      end if;
+    end for;
+    galois_gens := [__RewriteAuto(gamma[2], H, dims[1], dims[3])*X^(gamma[1]) : 
+        gamma in tr];
+
     V := Domain(H.2);
-    IN := [ Matrix([ Eltseq(((V.i@H.2)*X)@@H.2) : i in [1..Dimension(V)] ]) : X in IN ];
+    //IN := [ Matrix([ Eltseq(((V.i@H.2)*X)@@H.2) : i in [1..Dimension(V)] ]) : X in IN ];
+    IN := [__RewriteMat(X, H.2) : X in IN];
     W := Domain(H.0);
-    OUT := [ Matrix([ Eltseq(((W.i@H.0)*X)@@H.0) : i in [1..Dimension(W)] ]) : X in OUT ]; 
+    //OUT := [ Matrix([ Eltseq(((W.i@H.0)*X)@@H.0) : i in [1..Dimension(W)] ]) : X in OUT ]; 
+    OUT := [__RewriteMat(X, H.0) : X in OUT];
   end if;
 
   // Step 4: add pseudo-isometries on radical.
   if Dimension(Rad) gt 0 then
-    Radgens := [ DiagonalJoin(IdentityMatrix(k, Ncols(nForms[1])), x) : x in Generators(GL(Dimension(Rad), k)) ];
+    Radgens := [ DiagonalJoin(IdentityMatrix(K, Ncols(nForms[1])), x) : x in Generators(GL(Dimension(Rad), K)) ];
     Radcentrals := [];
     for i in [1..Ncols(nForms[1])] do
       for j in [1..Dimension(Rad)] do
-        X := IdentityMatrix( k, Ncols(nForms[1]) + Dimension(Rad) );
+        X := IdentityMatrix( K, Ncols(nForms[1]) + Dimension(Rad) );
         X[i][Ncols(nForms[1])+j] := 1;
         Append(~Radcentrals, X);
       end for;
     end for;
-    pseudo_in := [ DiagonalJoin( X, IdentityMatrix( k, Dimension(Rad) ) ) : X in IN ] cat Radgens cat Radcentrals;
-    pseudo_in := [ RadPerm^-1 * pseudo_in[i] * RadPerm : i in [1..#pseudo_in] ];
-    pseudo_out := OUT cat [ IdentityMatrix( k, #Forms ) : i in [1..#Radgens+#Radcentrals] ];
-    ORD *:= FactoredOrderGL(Dimension(Rad), #k);
-    ORD *:= Factorization(#k)^(Dimension(C)*Dimension(Rad));
+    pseudo_in := [DiagonalJoin(X, IdentityMatrix(K, Dimension(Rad))) : X in IN] cat Radgens cat Radcentrals;
+    pseudo_in := [RadPerm^-1 * pseudo_in[i] * RadPerm : i in [1..#pseudo_in]];
+    pseudo_out := OUT cat [IdentityMatrix(K, #Forms) : i in [1..#Radgens+#Radcentrals]];
+    ORD *:= FactoredOrderGL(Dimension(Rad), #K);
+    ORD *:= Factorization(#K)^(Dimension(C)*Dimension(Rad));
   else
     pseudo_in := IN;
     pseudo_out := OUT;
@@ -337,15 +363,16 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
   // Sanity check
   if __SANITY_CHECK then
     Forms := SystemOfForms(B);
+    g := #Forms;
     for i in [1..#pseudo_in] do
      // _ := IsHomotopism(B, B, [* pseudo_in[i], pseudo_in[i], pseudo_out[i] *]);
-      assert [ pseudo_in[i] * Forms[j] * Transpose( pseudo_in[i] ) : j in [1..2] ] eq 
-          [ &+[ pseudo_out[i][y][x]*Forms[y] : y in [1..2] ] : x in [1..2] ];
+      assert [ pseudo_in[i] * Forms[j] * Transpose( pseudo_in[i] ) : j in [1..g] ] eq 
+          [ &+[ pseudo_out[i][y][x]*Forms[y] : y in [1..g] ] : x in [1..g] ];
     end for;
   end if;
 
   // Put the group and relevant attributes together.
-  PIsom := sub< GL( Ncols(Forms[1])+#Forms, k ) | [ DiagonalJoin( pseudo_in[i], pseudo_out[i] ) : i in [1..#pseudo_in] ] >;
+  PIsom := sub< GL(Ncols(Forms[1])+#Forms, K) | [ DiagonalJoin( pseudo_in[i], pseudo_out[i] ) : i in [1..#pseudo_in] ] >;
   DerivedFrom(~PIsom, B, {0..2}, {0, 2});
   PIsom`FactoredOrder := ORD;
   PIsom`Order := Integers()!ORD;
