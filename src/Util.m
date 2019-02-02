@@ -14,9 +14,10 @@ __RewriteMat := function(M, phi)
   return Matrix([Eltseq(((V.i @ phi)*M) @@ phi) : i in [1..Dimension(V)] ]);
 end function;
 
-__RewriteAuto := function(M, H, d, e)
-  return DiagonalJoin(__RewriteMat(ExtractBlock(M, 1, 1, d, d), H.2), 
-      __RewriteMat(ExtractBlock(M, d+1, d+1, e, e), H.0));
+__Galois_Tango := function(X, induce, k, M, H)
+  top := __RewriteMat(M.2, H.2) * (X @ induce[1])^k;
+  bot := __RewriteMat(M.0, H.0) * (X @ induce[2])^k;
+  return DiagonalJoin(top, bot);
 end function;
 
 __galois_generator_irred := function (J)

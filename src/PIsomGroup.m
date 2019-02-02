@@ -7,7 +7,7 @@
 import "GlobalVars.m" : __SANITY_CHECK;
 import "Pfaffian.m" : __Pfaffian_AUT;
 import "Util.m" : __FindPermutation, __PermutationDegreeMatrix, __GetStarAlg, 
-    __WhichMethod, __SmallerGenSet, __Galois_Cent, __RewriteMat, __RewriteAuto;
+    __WhichMethod, __SmallerGenSet, __Galois_Cent, __RewriteMat, __Galois_Tango;
 import "Flat.m" : __TransformFIPair, __LiftFlatGenus2;
 import "sloped.m" : PseudoIsometryGroupAdjointTensor;
 import "Iso.m" : __IsPseudoSG;
@@ -40,11 +40,13 @@ end function;
 /*
 This is the function which combines both Pete's and Josh's code into one function for automorphisms.
 
+Input: a tensor over its centroid and a homotopism H with image t. 
+
 Method: if set to 0, it uses the established cut offs for determining which method to use.
 	If set to 1, then we use the polynomial method, and if set to 2, we use the adjoint tensor method. 
 */
 
-__G2_PIsometry := function( t : Method := 0 )
+__G2_PIsometry := function( t, H : Method := 0 )
 
   k := BaseRing(t);
 
@@ -230,6 +232,57 @@ __G2_PIsometry := function( t : Method := 0 )
     end for;
   end if;
 
+  // Step 3: check if non-trivial centroid.
+  E := BaseRing(t);
+  s := Domain(H);
+  K := BaseRing(s);
+  if #E ne #K then
+
+    // Therefore, H is a nontrivial homotopism from s to t. 
+
+    // Check which Galois automorphisms lift.
+    Cent := Centroid(s);
+    X := __Galois_Cent(Cent);
+    Gal := sub< GL(Nrows(X), #E) | X >;
+    Gal`FactoredOrder := FactoredOrder(X);
+    Gal`Order := IntegerRing()!LMGFactoredOrder(Gal);
+    DerivedFrom(~Gal, s, {0..2}, {0, 2});
+    assert forall{C : C in Generators(Cent) | X^-1*C*X in Cent};
+    pi2 := Induce(Gal, 2);
+    pi0 := Induce(Gal, 0);
+
+    // Running through everything... eventually change so it's smarter.
+    vprintf TameGenus, 1 : "Handling the potential Galois automorphisms.\n";
+    tr := [];
+    dims_t := [Dimension(U) : U in Frame(t)];
+    for a in [1..Degree(E, K)-1] do
+      //S := Tensor(E, dims_t, [x^(p^a) : x in Eltseq(t)], TensorCategory(t));
+
+      Forms_s := [((X @ pi2)^a)*F*Transpose((X @ pi2)^a) : F in SystemOfForms(s)];
+      Forms_s := [&+[((X @ pi0)^(a))[y][x]*Forms_s[y] : y in [1..#Forms_s]] : x in [1..#Forms_s]];
+      s_p := Tensor(Forms_s, 2, 1, TensorCategory(t));
+      s_p := TensorOverCentroid(s_p);
+      //assert exists(k){k : k in E | k*S_p eq S}; // very slow 
+
+      check, M := TGIsPseudoIsometric(s_p, t);
+      if check then
+        Append(~tr, <a, M>);
+      end if;
+    end for;
+    galois_gens := [__Galois_Tango(X, <pi2, pi0>, gamma[1], gamma[2], H) : gamma in tr];
+    vprintf TameGenus, 1 : "Found %o Galois automorphisms.\n", #galois_gens;
+
+    pseudo_in := [__RewriteMat(X, H.2) : X in pseudo_in];
+    pseudo_out := [__RewriteMat(X, H.0) : X in pseudo_out];
+    pseudo_order *:= Factorization(#galois_gens + 1);
+
+    dims_s := [Dimension(X) : X in Frame(s)];
+    pseudo_in cat:= [ExtractBlock(X, 1, 1, dims_s[1], dims_s[1]) : 
+        X in galois_gens];
+    pseudo_out cat:= [ExtractBlock(X, dims_s[1] + 1, dims_s[1] + 1, dims_s[3], 
+        dims_s[3]) : X in galois_gens];
+  end if;
+
 
   return pseudo_in, pseudo_out, isom_order*pseudo_order;
 end function;
@@ -277,6 +330,9 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
     vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
   else
     T := nB;
+    dims_T := [Dimension(X) : X in Frame(T)];
+    H := Homotopism(T, T, [*IdentityMatrix(K, dims_T[1]), 
+        IdentityMatrix(K, dims_T[2]), IdentityMatrix(K, dims_T[3])*]);
   end if;
   // Check genus <= 2.
   require Dimension(T`Codomain) le 2 : "Tensor is not genus 1 or 2.";
@@ -296,48 +352,14 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
       vprintf TameGenus, 1 : "Centroid is not a prime field, applying adjoint-tensor method.\n";
     end if;
 
-    IN, OUT, ORD := __G2_PIsometry( T : Method := Method );
+    IN, OUT, ORD := __G2_PIsometry( T, H : Method := Method );
 
   end if;
+
+
 
   vprintf TameGenus, 1 : "Putting everything together... ";
   tt := Cputime();
-
-
-  // Step 3: check if non-trivial centroid.
-  E := BaseRing(T);
-  if E ne K then
-
-    // Check which Galois automorphisms lift.
-    Cent := Centroid(nB);
-    X := __Galois_Cent(Cent);
-    Gal := sub< GL(Nrows(X), #E) | X >;
-    Gal`FactoredOrder := FactoredOrder(X);
-    Gal`Order := IntegerRing()!LMGFactoredOrder(Gal);
-    DerivedFrom(~Gal, nB, {0..2}, {0, 2});
-    assert forall{C : C in Generators(Cent) | X^-1*C*X in Cent};
-
-    // Running through everything... eventually change so it's smarter.
-    vprintf TameGenus, 1 : "Handling the potential Galois automorphisms.\n";
-    tr := [];
-    dims := [Dimension(U) : U in Frame(T)];
-    for a in [1..Degree(E, K)-1] do
-      S := Tensor(E, dims, [x^(p^a) : x in Eltseq(T)]);
-      check, M := __IsPseudoSG(T, S : Method := 1);
-      if check then
-        Append(~tr, <a, M>);
-      end if;
-    end for;
-    galois_gens := [__RewriteAuto(gamma[2], H, dims[1], dims[3])*X^(gamma[1]) : 
-        gamma in tr];
-
-    V := Domain(H.2);
-    //IN := [ Matrix([ Eltseq(((V.i@H.2)*X)@@H.2) : i in [1..Dimension(V)] ]) : X in IN ];
-    IN := [__RewriteMat(X, H.2) : X in IN];
-    W := Domain(H.0);
-    //OUT := [ Matrix([ Eltseq(((W.i@H.0)*X)@@H.0) : i in [1..Dimension(W)] ]) : X in OUT ]; 
-    OUT := [__RewriteMat(X, H.0) : X in OUT];
-  end if;
 
   // Step 4: add pseudo-isometries on radical.
   if Dimension(Rad) gt 0 then
@@ -366,8 +388,8 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
     g := #Forms;
     for i in [1..#pseudo_in] do
      // _ := IsHomotopism(B, B, [* pseudo_in[i], pseudo_in[i], pseudo_out[i] *]);
-      assert [ pseudo_in[i] * Forms[j] * Transpose( pseudo_in[i] ) : j in [1..g] ] eq 
-          [ &+[ pseudo_out[i][y][x]*Forms[y] : y in [1..g] ] : x in [1..g] ];
+      assert [pseudo_in[i] * Forms[j] * Transpose(pseudo_in[i]) : j in [1..g]] eq 
+          [&+[pseudo_out[i][y][x]*Forms[y] : y in [1..g]] : x in [1..g]];
     end for;
   end if;
 

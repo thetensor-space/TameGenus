@@ -126,7 +126,11 @@ intrinsic TGRandomGroup( q::RngIntElt, n::RngIntElt, g::RngIntElt : Exponentp :=
   require g gt 0 : "Argument 3 must be positive.";
   require Type(Exponentp) eq BoolElt : "Exponentp must be true or false.";
 
-  Forms := __WriteOverPrimeField( [ M - Transpose(M) : M in [RandomMatrix(GF(q),n,n) : i in [1..g]] ] );
+  Forms := __WriteOverPrimeField([M - Transpose(M) : M in [RandomMatrix(GF(q),n,n) : i in [1..g]]]);
+  X := Random(GL(Nrows(Forms[1]), BaseRing(Forms[1])));
+  Z := Random(GL(#Forms, BaseRing(Forms[1])));
+  Forms := [X*F*Transpose(X) : F in Forms];
+  Forms := [&+[Z[i][j]*Forms[i] : i in [1..#Forms]] : j in [1..#Forms]];
   return __FormsToGroup( Forms : ExponentP := Exponentp );
 end intrinsic;
 

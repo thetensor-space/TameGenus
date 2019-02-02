@@ -204,7 +204,7 @@ __IsPseudoSG := function( B, C : Constructive := true, Method := 0 )
   vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
 
   if (not Constructive) or (not isit) then
-    return isit,_; 
+    return isit, _; 
   end if;
 
   X[1] := M2^-1 * DiagonalJoin( T2^-1 * P2^-1 * X[1] * P1 * T1, IdentityMatrix(k, Dimension(R1) ) ) * M1;
@@ -214,7 +214,7 @@ __IsPseudoSG := function( B, C : Constructive := true, Method := 0 )
     assert [ X[1] * F * Transpose(X[1]) : F in SystemOfForms(B) ] eq [ &+[ X[2][j][i]*SystemOfForms(C)[j] : j in [1..2] ] : i in [1..2] ];
   end if;
 
-  return true, DiagonalJoin(X[1],X[2]);
+  return true, <X[1], X[2]>;
 end function;
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -278,28 +278,29 @@ intrinsic TGIsPseudoIsometric( s::TenSpcElt, t::TenSpcElt : Cent := true, Constr
   if Constructive and isit then
     vprintf TameGenus, 1 : "Putting everything together... ";
     tt := Cputime();
-    Y := [* ExtractBlock(X,1,1,Dimension(T`Domain[1]),Dimension(T`Domain[1])), 
-      ExtractBlock(X,1+Dimension(T`Domain[1]),1+Dimension(T`Domain[1]),Dimension(T`Codomain),Dimension(T`Codomain)) *];
-    assert [ Y[1] * F * Transpose(Y[1]) : F in SystemOfForms(T) ] eq [ &+[ Y[2][j][i]*SystemOfForms(S)[j] : j in [1..2] ] : i in [1..2] ];
+    //Y := [* ExtractBlock(X,1,1,Dimension(T`Domain[1]),Dimension(T`Domain[1])), 
+    //  ExtractBlock(X,1+Dimension(T`Domain[1]),1+Dimension(T`Domain[1]),Dimension(T`Codomain),Dimension(T`Codomain)) *];
+    //Y := X;
+    //assert [ Y[1] * F * Transpose(Y[1]) : F in SystemOfForms(S) ] eq [ &+[ Y[2][j][i]*SystemOfForms(T)[j] : j in [1..2] ] : i in [1..2] ];
 
     // if the centroid is an extension of the prime field convert back to prime field
-    if Cent and not IsPrimeField(BaseRing(Y[1])) then
+    if Cent and (#BaseRing(s) ne #BaseRing(S)) then
       V := Domain(Domain(Hmt_T))[1];
       W := Codomain(Domain(Hmt_T));
-      Y1 := Matrix([ ((V.i @ Hmt_T.2)*Y[1])@@Hmt_S.2 : i in [1..Dimension(V)] ])^-1;
-      Y2 := Matrix([ ((W.i @ Hmt_T.0)*Y[2])@@Hmt_S.0 : i in [1..Dimension(W)] ])^-1;
+      Y1 := Matrix([ ((V.i @ Hmt_T.2)*X[1])@@Hmt_S.2 : i in [1..Dimension(V)] ]);
+      Y2 := Matrix([ ((W.i @ Hmt_T.0)*X[2])@@Hmt_S.0 : i in [1..Dimension(W)] ]);
     else
       V := Domain(s)[1];
       W := Codomain(s);
-      Y1 := Y[1]^-1;
-      Y2 := Y[2]^-1;
+      //Y1 := Y[1]^-1;
+      //Y2 := Y[2]^-1;
     end if;
-    H := Homotopism( s, t, [*Y1, Y1, Y2*] );
+    H := Homotopism(s, t, [*X[1], X[1], X[2]*]); // check built in
     vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
     return true, H;
   end if;
 
-  return isit,_;
+  return isit, _;
 end intrinsic;
 
 
