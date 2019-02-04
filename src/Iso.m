@@ -265,6 +265,7 @@ intrinsic TGIsPseudoIsometric( s::TenSpcElt, t::TenSpcElt : Cent := true, Constr
     return false, _;
   end if;
 
+  require #BaseRing(S) eq #BaseRing(s) : "Extension fields not implemented.";
   require Dimension(Codomain(S)) le 2 : "Tensors have genus greater than 2.";
 
   // if Cent is not prime field, do adj-ten method.

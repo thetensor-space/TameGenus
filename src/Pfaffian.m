@@ -291,7 +291,7 @@ __Pfaffian_AUT := function( sB, d : Sanity := false )
 	    P := __PermutationDegreeMatrix( k, [ d[i] : i in [1..#d] ], perm );
 
 	    // Lift the sloped parts
-	    M := IdentityMatrix( GF(p), 0 );
+	    M := IdentityMatrix( k, 0 );
 	    for i in [1..#poly1] do
 		    Lift := __LiftSlopeGenus2( poly2[i], poly1[perm[i]], Z  : Sanity := Sanity );
 		    M := DiagonalJoin( M, DiagonalJoin( Transpose(Lift[1]), Lift[2] ) );

@@ -107,10 +107,11 @@ The first entry is the sequence of flat dimensions, and the second entry is the 
   require Type(K) ne BoolElt : "Forms must be defined over the same field.";
   require ISA(Type(K), FldFin) : "Field must be finite.";
   if Cent then
-    t := TensorOverCentroid(t);
+    s := TensorOverCentroid(t);
   end if;
-  require Dimension(t`Codomain) eq 2 : "Not a genus 2 tensor.";
-  return __GetGenus2Signature(t);
+  require #BaseRing(s) eq #BaseRing(t) : "Extension fields not implemented.";
+  require Dimension(s`Codomain) eq 2 : "Not a genus 2 tensor.";
+  return __GetGenus2Signature(s);
 end intrinsic;
 
 intrinsic Genus2Signature( S::[Mtrx] : Cent := true ) -> List

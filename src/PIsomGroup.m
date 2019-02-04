@@ -243,11 +243,11 @@ __G2_PIsometry := function( t, H : Method := 0 )
     // Check which Galois automorphisms lift.
     Cent := Centroid(s);
     X := __Galois_Cent(Cent);
-    Gal := sub< GL(Nrows(X), #E) | X >;
+    Gal := sub< GL(Nrows(X), BaseRing(X)) | X >;
     Gal`FactoredOrder := FactoredOrder(X);
     Gal`Order := IntegerRing()!LMGFactoredOrder(Gal);
     DerivedFrom(~Gal, s, {0..2}, {0, 2});
-    assert forall{C : C in Generators(Cent) | X^-1*C*X in Cent};
+    //assert forall{C : C in Generators(Cent) | X^-1*C*X in Cent};
     pi2 := Induce(Gal, 2);
     pi0 := Induce(Gal, 0);
 
@@ -255,14 +255,20 @@ __G2_PIsometry := function( t, H : Method := 0 )
     vprintf TameGenus, 1 : "Handling the potential Galois automorphisms.\n";
     tr := [];
     dims_t := [Dimension(U) : U in Frame(t)];
+    p := Characteristic(K);
     for a in [1..Degree(E, K)-1] do
-      //S := Tensor(E, dims_t, [x^(p^a) : x in Eltseq(t)], TensorCategory(t));
-
+      S := Tensor(E, dims_t, [x^(p^a) : x in Eltseq(t)], TensorCategory(t));
+      print "Building...";
       Forms_s := [((X @ pi2)^a)*F*Transpose((X @ pi2)^a) : F in SystemOfForms(s)];
-      Forms_s := [&+[((X @ pi0)^(a))[y][x]*Forms_s[y] : y in [1..#Forms_s]] : x in [1..#Forms_s]];
+      Forms_s := [&+[((X @ pi0)^(-a))[y][x]*Forms_s[y] : y in [1..#Forms_s]] : x in [1..#Forms_s]];
+      print "tensors";
       s_p := Tensor(Forms_s, 2, 1, TensorCategory(t));
+      print "TnOvCn";
       s_p := TensorOverCentroid(s_p);
-      //assert exists(k){k : k in E | k*S_p eq S}; // very slow 
+      
+      /*print "TESTING...";
+      assert exists{k : k in E | k*s_p eq S}; // very slow 
+      print "DONE.";*/
 
       check, M := TGIsPseudoIsometric(s_p, t);
       if check then
@@ -281,6 +287,7 @@ __G2_PIsometry := function( t, H : Method := 0 )
         X in galois_gens];
     pseudo_out cat:= [ExtractBlock(X, dims_s[1] + 1, dims_s[1] + 1, dims_s[3], 
         dims_s[3]) : X in galois_gens];
+
   end if;
 
 
@@ -327,6 +334,7 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
     vprintf TameGenus, 1 : "Rewriting tensor over its centroid... ";
     tt := Cputime();
     T, H := TensorOverCentroid(nB);
+    require #BaseRing(T) eq #BaseRing(B) : "Extension fields not implemented.";
     vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
   else
     T := nB;
@@ -334,6 +342,7 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
     H := Homotopism(T, T, [*IdentityMatrix(K, dims_T[1]), 
         IdentityMatrix(K, dims_T[2]), IdentityMatrix(K, dims_T[3])*]);
   end if;
+
   // Check genus <= 2.
   require Dimension(T`Codomain) le 2 : "Tensor is not genus 1 or 2.";
 
@@ -346,16 +355,9 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
 
   else
 
-    // if Cent is not prime field, do adj-ten method.
-    if not IsPrimeField(BaseRing(T)) then
-      Method := 1; 
-      vprintf TameGenus, 1 : "Centroid is not a prime field, applying adjoint-tensor method.\n";
-    end if;
-
     IN, OUT, ORD := __G2_PIsometry( T, H : Method := Method );
 
   end if;
-
 
 
   vprintf TameGenus, 1 : "Putting everything together... ";
