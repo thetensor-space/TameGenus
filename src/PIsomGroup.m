@@ -298,14 +298,17 @@ end function;
 //                                  Intrinsics
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-intrinsic TGPseudoIsometryGroup( B::TenSpcElt : Cent := true, Method := 0 ) -> GrpMat
+intrinsic TGPseudoIsometryGroup( t::TenSpcElt : Cent := true, Method := 0 ) -> 
+    GrpMat
 {Construct the pseudo-isometry group for an alternating bimap of genus 1 or 2. 
-To use a specific method for genus 2, set Method to 1 for adjoint-tensor method or 2 for Pfaffian method.}
-  require forall{ X : X in Frame(B) | Type(X) eq ModTupFld } : "Domain and codomain must be vector spaces.";
-  require B`Valence eq 3 : "Tensor must have valence 3.";
-  require IsAlternating(B) : "Tensor must be alternating.";
-  K := BaseRing(B);
-  require ISA(Type(K),FldFin) : "Base ring must be a finite field.";
+To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
+or 2 for Pfaffian method.}
+  require forall{ X : X in Frame(t) | Type(X) eq ModTupFld } : 
+      "Domain and codomain must be vector spaces.";
+  require Valence(t) eq 3 : "Tensor must have valence 3.";
+  require IsAlternating(t) : "Tensor must be alternating.";
+  K := BaseRing(t);
+  require ISA(Type(K), FldFin) : "Base ring must be a finite field.";
   p := Characteristic(K);
   require p ne 2 : "Must be odd characteristic.";
 
@@ -313,18 +316,21 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
   // Step 0: remove the radical.
   vprintf TameGenus, 1 : "Removing the radical... ";
   tt := Cputime();
-  Rad := Radical(B, 2);
-  Forms := SystemOfForms(B);
+  Rad := Radical(t, 2);
+  Forms := SystemOfForms(t);
+
   if Dimension(Rad) gt 0 then
     C := Complement(Generic(Rad), Rad);
-    RadPerm := GL(Dimension(B`Domain[1]), K)!Matrix(Basis(C) cat Basis(Rad));
-    nForms := [ RadPerm*X*Transpose(RadPerm) : X in Forms ];
-    nForms := [ ExtractBlock(X, 1, 1, Ncols(Forms[1])-Dimension(Rad), Ncols(Forms[1])-Dimension(Rad)) : X in nForms ];  
-    nB := Tensor( nForms, 2, 1 );
+    RadPerm := GL(Dimension(Domain(t)[1]), K)!Matrix(Basis(C) cat Basis(Rad));
+    nForms := [RadPerm*X*Transpose(RadPerm) : X in Forms];
+    nForms := [ExtractBlock(X, 1, 1, Ncols(Forms[1])-Dimension(Rad), 
+        Ncols(Forms[1])-Dimension(Rad)) : X in nForms];  
+    t_nondeg := Tensor(nForms, 2, 1);
   else
     nForms := Forms;
-    nB := B;
+    t_nondeg := t;
   end if; 
+
   timing := Cputime(tt);
   vprintf TameGenus, 1 : "%o seconds.\n", timing;
 
@@ -333,50 +339,56 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
   if Cent then
     vprintf TameGenus, 1 : "Rewriting tensor over its centroid... ";
     tt := Cputime();
-    T, H := TensorOverCentroid(nB);
-    require #BaseRing(T) eq #BaseRing(B) : "Extension fields not implemented.";
+    T, H := TensorOverCentroid(t_nondeg);
+    require #BaseRing(T) eq #BaseRing(t) : "Extension fields not implemented.";
     vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
   else
-    T := nB;
+    T := t_nondeg;
     dims_T := [Dimension(X) : X in Frame(T)];
     H := Homotopism(T, T, [*IdentityMatrix(K, dims_T[1]), 
         IdentityMatrix(K, dims_T[2]), IdentityMatrix(K, dims_T[3])*]);
   end if;
 
   // Check genus <= 2.
-  require Dimension(T`Codomain) le 2 : "Tensor is not genus 1 or 2.";
+  require Dimension(Codomain(T)) le 2 : "Tensor is not genus 1 or 2.";
 
 
   // Step 2: Construct pseudo-isometry group
-  if Dimension(T`Codomain) eq 1 then
+  if Dimension(Codomain(T)) eq 1 then
 
     // if genus 1, do a simpler algorithm.
     IN, OUT, ORD := __G1_PIsometry(T);
+    // IS THIS ACTUALLY THE FULL GROUP???  --JM 
 
   else
 
-    IN, OUT, ORD := __G2_PIsometry( T, H : Method := Method );
+    IN, OUT, ORD := __G2_PIsometry(T, H : Method := Method);
 
   end if;
+
 
 
   vprintf TameGenus, 1 : "Putting everything together... ";
   tt := Cputime();
 
+
   // Step 4: add pseudo-isometries on radical.
   if Dimension(Rad) gt 0 then
-    Radgens := [ DiagonalJoin(IdentityMatrix(K, Ncols(nForms[1])), x) : x in Generators(GL(Dimension(Rad), K)) ];
+    Radgens := [DiagonalJoin(IdentityMatrix(K, Ncols(nForms[1])), x) : 
+        x in Generators(GL(Dimension(Rad), K))];
     Radcentrals := [];
     for i in [1..Ncols(nForms[1])] do
       for j in [1..Dimension(Rad)] do
-        X := IdentityMatrix( K, Ncols(nForms[1]) + Dimension(Rad) );
+        X := IdentityMatrix(K, Ncols(nForms[1]) + Dimension(Rad));
         X[i][Ncols(nForms[1])+j] := 1;
         Append(~Radcentrals, X);
       end for;
     end for;
-    pseudo_in := [DiagonalJoin(X, IdentityMatrix(K, Dimension(Rad))) : X in IN] cat Radgens cat Radcentrals;
+    pseudo_in := [DiagonalJoin(X, IdentityMatrix(K, Dimension(Rad))) : X in IN] 
+        cat Radgens cat Radcentrals;
     pseudo_in := [RadPerm^-1 * pseudo_in[i] * RadPerm : i in [1..#pseudo_in]];
-    pseudo_out := OUT cat [IdentityMatrix(K, #Forms) : i in [1..#Radgens+#Radcentrals]];
+    pseudo_out := OUT cat [IdentityMatrix(K, #Forms) : 
+        i in [1..#Radgens+#Radcentrals]];
     ORD *:= FactoredOrderGL(Dimension(Rad), #K);
     ORD *:= Factorization(#K)^(Dimension(C)*Dimension(Rad));
   else
@@ -386,18 +398,20 @@ To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
 
   // Sanity check
   if __SANITY_CHECK then
-    Forms := SystemOfForms(B);
+    Forms := SystemOfForms(t);
     g := #Forms;
     for i in [1..#pseudo_in] do
-     // _ := IsHomotopism(B, B, [* pseudo_in[i], pseudo_in[i], pseudo_out[i] *]);
-      assert [pseudo_in[i] * Forms[j] * Transpose(pseudo_in[i]) : j in [1..g]] eq 
-          [&+[pseudo_out[i][y][x]*Forms[y] : y in [1..g]] : x in [1..g]];
+      assert IsHomotopism(B, B, [* pseudo_in[i], pseudo_in[i], pseudo_out[i] *],
+          HomotopismCategory(3));
+      //assert [pseudo_in[i] * Forms[j] * Transpose(pseudo_in[i]) : j in [1..g]] eq 
+      //    [&+[pseudo_out[i][y][x]*Forms[y] : y in [1..g]] : x in [1..g]];
     end for;
   end if;
 
   // Put the group and relevant attributes together.
-  PIsom := sub< GL(Ncols(Forms[1])+#Forms, K) | [ DiagonalJoin( pseudo_in[i], pseudo_out[i] ) : i in [1..#pseudo_in] ] >;
-  DerivedFrom(~PIsom, B, {0..2}, {0, 2});
+  PIsom := sub< GL(Ncols(Forms[1])+#Forms, K) | [DiagonalJoin(pseudo_in[i], 
+      pseudo_out[i]) : i in [1..#pseudo_in]] >;
+  DerivedFrom(~PIsom, t, {0..2}, {0, 2});
   PIsom`FactoredOrder := ORD;
   PIsom`Order := Integers()!ORD;
 
