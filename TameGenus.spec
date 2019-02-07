@@ -16,6 +16,6 @@
   	pseudo.m
   	PIsomGroup.m
   	Constructors.m
-  	Basics.m
+    Signatures.m
 	}
 }

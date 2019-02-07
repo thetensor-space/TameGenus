@@ -96,7 +96,9 @@ __Galois_Cent := function(C)
 end function;
 
 
-// Input: DiagonalJoin(X, Y) generates PIsom/Isom.
+// Input: A pair of sequences of mats such that DiagonalJoin(X, Y) generates 
+// PIsom/Isom.
+// Returns a potentially smaller subsequence of X and Y, along with the order.
 __SmallerGenSet := function(X, Y)
   assert #X eq #Y;
   K := BaseRing(X[1]);

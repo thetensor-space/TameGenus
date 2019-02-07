@@ -18,57 +18,64 @@ __GetGenus2Signature := function( t )
   sorted_dims := flats cat sloped;
   P := __PermutationDegreeMatrix( k, dims, __FindPermutation( sorted_dims, dims ) );
   bForms := [ P*T*F*Transpose(P*T) : F in SystemOfForms(t) ];
-  start := &+(flats cat [0]) + 1;
-  R := PolynomialRing( k, 2 );
-  polys := {@@};
-  for d in sloped do
-    X := ExtractBlock( bForms[1], start, start + d div 2, d div 2, d div 2);
-    Y := ExtractBlock( bForms[2], start, start + d div 2, d div 2, d div 2);
-    start +:= d;
-    det := R!Determinant( X*R.1 + Y*R.2 );
-    Include(~polys, (Coefficients(det)[1])^-1 * det);
-  end for;
 
-  //Needed for PGL
-  cleartop := function( X, k )
-    if X[1][1] ne 0 then
-      X := X[1][1]^-1 * MatrixAlgebra( k, 2 )!X;
-    else
-      X := X[1][2]^-1 * MatrixAlgebra( k, 2 )!X;
-    end if;
-    return X;
-  end function;
-  act := OrbitAction( GL(2,k), LineOrbits(GL(2,k))[1][1] ); // The action GL on the line (1,0)
-  Perms := Image( act ); // PGL(2,k)
+  if #sloped gt 0 then
 
-  // Get canonical Pfaffian.
-  pfaff_orbits := {@ polys @};
-  for Z in Perms do
-    X := cleartop(Z @@ act, k);
-    polys_new := {@@};
-    for f in polys do
-      Include(~polys_new, __GL2ActionOnPolynomial(f, X));
+    start := &+(flats cat [0]) + 1;
+    R := PolynomialRing( k, 2 );
+    polys := {@@};
+    for d in sloped do
+      X := ExtractBlock( bForms[1], start, start + d div 2, d div 2, d div 2);
+      Y := ExtractBlock( bForms[2], start, start + d div 2, d div 2, d div 2);
+      start +:= d;
+      det := R!Determinant( X*R.1 + Y*R.2 );
+      Include(~polys, (Coefficients(det)[1])^-1 * det);
     end for;
-    Include(~pfaff_orbits, polys_new);
-  end for;
-  pfaff_prod := {@ &*(P) : P in pfaff_orbits @};
-  ind := Index(pfaff_prod, Minimum(pfaff_prod)); // internal Magma ordering on K[x,y].
-  can_polys := [f : f in pfaff_orbits[ind]];
 
-  // Polynomials are annoying to compare in Magma. 
-  // Here's the (possibly temporary) fix.
-  terms := [* [ 0 : i in [0..Degree(f)] ] : f in can_polys *];
-  for i in [1..#can_polys] do
-    f := can_polys[i];
-    T := Terms(f); // sorted via lex
-    C := Coefficients(f);
-    d := Degree(f);
-    assert #T eq #C;
-    T := [ C[i]^-1*T[i] : i in [1..#T] ];
-    for j in [1..#T] do
-      terms[i][Degree(T[j],2)+1] +:= C[j];
+    //Needed for PGL
+    cleartop := function( X, k )
+      if X[1][1] ne 0 then
+        X := X[1][1]^-1 * MatrixAlgebra( k, 2 )!X;
+      else
+        X := X[1][2]^-1 * MatrixAlgebra( k, 2 )!X;
+      end if;
+      return X;
+    end function;
+    act := OrbitAction( GL(2,k), LineOrbits(GL(2,k))[1][1] ); // The action GL on the line (1,0)
+    Perms := Image( act ); // PGL(2,k)
+
+    // Get canonical Pfaffian.
+    pfaff_orbits := {@ polys @};
+    for Z in Perms do
+      X := cleartop(Z @@ act, k);
+      polys_new := {@@};
+      for f in polys do
+        Include(~polys_new, __GL2ActionOnPolynomial(f, X));
+      end for;
+      Include(~pfaff_orbits, polys_new);
     end for;
-  end for;
+    pfaff_prod := {@ &*(P) : P in pfaff_orbits @};
+    ind := Index(pfaff_prod, Minimum(pfaff_prod)); // internal Magma ordering on K[x,y].
+    can_polys := [f : f in pfaff_orbits[ind]];
+
+    // Polynomials are annoying to compare in Magma. 
+    // Here's the (possibly temporary) fix.
+    terms := [* [ 0 : i in [0..Degree(f)] ] : f in can_polys *];
+    for i in [1..#can_polys] do
+      f := can_polys[i];
+      T := Terms(f); // sorted via lex
+      C := Coefficients(f);
+      d := Degree(f);
+      assert #T eq #C;
+      T := [ C[i]^-1*T[i] : i in [1..#T] ];
+      for j in [1..#T] do
+        terms[i][Degree(T[j],2)+1] +:= C[j];
+      end for;
+    end for;
+
+  else
+    terms := [**];
+  end if;
 
   return [* flats, terms *];
 end function;
