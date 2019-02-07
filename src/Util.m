@@ -213,6 +213,56 @@ return p;
 end function;
 
 /*
+  Given a genus 2 tensor t, return the two subtensors t_flat and t_sloped, a 
+  homotopism from t to t_flat perp t_sloped, and two sequences of the dimensions
+  of the flat and sloped blocks.
+*/
+__Get_Flat_and_Sloped := function(t) 
+  K := BaseRing(t);
+
+	// Compute a perp-decomposition
+	T, dims := PerpDecomposition(t);
+
+  // Organize t into two subtensors
+  flatdims := [ d : d in dims | IsOdd(d) ];
+  slopeddims := [ d : d in dims | IsEven(d) ];
+  Sort(~flatdims);
+  Sort(~slopeddims);
+  dims_sorted := flatdims cat slopeddims;
+  P := __PermutationDegreeMatrix(K, dims, __FindPermutation(dims_sorted, dims)); 
+
+  // To resolve some bugs about empty sequences:
+  if flatdims eq [] then Append(~flatdims, 0); end if; 
+  if slopeddims eq [] then Append(~slopeddims, 0); end if;
+  
+  // Construct the homotopism H from t to s:
+  //    t : V x V >-> W
+  //        ^   ^     |
+  //        |   |     v
+  //    s : V x V >-> W
+  Antichmtp := TensorCategory([-1, -1, 1], {{0}, {1, 2}});
+  H := Homotopism([*P*T, P*T, IdentityMatrix(K, 2)*], Antichmtp);
+  s := t @ H;
+
+  // Extract the two subtensors
+  Flat := [ExtractBlock(X, 1, 1, &+flatdims, &+flatdims) : 
+      X in SystemOfForms(s)];
+  Sloped := [ExtractBlock(X, &+flatdims+ 1, &+flatdims + 1, &+slopeddims, 
+      &+slopeddims) : X in SystemOfForms(s)];
+  
+  t_flat := Tensor(Flat, 2, 1, TensorCategory(t));
+  t_sloped := Tensor(Sloped, 2, 1, TensorCategory(t));
+
+  // Undo that change
+  if flatdims eq [0] then flatdims := []; end if; 
+  if slopeddims eq [0] then slopeddims := []; end if;
+
+  return t_flat, t_sloped, H, flatdims, slopeddims;
+end function;
+
+
+
+/*
 Input a polynomial f in k[x], and 
 returns the homogenization of f in k[x,y].
 */
