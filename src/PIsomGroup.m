@@ -7,7 +7,8 @@
 import "GlobalVars.m" : __SANITY_CHECK;
 import "Pfaffian.m" : __Pfaffian_AUT;
 import "Util.m" : __FindPermutation, __PermutationDegreeMatrix, __GetStarAlg, 
-    __WhichMethod, __SmallerGenSet, __Galois_Cent, __RewriteMat, __Galois_Tango;
+    __WhichMethod, __SmallerGenSet, __Galois_Cent, __RewriteMat, __Galois_Tango,
+    __Get_Flat_and_Sloped;
 import "Flat.m" : __TransformFIPair, __LiftFlatGenus2;
 import "sloped.m" : PseudoIsometryGroupAdjointTensor;
 import "Iso.m" : __IsPseudoSG;
@@ -57,57 +58,30 @@ __G2_PIsometry := function( t, H : Method := 0 )
   timing := Cputime(tt);
   vprintf TameGenus, 1 : " %o seconds.\n", timing;
 
-
-	// Step 2a: Get a perp-decomposition and organize blocks.
+  // Break off the flat and sloped subtensors of t 
   vprintf TameGenus, 1 : "Computing perp-decomposition...";
-  tt := Cputime();
-	T, dims := PerpDecomposition(t);
+  tt := Cputime(); 
+  t_flat, t_slope, F, f_dims, s_dims := __Get_Flat_and_Sloped(t);
   timing := Cputime(tt);
   vprintf TameGenus, 1 : " %o seconds.\n", timing;
 
 
-  // Step 2b: Organize t into two subtensors
-  flatdims := [ d : d in dims | IsOdd(d) ];
-  slopeddims := [ d : d in dims | IsEven(d) ];
-  Sort(~flatdims);
-  Sort(~slopeddims);
-  dims_sorted := flatdims cat slopeddims;
-  P := __PermutationDegreeMatrix(k, dims, __FindPermutation(dims_sorted, dims)); 
-
   vprintf TameGenus, 1 : "%o sloped blocks and %o flat blocks.\nDims: %o\n", 
-      #slopeddims, #flatdims, dims_sorted;
-
-  // To resolve some bugs about empty sequences:
-  if flatdims eq [] then Append(~flatdims, 0); end if; 
-  if slopeddims eq [] then Append(~slopeddims, 0); end if;
-  // Extract the two subtensors. We will leave them as system of forms for now
-  //H := Homotopism([*P*T, P*T, IdentityMatrix(k, 2)*], 
-  //    CohomotopismCategory(3));
-  //s := t @ H;
-  t_PT := [P*T*X*Transpose(P*T) : X in SystemOfForms(t)];
-  Flat := [ExtractBlock(X, 1, 1, &+flatdims, &+flatdims) : X in t_PT];
-  Sloped := [ExtractBlock(X, &+flatdims+ 1, &+flatdims + 1, &+slopeddims, 
-      &+slopeddims) : X in t_PT];
+      #s_dims, #f_dims, s_dims cat f_dims;
 
 
   // Step 3: Lift the sloped
-  if &+slopeddims gt 0 then
-
-    // Construct the sloped subtensor from forms. 
-    // Before we had a shortcut to get Adj_sloped from Adj coming from 
-    // __GetStarAlg. Is this correct? 
-    sloped_t := Tensor(Sloped, 2, 1);
-    //sloped_t`Adjoint := __GetStarAlg(A, P*T, 1 + &+flatdims, &+slopeddims);
+  if #s_dims gt 0 then
 
     // determine which method to use
-    adjten := __WhichMethod(Method, #k, slopeddims);
+    adjten := __WhichMethod(Method, #k, s_dims);
     tt := Cputime();
 
     if adjten then
 
       // Adjoint-tensor method
       vprintf TameGenus, 1 : "Adjoint-tensor method...";
-		  inner_s, outer := PseudoIsometryGroupAdjointTensor(sloped_t);
+		  inner_s, outer := PseudoIsometryGroupAdjointTensor(t_slope);
       // Requires this little transpose fix
       outer := [Transpose(outer[k]) : k in [1..#outer]];
 
@@ -115,7 +89,7 @@ __G2_PIsometry := function( t, H : Method := 0 )
 
       // Pfaffian method
       vprintf TameGenus, 1 : "Pfaffian method...";
-      inner_s, outer := __Pfaffian_AUT(sloped_t, slopeddims);
+      inner_s, outer := __Pfaffian_AUT(t_slope, s_dims);
 
     end if;
 
@@ -123,7 +97,7 @@ __G2_PIsometry := function( t, H : Method := 0 )
     // Seems like LMG might handle it just fine. 
     // We can come back if we need. --JM (30.01.2019)
     inner_s, outer, pseudo_order := __SmallerGenSet(inner_s, outer);
-    assert pseudo_order eq LMGFactoredOrder(sub<GL(2, k) | outer>);
+    //assert pseudo_order eq LMGFactoredOrder(sub<GL(2, k) | outer>);
     timing := Cputime(tt);
     vprintf TameGenus, 1 : " %o seconds.\n", timing;
 
@@ -137,20 +111,17 @@ __G2_PIsometry := function( t, H : Method := 0 )
 
 
 	// Step 4: Lift the flat blocks
-  if &+flatdims gt 0 then
+  if #f_dims gt 0 then
 
     // In this case, there is a non-trivial flat block
-    flat_t := Tensor(Flat, 2, 1);
-    //flat_t`Adjoint := __GetStarAlg(A, P*T, 1, &+flatdims);
     i := 1;
     S := IdentityMatrix(k, 0);
+    Flat := SystemOfForms(t_flat);
 
     // We decompose Flat (the flat system of forms) into indecomposable forms. 
-    for d in flatdims do
+    for d in f_dims do
       Flat_ind := [ExtractBlock(Flat[j], i, i, d, d) : j in [1..2]];
       flat_ind_t := Tensor(Flat_ind, 2, 1);
-      //flat_ind_t`Adjoint := __GetStarAlg(AdjointAlgebra(flat_t), 
-      //    IdentityMatrix(k, &+flatdims), i, d);
       S := DiagonalJoin(S, __TransformFIPair(flat_ind_t));
       i +:= d;
     end for;
