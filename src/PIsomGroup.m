@@ -183,14 +183,8 @@ __G2_PIsometry := function( t, H : Method := 0 )
 
   // Sanity check 
   if __SANITY_CHECK then
-    Cat := HomotopismCategory(3);
-    for i in [1..#inner] do
-      // Old code:
-      Forms := SystemOfForms(t);
-      assert [inner[i] * Forms[j] * Transpose(inner[i]) : j in [1..2]] eq 
-          [&+[outer[i][y][x]*Forms[y] : y in [1..2]] : x in [1..2]];
-      //assert IsHomotopism(t, t, [*inner[i], inner[i], outer[i]*], Cat);
-    end for; 
+    assert forall{i : i in [1..#inner] | IsHomotopism(t, t, [*inner[i], 
+        inner[i], outer[i]*], HomotopismCategory(3))};
   end if;
 	
 
@@ -203,16 +197,13 @@ __G2_PIsometry := function( t, H : Method := 0 )
   timing := Cputime(tt);
   vprintf TameGenus, 1 : " %o seconds.\n", timing;
   isom_order := FactoredOrder(isom); // Isometry group already stores this.
-  assert isom_order eq LMGFactoredOrder(sub< Generic(isom) | Generators(isom) >);
+  //assert isom_order eq LMGFactoredOrder(sub< Generic(isom) | Generators(isom) >);
 
   // Sanity check on isometry group
   if __SANITY_CHECK then
-    for i in [1..Ngens(isom)] do
-      // Old code:
-      Forms := SystemOfForms(t);
-      assert [ isom.i * Forms[j] * Transpose( isom.i ) : j in [1..2] ] eq Forms;
-      //assert IsHomotopism(t, t, [*isom.i, isom.i, IdentityMatrix(k, 2)*], Cat);
-    end for; 
+    I2 := IdentityMatrix(k, 2);
+    assert forall{I : I in Generators(isom) | IsHomotopism(t, t, [*I, I, 
+        I2*], HomotopismCategory(3))};
   end if;
 
   // Step 6: Combine everything from steps 3 - 5.
@@ -222,14 +213,8 @@ __G2_PIsometry := function( t, H : Method := 0 )
 
   // Sanity check
   if __SANITY_CHECK then
-    Forms := SystemOfForms(t);
-    for i in [1..#pseudo_in] do
-      // Old code:
-      assert [ pseudo_in[i] * Forms[j] * Transpose( pseudo_in[i] ) : j in [1..2] ] eq 
-          [ &+[ pseudo_out[i][y][x]*Forms[y] : y in [1..2] ] : x in [1..2] ];
-      //assert IsHomotopism(t, t, [*pseudo_in[i], pseudo_in[i], 
-      //    pseudo_out[i]*], Cat);
-    end for;
+    assert forall{i : i in [1..#pseudo_in] | IsHomotopism(t, t, [*pseudo_in[i],
+        pseudo_in[i], pseudo_out[i]*], HomotopismCategory(3))};
   end if;
 
   // Step 3: check if non-trivial centroid.
@@ -367,7 +352,6 @@ or 2 for Pfaffian method.}
   end if;
 
 
-
   vprintf TameGenus, 1 : "Putting everything together... ";
   tt := Cputime();
 
@@ -398,14 +382,8 @@ or 2 for Pfaffian method.}
 
   // Sanity check
   if __SANITY_CHECK then
-    Forms := SystemOfForms(t);
-    g := #Forms;
-    for i in [1..#pseudo_in] do
-      assert IsHomotopism(B, B, [* pseudo_in[i], pseudo_in[i], pseudo_out[i] *],
-          HomotopismCategory(3));
-      //assert [pseudo_in[i] * Forms[j] * Transpose(pseudo_in[i]) : j in [1..g]] eq 
-      //    [&+[pseudo_out[i][y][x]*Forms[y] : y in [1..g]] : x in [1..g]];
-    end for;
+    assert forall{i : i in [1..#pseudo_in] | IsHomotopism(t, t, [*pseudo_in[i],
+        pseudo_in[i], pseudo_out[i]*], HomotopismCategory(3))};
   end if;
 
   // Put the group and relevant attributes together.

@@ -78,14 +78,14 @@ end function;
 //                                  Intrinsics
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 intrinsic Genus( t::TenSpcElt ) -> RngIntElt
-{Computes the genus of a tensor t.}
+{Computes the genus of the associated fully nondegenerate tensor of t.}
   try 
     _ := Eltseq(t);
   catch err
     error "Cannot compute structure constants.";
   end try;
-  t := TensorOverCentroid(t);
-	return Dimension(t`Codomain);
+  s := TensorOverCentroid(FullyNondegenerateTensor(t));
+	return Dimension(Codomain(s));
 end intrinsic;
 
 intrinsic Genus( G::GrpPC ) -> RngIntElt
@@ -98,30 +98,37 @@ intrinsic Genus( G::GrpPC ) -> RngIntElt
 end intrinsic;
 
 intrinsic Genus2Signature( t::TenSpcElt : Cent := true ) -> List
-{Returns the canonical genus 2 signature.
-The first entry is the sequence of flat dimensions, and the second entry is the list of coefficients for the Pfaffians.}
+{Returns the canonical genus 2 signature. The first entry are the dimensions of 
+the radical and co-radical, the second entry is the sequence of flat dimensions, 
+and the third entry is the list of coefficients for the Pfaffians.}
   require Type(Cent) eq BoolElt : "`Cent' must be true or false.";
-  require forall{ X : X in t`Domain cat [*t`Codomain*] | Type(X) eq ModTupFld } : "Domain and codomain must be vector spaces.";
+  require forall{X : X in t`Domain cat [*t`Codomain*] | Type(X) eq ModTupFld} : 
+      "Domain and codomain must be vector spaces.";
   require IsAlternating(t) : "Forms must be alternating.";
   K := BaseRing(t);
   require Type(K) ne BoolElt : "Forms must be defined over the same field.";
   require ISA(Type(K), FldFin) : "Field must be finite.";
+  t_nondeg := FullyNondegenerateTensor(t);
   if Cent then
-    s := TensorOverCentroid(t);
+    s := TensorOverCentroid(t_nondeg);
   end if;
   require #BaseRing(s) eq #BaseRing(t) : "Extension fields not implemented.";
-  require Dimension(s`Codomain) eq 2 : "Not a genus 2 tensor.";
-  return __GetGenus2Signature(s);
+  require Dimension(Codomain(s)) eq 2 : "Not a genus 2 tensor.";
+  return [*<Dimension(Radical(t, 2)), Dimension(Coradical(t))> *] cat
+      __GetGenus2Signature(s);
 end intrinsic;
 
 intrinsic Genus2Signature( S::[Mtrx] : Cent := true ) -> List
-{Returns the canonical genus 2 signature.
-The first entry is the sequence of flat dimensions, and the second entry is the list of coefficients for the Pfaffians.}
+{Returns the canonical genus 2 signature. The first entry are the dimensions of 
+the radical and co-radical, the second entry is the sequence of flat dimensions, 
+and the third entry is the list of coefficients for the Pfaffians.}
   return Genus2Signature(Tensor(S, 2, 1) : Cent := Cent);
 end intrinsic;
 
 intrinsic Genus2Signature( G::GrpPC : Cent := true ) -> List
-{Returns the canonical genus 2 signature.
-The first entry is the sequence of flat dimensions, and the second entry is the list of coefficients for the Pfaffians.}
+{Returns the canonical genus 2 signature. The first entry are the ranks of the 
+center over the Frattini subgroup and the Frattini subgroup over the commutator
+subgroup, the second entry is the sequence of flat dimensions, 
+and the third entry is the list of coefficients for the Pfaffians.}
   return Genus2Signature(pCentralTensor(G, 1, 1) : Cent := Cent);
 end intrinsic;
