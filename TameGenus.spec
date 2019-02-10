@@ -17,5 +17,6 @@
   	PIsomGroup.m
   	Constructors.m
     Signatures.m
+    Semilinear.m
 	}
 }
