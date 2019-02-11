@@ -4,7 +4,7 @@
 */
 
 
-__VERSION := "1.2";
+__VERSION := "1.3";
 __SANITY_CHECK := true;
 
-declare verbose TameGenus, 1;
+declare verbose TameGenus, 2;

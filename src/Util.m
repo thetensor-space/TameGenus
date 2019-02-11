@@ -7,6 +7,17 @@
 import "GlobalVars.m" : __VERSION, __SANITY_CHECK;
 
 
+// A function to convert factored orders into a string parsable by humans.
+__Display_order := function(N)
+  if #N eq 0 then 
+    return "1"; 
+  end if;
+  str := "";
+  for t in N do
+    str cat:= Sprintf("%o^%o * ", t[1], t[2]);
+  end for;
+  return str[1..#str-3];
+end function;
 
 // Input: A pair of sequences of mats such that DiagonalJoin(X, Y) generates 
 // PIsom/Isom.
@@ -302,12 +313,15 @@ end function;
 // m : method, q : size of field, d : dims
 __WhichMethod := function(m, q, d)
   if m eq 1 then
+    vprintf TameGenus, 1 : "\nMethod set to adjoint-tensor.\n";
     return true;
   end if;
   if m eq 2 then
+    vprintf TameGenus, 1 : "\nMethod set to Pfaffian.\n";
     return false;
   end if;
   if q le 11 then
+    vprintf TameGenus, 1 : "\nField is small enough, applying Pfaffian method.\n";
     return false;
   end if; 
   ord := Factorization(q);
@@ -317,8 +331,12 @@ __WhichMethod := function(m, q, d)
   t := Maximum([Multiplicity(B, x) : x in B]);
   // can probably be improved
   if q^3*e le Factorial(t) then
+    vprintf TameGenus, 1 : "\nPGammaL is smaller than potential symmetric " cat 
+        "group, applying Pfaffian method.\n";
     return false;
   else
+    vprintf TameGenus, 1 : "\nPGammaL is larger than symmetric group, " cat
+        "applying adjoint-tensor method.\n";
     return true;
   end if;
 end function;

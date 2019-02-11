@@ -7,44 +7,93 @@
 import "GlobalVars.m" : __SANITY_CHECK;
 import "Pfaffian.m" : __Pfaffian_AUT;
 import "Util.m" : __FindPermutation, __PermutationDegreeMatrix, __GetStarAlg, 
-    __WhichMethod, __SmallerGenSet, __Get_Flat_and_Sloped;
+    __WhichMethod, __SmallerGenSet, __Get_Flat_and_Sloped, __Display_order;
 import "Flat.m" : __TransformFIPair, __LiftFlatGenus2;
 import "sloped.m" : PseudoIsometryGroupAdjointTensor;
 import "Iso.m" : __IsPseudoSG;
 import "Semilinear.m" : __RewriteMat, __Galois_check;
 
 
-__G1_PIsometry := function( B : Print := false )
-  k := BaseRing(B);
-  Form := SystemOfForms(B);
-  vprintf TameGenus, 1 : "Computing the isometry group... ";
+__G1_PIsometry := function( t, H : Print := false )
+  K := BaseRing(t);
+
+  // Construct generators for isometry group
+  vprintf TameGenus, 1 : "\nConstructing the isometry group.\n";
   tt := Cputime();
-  Isom := IsometryGroup( Form : DisplayStructure := false );
-  timing := Cputime(tt);
-  vprintf TameGenus, 1 : "%o seconds.\n", timing;
+
+  if GetVerbose("TameGenus") eq 0 then
+    disp := false;
+  else
+    disp := true;
+  end if;
+  isom := IsometryGroup(SystemOfForms(t) : DisplayStructure := disp);
+
+  isom_order := FactoredOrder(isom); // Isometry group already stores this.
+  vprintf TameGenus, 2 : "\tIsometry order : %o\n", 
+      __Display_order(isom_order);
+  vprintf TameGenus, 2 : "Isometry construction timing : %o s\n", Cputime(tt);
+
 
   // Sanity check
   if __SANITY_CHECK then
-    for X in Generators(Isom) do
-      _ := IsHomotopism(B, B, [* X, X, IdentityMatrix(k, 1) *]);
-    end for;
+    vprintf TameGenus, 1 : "\nRunning sanity check.\n";
+    tt := Cputime();
+    assert forall{X : X in Generators(isom) | IsHomotopism(t, t, 
+        [*X, X, IdentityMatrix(K, 1)*], HomotopismCategory(3))};
+    vprintf TameGenus, 2 : "Sanity test timing : %o s\n", Cputime(tt);
   end if;
 
-  prim := PrimitiveElement(k);
-  pseudo_in := [X : X in Generators(Isom)] cat [prim*IdentityMatrix(k, Nrows(Form[1]))];
-  pseudo_out := [IdentityMatrix(k, 1) : i in [1..Ngens(Isom)]] cat [DiagonalMatrix(k, [prim^2])];
+  // TODO: Fix this! This is not correct!
+  prim := PrimitiveElement(K);
+  pseudo_in := [X : X in Generators(isom)] cat [prim*IdentityMatrix(K, Nrows(Form[1]))];
+  pseudo_out := [IdentityMatrix(K, 1) : i in [1..Ngens(isom)]] cat [DiagonalMatrix(K, [prim^2])];
 
-  return pseudo_in, pseudo_out, FactoredOrder(Isom)*Factorization(#k - 1);
+
+  // Check if there are non-trivial Galois actions
+  if #BaseRing(Domain(H)) ne #K then
+
+    vprintf TameGenus, 1 : "\nChecking Galois automorphisms.\n";
+
+    pseudo_in := [__RewriteMat(X, H.2) : X in pseudo_in];
+    pseudo_out := [__RewriteMat(X, H.0) : X in pseudo_out];
+    galois_in, galois_out, galois_ord := __Galois_check(H);
+    pseudo_in cat:= galois_in;
+    pseudo_out cat:= galois_out;
+
+    vprintf TameGenus, 2 : "\tGalois order : %o\n", 
+        __Display_order(galois_ord);
+
+  else
+
+    galois_ord := Factorization(1); // hilarious...
+
+  end if;
+
+
+  // Sanity check
+  if __SANITY_CHECK then
+    vprintf TameGenus, 1 : "\nRunning sanity check.\n";
+    tt := Cputime();
+    s := Domain(H);
+    assert forall{i : i in [1..#pseudo_in] | IsHomotopism(s, s, [*pseudo_in[i],
+        pseudo_in[i], pseudo_out[i]*], HomotopismCategory(3))};
+    vprintf TameGenus, 2 : "Sanity test timing : %o s\n", Cputime(tt);
+  end if;
+
+
+  return pseudo_in, pseudo_out, isom_order * Factorization(#K - 1) * galois_ord;
 end function;
 
 
 /*
-This is the function which combines both Pete's and Josh's code into one function for automorphisms.
+  This is the function which combines both Pete's and Josh's code into one 
+  function for automorphisms.
 
-Input: a tensor over its centroid and a homotopism H with image t. 
+  Input: a tensor over its centroid and a homotopism H with image t. 
 
-Method: if set to 0, it uses the established cut offs for determining which method to use.
-	If set to 1, then we use the polynomial method, and if set to 2, we use the adjoint tensor method. 
+  Method: if set to 0, it uses the established cut offs for determining which 
+  method to use. If set to 1, then we use the polynomial method, and if set to 
+  2, we use the adjoint tensor method. 
 */
 
 __G2_PIsometry := function( t, H : Method := 0 )
@@ -52,25 +101,28 @@ __G2_PIsometry := function( t, H : Method := 0 )
   k := BaseRing(t);
 
   // Step 1: Compute the adjoint algebra of the forms.
-  vprintf TameGenus, 1 : "Computing the adjoint algebra...";
+  vprintf TameGenus, 1 : "\nComputing the adjoint algebra.\n";
   tt := Cputime();
+
   A := AdjointAlgebra(t);
-  timing := Cputime(tt);
-  vprintf TameGenus, 1 : " %o seconds.\n", timing;
+
+  vprintf TameGenus, 1 : "\tdim(Adj) = %o\n", Dimension(A);
+  vprintf TameGenus, 2 : "\tSimple parameters = %o\n", SimpleParameters(A);
+  vprintf TameGenus, 2 : "Adjoint construction timing : %o s.\n", Cputime(tt);
 
   // Break off the flat and sloped subtensors of t 
-  vprintf TameGenus, 1 : "Computing perp-decomposition...";
+  vprintf TameGenus, 1 : 
+      "\nDecomposing tensor into flat and sloped subtensors.\n";
   tt := Cputime(); 
+
   t_flat, t_slope, F, f_dims, s_dims := __Get_Flat_and_Sloped(t);
-  timing := Cputime(tt);
-  vprintf TameGenus, 1 : " %o seconds.\n", timing;
 
-
-  vprintf TameGenus, 1 : "%o sloped blocks and %o flat blocks.\nDims: %o\n", 
-      #s_dims, #f_dims, s_dims cat f_dims;
+  vprintf TameGenus, 1 : "\tBlock dims = %o\n", f_dims cat s_dims;
+  vprintf TameGenus, 2 : "Perp-decomposition timing : %o s\n", Cputime(tt);
 
 
   // Step 3: Lift the sloped
+  vprintf TameGenus, 1 : "\nNumber of sloped blocks to lift: %o.\n", #s_dims;
   if #s_dims gt 0 then
 
     // determine which method to use
@@ -80,16 +132,16 @@ __G2_PIsometry := function( t, H : Method := 0 )
     if adjten then
 
       // Adjoint-tensor method
-      vprintf TameGenus, 1 : "Adjoint-tensor method...";
 		  inner_s, outer := PseudoIsometryGroupAdjointTensor(t_slope);
       // Requires this little transpose fix
       outer := [Transpose(outer[k]) : k in [1..#outer]];
+      method := "Adjoint-tensor";
 
     else
 
       // Pfaffian method
-      vprintf TameGenus, 1 : "Pfaffian method...";
       inner_s, outer := __Pfaffian_AUT(t_slope, s_dims);
+      method := "Pfaffian";
 
     end if;
 
@@ -97,9 +149,6 @@ __G2_PIsometry := function( t, H : Method := 0 )
     // Seems like LMG might handle it just fine. 
     // We can come back if we need. --JM (30.01.2019)
     inner_s, outer, pseudo_order := __SmallerGenSet(inner_s, outer);
-    //assert pseudo_order eq LMGFactoredOrder(sub<GL(2, k) | outer>);
-    timing := Cputime(tt);
-    vprintf TameGenus, 1 : " %o seconds.\n", timing;
 
   else
 
@@ -110,6 +159,7 @@ __G2_PIsometry := function( t, H : Method := 0 )
   end if;
 
 
+  vprintf TameGenus, 1 : "\nNumber of flat blocks to lift: %o.\n", #f_dims;
 	// Step 4: Lift the flat blocks
   if #f_dims gt 0 then
 
@@ -151,30 +201,47 @@ __G2_PIsometry := function( t, H : Method := 0 )
   inner := [(F.2)^-1 * DiagonalJoin(inner_f[i], inner_s[i]) * F.2 : 
       i in [1..#outer]];
 
+  vprintf TameGenus, 2 : "\tPseudo-isometry order : %o\n", 
+      __Display_order(pseudo_order);
+  vprintf TameGenus, 2 : "%o method timing : %o s\n", method, Cputime(tt);
+
 
   // Sanity check 
   if __SANITY_CHECK then
+    vprintf TameGenus, 1 : "\nRunning sanity check.\n";
+    tt := Cputime();
     assert forall{i : i in [1..#inner] | IsHomotopism(t, t, [*inner[i], 
         inner[i], outer[i]*], HomotopismCategory(3))};
+    vprintf TameGenus, 2 : "Sanity test timing : %o s\n", Cputime(tt);
   end if;
 	
 
 	// Construct generators for isometry group
+  vprintf TameGenus, 1 : "\nConstructing the isometry group.\n";
   tt := Cputime();
-  vprintf TameGenus, 1 : "Constructing the isometries...";
-  // Maybe eventually this will take a tensor instead of [Mtrx]
-  isom := IsometryGroup(SystemOfForms(t) : DisplayStructure := false, 
+
+  if GetVerbose("TameGenus") eq 0 then
+    disp := false;
+  else
+    disp := true;
+  end if;
+  isom := IsometryGroup(SystemOfForms(t) : DisplayStructure := disp, 
       Adjoint := A);
-  timing := Cputime(tt);
-  vprintf TameGenus, 1 : " %o seconds.\n", timing;
+
   isom_order := FactoredOrder(isom); // Isometry group already stores this.
+  vprintf TameGenus, 2 : "\tIsometry order : %o\n", 
+      __Display_order(isom_order);
+  vprintf TameGenus, 2 : "Isometry construction timing : %o s\n", Cputime(tt);
 
 
   // Sanity check on isometry group
   if __SANITY_CHECK then
+    vprintf TameGenus, 1 : "\nRunning sanity check.\n";
+    tt := Cputime();
     I2 := IdentityMatrix(k, 2);
     assert forall{I : I in Generators(isom) | IsHomotopism(t, t, [*I, I, 
         I2*], HomotopismCategory(3))};
+    vprintf TameGenus, 2 : "Sanity test timing : %o s\n", Cputime(tt);
   end if;
 
 
@@ -185,21 +252,33 @@ __G2_PIsometry := function( t, H : Method := 0 )
 
   // Check if there are non-trivial Galois actions
   if #BaseRing(Domain(H)) ne #BaseRing(t) then
+
+    vprintf TameGenus, 1 : "\nChecking Galois automorphisms.\n";
+
     pseudo_in := [__RewriteMat(X, H.2) : X in pseudo_in];
     pseudo_out := [__RewriteMat(X, H.0) : X in pseudo_out];
     galois_in, galois_out, galois_ord := __Galois_check(H);
     pseudo_in cat:= galois_in;
     pseudo_out cat:= galois_out;
+
+    vprintf TameGenus, 2 : "\tGalois order : %o\n", 
+        __Display_order(galois_ord);
+
   else
-    galois_ord := 1;
+
+    galois_ord := Factorization(1); // hilarious...
+
   end if;
 
 
   // Sanity check
   if __SANITY_CHECK then
+    vprintf TameGenus, 1 : "\nRunning sanity check.\n";
+    tt := Cputime();
     s := Domain(H);
     assert forall{i : i in [1..#pseudo_in] | IsHomotopism(s, s, [*pseudo_in[i],
         pseudo_in[i], pseudo_out[i]*], HomotopismCategory(3))};
+    vprintf TameGenus, 2 : "Sanity test timing : %o s\n", Cputime(tt);
   end if;
 
 
@@ -234,10 +313,15 @@ or 2 for Pfaffian method.}
   */
 
   // Remove the radicals
-  vprintf TameGenus, 1 : "Removing the radical... ";
+  vprintf TameGenus, 1 : "Checking the radicals.\n";
   tt := Cputime();
-  Rad := Radical(t, 2);
+
   Forms := SystemOfForms(t);
+  Rad := Radical(t, 2);
+  Crad := Coradical(t);
+
+  vprintf TameGenus, 1 : "\tdim(Rad_V) = %o\n\tdim(Rad_W) = %o\n", 
+      Dimension(Rad), Dimension(Crad);
 
   if Dimension(Rad) gt 0 then
     C := Complement(Generic(Rad), Rad);
@@ -252,20 +336,34 @@ or 2 for Pfaffian method.}
   end if; 
 
   timing := Cputime(tt);
-  vprintf TameGenus, 1 : "%o seconds.\n", timing;
+  vprintf TameGenus, 2 : "Radical timing : %o s\n", timing;
 
 
-  // Write bimap over its centroid. 
   if Cent then
-    vprintf TameGenus, 1 : "Rewriting tensor over its centroid... ";
+
+    // Write tensor over its centroid. 
+    vprintf TameGenus, 1 : "\nWriting tensor over its centroid.\n";
     tt := Cputime();
+
     T, H := TensorOverCentroid(t_nondeg);
-    vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
+
+    if IsPrimeField(BaseRing(T)) then
+      vprintf TameGenus, 1 : "\tCent(t) = GF(%o)\n", #BaseRing(T);
+    else
+      vprintf TameGenus, 1 : "\tCent(t) = GF(%o^%o)\n", 
+          Factorization(#BaseRing(T))[1][1], Factorization(#BaseRing(T))[1][2];
+    end if;
+    vprintf TameGenus, 2 : "Writing over centroid timing : %o s\n", Cputime(tt);
+
   else
+
+    // Skip the centroid step.
+    vprintf TameGenus, 1 : "\nCent turned OFF.\n";
     T := t_nondeg;
     dims_T := [Dimension(X) : X in Frame(T)];
     H := Homotopism(T, T, [*IdentityMatrix(K, dims_T[1]), 
         IdentityMatrix(K, dims_T[2]), IdentityMatrix(K, dims_T[3])*]);
+
   end if;
 
 
@@ -275,19 +373,23 @@ or 2 for Pfaffian method.}
 
   // Construct pseudo-isometry group
   if Dimension(Codomain(T)) eq 1 then
+  
+    vprintf TameGenus, 1 : "\nTensor has genus 1.\n";
     IN, OUT, ORD := __G1_PIsometry(T);
-    // IS THIS ACTUALLY THE FULL GROUP???  --JM 
+
   else
+
+    vprintf TameGenus, 1 : "\nTensor has genus 2.\n";
     IN, OUT, ORD := __G2_PIsometry(T, H : Method := Method);
+
   end if;
 
-
-  vprintf TameGenus, 1 : "Putting everything together... ";
-  tt := Cputime();
-
-
-  // Add pseudo-isometries on radical.
+  
   if Dimension(Rad) gt 0 then
+
+    // Add pseudo-isometries on radical.
+    vprintf TameGenus, 1 : "\nIncluding the pseudo-isometries from radicals.\n";
+
     Radgens := [DiagonalJoin(IdentityMatrix(K, Ncols(nForms[1])), x) : 
         x in Generators(GL(Dimension(Rad), K))];
     Radcentrals := [];
@@ -305,16 +407,22 @@ or 2 for Pfaffian method.}
         i in [1..#Radgens + #Radcentrals]];
     ORD *:= FactoredOrderGL(Dimension(Rad), #K);
     ORD *:= Factorization(#K)^(Dimension(C)*Dimension(Rad));
+
   else
+
     pseudo_in := IN;
     pseudo_out := OUT;
+
   end if;
 
 
   // Sanity check
   if __SANITY_CHECK then
+    vprintf TameGenus, 1 : "\nRunning sanity check.\n";
+    tt := Cputime();
     assert forall{i : i in [1..#pseudo_in] | IsHomotopism(t, t, [*pseudo_in[i],
         pseudo_in[i], pseudo_out[i]*], HomotopismCategory(3))};
+    vprintf TameGenus, 2 : "Sanity test timing : %o s\n", Cputime(tt);
   end if;
 
 
@@ -325,10 +433,6 @@ or 2 for Pfaffian method.}
   DerivedFrom(~PIsom, t, {0..2}, {0, 2});
   PIsom`FactoredOrder := ORD;
   PIsom`Order := Integers()!ORD;
-
-
-  timing := Cputime(tt);
-  vprintf TameGenus, 1 : "%o seconds.\n", timing;
 
 
   return PIsom;
