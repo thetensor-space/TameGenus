@@ -4,9 +4,15 @@
 */
 
 
+__Galois_order := function(gens, n)
+  Zn := CyclicGroup(GrpAb, n);
+  H := sub< Zn | gens >;
+  return FactoredOrder(H);
+end function;
+
 __RewriteMat := function(M, phi)
   V := Domain(phi);
-  return Matrix([Eltseq(((V.i @ phi)*M) @@ phi) : i in [1..Dimension(V)] ]);
+  return Matrix([Eltseq(((V.i @ phi)*M) @@ phi) : i in [1..Dimension(V)]]);
 end function;
 
 __Galois_Tango := function(X, induce, k, M, H)
@@ -96,7 +102,23 @@ __Standard_Gen := function(H)
   E := BaseRing(t);
   X_s := ScalarMatrix(Dimension(Domain(t)[1]), E.1);
   Y_s := ScalarMatrix(Dimension(Codomain(t)), E.1);
-  return DiagonalJoin(__RewriteMat(X_s, H.2), __RewriteMat(Y_s, H.0));
+  Z := DiagonalJoin(__RewriteMat(X_s, H.2), __RewriteMat(Y_s, H.0));
+  assert DefiningPolynomial(E) eq MinimalPolynomial(Z);
+  assert Z in Centroid(Domain(H));
+  return Z;
+end function;
+
+
+__Galois_sanity := function(t, a)
+  p := Characteristic(BaseRing(t));
+  sigma := [*map< D -> D | x :-> Parent(x)![(u ne 0) select u^(-p^a) else 0 
+      : u in Eltseq(x)] > : D in Domain(t)*];
+  sigma cat:= [*map< Codomain(t) -> Codomain(t) | 
+    x :-> Parent(x)![u^(p^a) : u in Eltseq(x)] >*];
+  Antichmtp := TensorCategory([-1 : i in [1..#Domain(t)]] cat [1], 
+      RepeatPartition(TensorCategory(t)));
+  F := Homotopism(sigma, Antichmtp);
+  return t @ F;
 end function;
 
 
@@ -118,7 +140,7 @@ __Galois_check := function(H)
   X2 := ExtractBlock(X, 1, 1, dims_s[1], dims_s[1]);
   X0 := ExtractBlock(X, dims_s[1] + 1, dims_s[1] + 1, dims_s[3], dims_s[3]);
   Cat := TensorCategory([-1, -1, 1], {{0}, {1, 2}});
-  F := Homotopism([*X2^-1, X2^-1, X0*], Cat);
+  F_a := func< a | Homotopism([*X2^-a, X2^-a, X0^a*], Cat) >;
 
   gal_aut := [];
   divs := __Proper_Divs(Degree(E, K));
@@ -126,10 +148,13 @@ __Galois_check := function(H)
   while #divs gt 0 do
     // apply the Galois automorphism x :-> x^(p^a)
     a := Minimum(divs);
-    t_p := Tensor(E, dims_t, [x^(p^a) : x in Eltseq(t)], TensorCategory(t));
 
     // check if they are E-linear pseudo-isometric
-    check, M := TGIsPseudoIsometric(t, TensorOverCentroid(s @ F));
+    s_F := s @ F_a(a);
+    assert Centroid(s) eq Centroid(s_F); // after tests *assign* this
+    s_p := TensorOverCentroid(s_F);
+    assert TGIsPseudoIsometric(s_p, __Galois_sanity(t, a)); 
+    check, M := TGIsPseudoIsometric(t, s_p);
 
     // if so, remove multiplies of a; otherwise, just remove a. 
     if check then
@@ -147,5 +172,7 @@ __Galois_check := function(H)
   assert forall{B : B in blocks | IsHomotopism(s, s, [*B[1], B[1], B[2]*], 
       HomotopismCategory(3))};
 
-  return blocks;
+  Gal_ord := __Galois_order([T[1] : T in gal_aut], Degree(E, K));
+
+  return blocks, Gal_ord;
 end function;
