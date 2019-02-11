@@ -154,7 +154,7 @@ __Galois_check := function(H)
     assert Centroid(s) eq Centroid(s_F); // after tests *assign* this
     s_p := TensorOverCentroid(s_F);
     assert TGIsPseudoIsometric(s_p, __Galois_sanity(t, a)); 
-    check, M := TGIsPseudoIsometric(t, s_p);
+    check, M := TGIsPseudoIsometric(t, s_p : Cent := false);
 
     // if so, remove multiplies of a; otherwise, just remove a. 
     if check then
@@ -166,13 +166,16 @@ __Galois_check := function(H)
 
   end while;
 
-  blocks := [<X2^(T[1]) * __RewriteMat(T[2].2, H.2), 
-      X0^(T[1]) * __RewriteMat(T[2].0, H.0)> : T in gal_aut];
+  // Write the blocks over the correct field
+  Galois_in := [X2^(T[1]) * __RewriteMat(T[2].2, H.2) : T in gal_aut];
+  Galois_out := [X0^(T[1]) * __RewriteMat(T[2].0, H.0) : T in gal_aut];
 
-  assert forall{B : B in blocks | IsHomotopism(s, s, [*B[1], B[1], B[2]*], 
-      HomotopismCategory(3))};
+  // Sanity check
+  assert forall{k : k in [1..#gal_aut] | IsHomotopism(s, s, [*Galois_in[k], 
+      Galois_in[k], Galois_out[k]*], HomotopismCategory(3))};
 
+  // Get the (factored) order of the Galois part
   Gal_ord := __Galois_order([T[1] : T in gal_aut], Degree(E, K));
 
-  return blocks, Gal_ord;
+  return Galois_in, Galois_out, Gal_ord;
 end function;

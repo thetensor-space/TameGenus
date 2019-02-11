@@ -7,12 +7,11 @@
 import "GlobalVars.m" : __SANITY_CHECK;
 import "Pfaffian.m" : __Pfaffian_AUT;
 import "Util.m" : __FindPermutation, __PermutationDegreeMatrix, __GetStarAlg, 
-    __WhichMethod, __SmallerGenSet, __Galois_Cent, __RewriteMat, __Galois_Tango,
-    __Get_Flat_and_Sloped;
+    __WhichMethod, __SmallerGenSet, __Get_Flat_and_Sloped;
 import "Flat.m" : __TransformFIPair, __LiftFlatGenus2;
 import "sloped.m" : PseudoIsometryGroupAdjointTensor;
 import "Iso.m" : __IsPseudoSG;
-import "Semilinear.m" : __Galois_check;
+import "Semilinear.m" : __RewriteMat, __Galois_check;
 
 
 __G1_PIsometry := function( B : Print := false )
@@ -133,7 +132,7 @@ __G2_PIsometry := function( t, H : Method := 0 )
     // them to the flat part. 
     for Z in outer do 
       X := IdentityMatrix(k, 0);
-      for d in flatdims do
+      for d in f_dims do
         X := DiagonalJoin(X, __LiftFlatGenus2(Z, d));
       end for;
       // The corresponding lift of Z on the flat part.
@@ -180,12 +179,14 @@ __G2_PIsometry := function( t, H : Method := 0 )
 
 
   // Combine everything from steps 3 - 5.
-  pseudo_in := inner cat [x : x in Generators(isom)];
+  pseudo_in := inner cat [Matrix(x) : x in Generators(isom)];
   pseudo_out := outer cat [IdentityMatrix( k, 2 ) : i in [1..Ngens(isom)]];
 
 
   // Check if there are non-trivial Galois actions
   if #BaseRing(Domain(H)) ne #BaseRing(t) then
+    pseudo_in := [__RewriteMat(X, H.2) : X in pseudo_in];
+    pseudo_out := [__RewriteMat(X, H.0) : X in pseudo_out];
     galois_in, galois_out, galois_ord := __Galois_check(H);
     pseudo_in cat:= galois_in;
     pseudo_out cat:= galois_out;
@@ -196,7 +197,8 @@ __G2_PIsometry := function( t, H : Method := 0 )
 
   // Sanity check
   if __SANITY_CHECK then
-    assert forall{i : i in [1..#pseudo_in] | IsHomotopism(t, t, [*pseudo_in[i],
+    s := Domain(H);
+    assert forall{i : i in [1..#pseudo_in] | IsHomotopism(s, s, [*pseudo_in[i],
         pseudo_in[i], pseudo_out[i]*], HomotopismCategory(3))};
   end if;
 
@@ -222,6 +224,14 @@ or 2 for Pfaffian method.}
   p := Characteristic(K);
   require p ne 2 : "Must be odd characteristic.";
 
+  /*
+    The code in this part of the intrinsic does a few things:
+      1. remove the radicals,
+      2. write the tensor over its centroid,
+      3. export the fully nondegenerate tensor to get pseudo-isomtry group,
+      4. add in any pseudo-isomtries from the radicals,
+      5. add bookkeeping attributes to the pseudo-isometry group. 
+  */
 
   // Remove the radicals
   vprintf TameGenus, 1 : "Removing the radical... ";
@@ -250,7 +260,6 @@ or 2 for Pfaffian method.}
     vprintf TameGenus, 1 : "Rewriting tensor over its centroid... ";
     tt := Cputime();
     T, H := TensorOverCentroid(t_nondeg);
-    require #BaseRing(T) eq #BaseRing(t) : "Extension fields not implemented.";
     vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
   else
     T := t_nondeg;
