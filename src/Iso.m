@@ -5,7 +5,8 @@
 
 
 import "GlobalVars.m" : __SANITY_CHECK;
-import "Util.m" : __GL2ActionOnPolynomial, __PermutationDegreeMatrix, __FindPermutation, __GetStarAlg, __WhichMethod, __WriteMatrixOverPrimeField;
+import "Util.m" : __GL2ActionOnPolynomial, __GetStarAlg, __WhichMethod,
+    __Print_field, __Radical_removal, __Display_adj_info, __Get_Flat_and_Sloped;
 import "Pfaffian.m" : __Pfaffian_ISO;
 import "sloped.m" : IsPseudoIsometricAdjointTensor;
 import "LiftFlat.m" : __LiftFlatGenus2;
@@ -16,11 +17,11 @@ __GetIdempotents := function( A )
   return [ A.2^-i*A.1*A.2^i : i in [0..n-1] ];
 end function;
 
-__IsPseudoSGPfaffian := function( flats, sloped, bB, bC : Constructive := false )
+__IsPseudoSGPfaffian := function( flats, sloped, bB, bC : Constructive := true )
   if Constructive then
-    isit, pi := __Pfaffian_ISO( bB, bC, flats, sloped : Sanity := true );
-    if not isit then
-      return false,_;
+    check_pisom, pi := __Pfaffian_ISO(bB, bC, flats, sloped);
+    if not check_pisom then
+      return false, _;
     else
       return true, pi;
     end if;
@@ -43,86 +44,65 @@ __IsPseudoSGPfaffian := function( flats, sloped, bB, bC : Constructive := false 
       Include(~polys2, Coefficients(det)[1]^-1 * det );
       start +:= d;
     end for;
-    act := OrbitAction( GL(2,k), LineOrbits(GL(2,k))[1][1] ); // The action of GL on the line (1,0)
+    // The action of GL on the line (1,0)
+    act := OrbitAction( GL(2,k), LineOrbits(GL(2,k))[1][1] ); 
     Perms := Image( act ); // PGL(2,k)
-    return exists{ X : X in Perms | polys1 eq {* R!(__GL2ActionOnPolynomial( f, X @@ act )) : f in polys2 *} }, _;
+    return exists{ X : X in Perms | polys1 eq {* R!(__GL2ActionOnPolynomial( f, 
+        X @@ act )) : f in polys2 *} }, _;
   end if;
 end function;
 
-__IsPseudoSGAdjTens := function( flats, sloped, bB, bC )
-  pos := &+(flats cat [0]) + 1;
-  s := &+(sloped cat [0]);
-  K := BaseRing(bB);
-  sForms1 := [ ExtractBlock(F,pos,pos,s,s) : F in SystemOfForms(bB) ];
-  sForms2 := [ ExtractBlock(F,pos,pos,s,s) : F in SystemOfForms(bC) ];
-  sB := Tensor( sForms1, 2, 1 );
-  sB`Adjoint := __GetStarAlg( AdjointAlgebra(bB), IdentityMatrix(K,pos+s-1), pos, s );
-  sC := Tensor( sForms2, 2, 1 );
-  sC`Adjoint := __GetStarAlg( AdjointAlgebra(bC), IdentityMatrix(K,pos+s-1), pos, s );
-  isit,X,Z := IsPseudoIsometricAdjointTensor( sB, sC );
+__IsPseudoSGAdjTens := function( sB, sC )
+  isit, X, Z := IsPseudoIsometricAdjointTensor( sB, sC );
   if not isit then 
-    return false,_;
-  end if;
-  return isit,[*X,Z*];
-end function;
-
-__IsPseudoSG := function( B, C : Constructive := true, Method := 0 )
-  k := BaseRing(B);
-  // Peel off the radicals
-  vprintf TameGenus, 1 : "Computing radicals... ";
-  tt := Cputime();
-  R1 := Radical(B,1);
-  R2 := Radical(C,1);
-  vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
-  if Dimension(R1) ne Dimension(R2) then
-    vprintf TameGenus, 1 : "Not isomorphic: radicals of different dimension.";
     return false, _;
   end if;
-  if Dimension(R1) gt 0 then
-    V := Generic(R1);
-    C1 := Complement( V, R1 );
-    C2 := Complement( V, R2 );
-    M1 := Matrix( Basis( C1 ) cat Basis( R1 ) );
-    M2 := Matrix( Basis( C2 ) cat Basis( R2 ) );
-    nForms1 := [ ExtractBlock( M1*F*Transpose(M1), 1, 1, Nrows(M1)-Dimension(R1), Nrows(M1)-Dimension(R1) ) : F in SystemOfForms(B) ];
-    nForms2 := [ ExtractBlock( M2*F*Transpose(M2), 1, 1, Nrows(M1)-Dimension(R1), Nrows(M1)-Dimension(R1) ) : F in SystemOfForms(C) ];
-    nB := Tensor( nForms1, 2, 1 );
-    nC := Tensor( nForms2, 2, 1 );
-  else
-    M1 := IdentityMatrix( k, Dimension(B`Domain[1]) );
-    M2 := M1;
-    nB := B;
-    nC := C;
-    nForms1 := SystemOfForms(nB);
-    nForms2 := SystemOfForms(nC);
+  return isit, [*X, Z*];
+end function;
+
+__IsPseudoSG := function( F, G : Constructive := true, Method := 0 )
+  s := Codomain(F);
+  t := Codomain(G);
+  K := BaseRing(s);
+
+  vprintf TameGenus, 1 : "\nComputing the adjoint algebra.\n";
+  tt := Cputime();
+
+  A_s := AdjointAlgebra(s);
+  A_t := AdjointAlgebra(t);
+  __Display_adj_info(A_s : subscript := "_s");
+  __Display_adj_info(A_t : subscript := "_t");
+
+  vprintf TameGenus, 2 : "Adjoint construction timing : %o s.\n", Cputime(tt);
+
+  // Quick adjoint check
+  if SimpleParameters(A_s) ne SimpleParameters(A_t) then
+    vprintf TameGenus, 1 : "\nAdjoint algebras are not isomorphic.\n";
+    return false, _;
   end if;
 
-  // trivial case -- genus 1
-  if Dimension(B`Codomain) eq 1 then
-    vprintf TameGenus, 1 : "Genus 1 case.\n";
+  // genus 1
+  if Dimension(Codomain(s)) eq 1 then
+    vprintf TameGenus, 1 : "\nGenus 1 case.\n";
     if Constructive then
-      /* Hack until bug in StarAlg gets fixed for forms. */
-      vprintf TameGenus, 1 : "Computing adjoint algebras... ";
-      tt := Cputime();
-      A1 := AdjointAlgebra( nB );
-      A2 := AdjointAlgebra( nC );
-      vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
-      I1 := __GetIdempotents( A1 );
-      I2 := __GetIdempotents( A2 );
+
+      // Hack until bug in StarAlg gets fixed for forms.
+      I1 := __GetIdempotents(A_s);
+      I2 := __GetIdempotents(A_t);
       S1 := Matrix( &cat[ Basis( Image( I1[i] ) ) : i in [1..#I1] ] );
       S2 := Matrix( &cat[ Basis( Image( I2[i] ) ) : i in [1..#I2] ] );
-      bForms1 := [ S1*nForms1[1]*Transpose(S1) ];
-      bForms2 := [ S2*nForms2[1]*Transpose(S2) ];
-      N1 := ExtractBlock( bForms1[1], 1, Nrows(bForms1[1]) div 2 + 1, Nrows(bForms1[1]) div 2, Nrows(bForms1[1]) div 2 );
-      N2 := ExtractBlock( bForms2[1], 1, Nrows(bForms1[1]) div 2 + 1, Nrows(bForms1[1]) div 2, Nrows(bForms1[1]) div 2 );
-      T := DiagonalJoin( DiagonalJoin( N2 * N1^-1, IdentityMatrix( k, Nrows(N1) ) ), IdentityMatrix(k, Dimension(R1)) );
-      S2 := DiagonalJoin( S2, IdentityMatrix(k,Dimension(R1)) );
-      S1 := DiagonalJoin( S1, IdentityMatrix(k,Dimension(R1)) );
-      X := < M2^-1 * S2^-1 * T * S1 * M1, IdentityMatrix(k,1) >;
+      bForms1 := [ S1*SystemOfForms(s)[1]*Transpose(S1) ];
+      bForms2 := [ S2*SystemOfForms(t)[1]*Transpose(S2) ];
+      N1 := ExtractBlock( bForms1[1], 1, Nrows(bForms1[1]) div 2 + 1, 
+          Nrows(bForms1[1]) div 2, Nrows(bForms1[1]) div 2 );
+      N2 := ExtractBlock( bForms2[1], 1, Nrows(bForms1[1]) div 2 + 1, 
+          Nrows(bForms1[1]) div 2, Nrows(bForms1[1]) div 2 );
+      T := DiagonalJoin( N2 * N1^-1, IdentityMatrix( K, Nrows(N1) ) );
+      X := < S2^-1 * T * S1, IdentityMatrix(K, 1) >;
 
       // Sanity check
       if __SANITY_CHECK then
-        assert [ X[1] * F * Transpose(X[1]) : F in SystemOfForms(B) ] eq SystemOfForms(B);
+        assert IsHomotopism(s, t, [*X[1], X[1], X[2]*]);
       end if;
 
       return true, DiagonalJoin(X); 
@@ -132,97 +112,80 @@ __IsPseudoSG := function( B, C : Constructive := true, Method := 0 )
   end if;
 
   // genus 2
-  vprintf TameGenus, 1 : "Genus 2 case.\n";
-  vprintf TameGenus, 1 : "Computing adjoint algebras... ";
-  tt := Cputime();
-  A1 := AdjointAlgebra( nB );
-  A2 := AdjointAlgebra( nC );
-  vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
-  vprintf TameGenus, 1 : "Computing perp decompositions... ";
-  tt := Cputime();
-  T1,dims1 := PerpDecomposition( nB );
-  T2,dims2 := PerpDecomposition( nC );
-  vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
-  if Multiset(dims1) ne Multiset(dims2) then
-    vprint TameGenus, 1 : "Genus 2 signatures are not the same.";
-    return false,_; 
-  end if;
-  flats := Sort( [ d : d in dims1 | IsOdd(d) ] );
-  sloped := Sort( [ d : d in dims1 | IsEven(d) ] );
-  sorted_dims := flats cat sloped;
-  adjten := __WhichMethod(Method,#k,sloped);
-  vprintf TameGenus, 1 : "%o sloped blocks and %o flat blocks.\nDims: %o\n", #sloped, #flats, sorted_dims;
-  if not Constructive and sloped eq [] then 
-    return true,_; 
-  end if;
-  P1 := __PermutationDegreeMatrix( k, dims1, __FindPermutation( sorted_dims, dims1 ) );
-  bForms1 := [ P1*T1*F*Transpose(P1*T1) : F in SystemOfForms(nB) ];
-  P2 := __PermutationDegreeMatrix( k, dims2, __FindPermutation( sorted_dims, dims2 ) );
-  bForms2 := [ P2*T2*F*Transpose(P2*T2) : F in SystemOfForms(nC) ];
+  vprintf TameGenus, 1 : "\nGenus 2 case.\n";
+  vprintf TameGenus, 1 : 
+      "\nDecomposing tensors into flat and sloped subtensors.\n";
+  tt := Cputime(); 
 
-  // If it's sloped but the span of the forms is not 2 dimensional use Pfaffian regardless.
-  // This is because Pete's code is built on the assumption that the span of the forms is 2 dimensional.
-  // Better way to do this................... (face palm 5 years later)
-  if adjten then
-    start := &+(flats cat [1]);
-    d_s := &+(sloped cat [0]);
-    S11 := ExtractBlock( bForms1[1], start, start, d_s, d_s ); 
-    S12 := ExtractBlock( bForms1[2], start, start, d_s, d_s ); 
-    S21 := ExtractBlock( bForms2[1], start, start, d_s, d_s ); 
-    S22 := ExtractBlock( bForms2[2], start, start, d_s, d_s ); 
-    S1 := sub< KMatrixSpace(k,d_s,d_s) | S11, S12 >;
-    S2 := sub< KMatrixSpace(k,d_s,d_s) | S21, S22 >;
-    if (Dimension(S1) ne 2) or (Dimension(S2) ne 2) then
-      adjten := false;
-    end if;
+  s_flat, s_sloped, H_s, fdims_s, sdims_s := __Get_Flat_and_Sloped(s);
+  t_flat, t_sloped, H_t, fdims_t, sdims_t := __Get_Flat_and_Sloped(t);
+
+  // Quick checks
+  if (fdims_s ne fdims_t) or (sdims_s ne sdims_t) then
+    vprint TameGenus, 1 : "\nGenus 2 signatures are not the same.";
+    return false, _; 
   end if;
+  if not Constructive and (sdims_s eq []) then 
+    return true, _; 
+  end if;
+
+  vprintf TameGenus, 1 : "\tBlock dims = %o\n", fdims_s cat sdims_s;
+  vprintf TameGenus, 2 : "Perp-decomposition timing : %o s\n", Cputime(tt);
+
 
   // if it's just flat, go to the Pfaffian function.
-  if sloped eq [] then
+  if sdims_s eq [] then
     adjten := false;
+  else
+    adjten := __WhichMethod(Method, #K, sdims_s);
   end if;
-
-  bB := Tensor( bForms1, 2, 1 );
-  bC := Tensor( bForms2, 2, 1 );
-  /*if adjten or (#flats gt 0) then
-    bB`Adjoint := __GetStarAlg( A1, P1*T1, 1, Nrows(bForms1[1]) );
-    bC`Adjoint := __GetStarAlg( A2, P2*T2, 1, Nrows(bForms2[1]) );
-  end if;*/
+  
+  s_block := Codomain(H_s);
+  t_block := Codomain(H_t);
+  assert AdjointAlgebra(s_block) eq sub<Generic(A_s) | [H_s.2 * X * (H_s.2)^-1 :
+      X in Generators(A_s)]>;
+  assert AdjointAlgebra(t_block) eq sub<Generic(A_t) | [H_t.2 * X * (H_t.2)^-1 :
+      X in Generators(A_t)]>;
 
   if adjten then
     vprintf TameGenus, 1 : "Using adjoint-tensor method... ";
     tt := Cputime();
-    isit,X := __IsPseudoSGAdjTens( flats, sloped, bB, bC );
-    if isit then
+    check_pisom, X := __IsPseudoSGAdjTens(s_sloped, t_sloped);
+    if check_pisom then
       X := [* X[1], Transpose(X[2]) *]; // fixes a transpose issue with adj-tens
     end if;
   else
     vprintf TameGenus, 1 : "Using Pfaffian method... ";
     tt := Cputime();
-    isit,X := __IsPseudoSGPfaffian( flats, sloped, bB, bC : Constructive := Constructive );
+    check_pisom, X := __IsPseudoSGPfaffian(fdims_s, sdims_s, s_block, t_block : 
+        Constructive := Constructive );
   end if;
   vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
 
-  if (not Constructive) or (not isit) then
-    return isit, _; 
+  if not Constructive or not check_pisom then
+    return check_pisom, _; 
   end if;
 
-  X[1] := M2^-1 * DiagonalJoin( T2^-1 * P2^-1 * X[1] * P1 * T1, IdentityMatrix(k, Dimension(R1) ) ) * M1;
+  X[1] := (H_t.2)^-1 * X[1] * H_s.2;
 
   // sanity check
   if __SANITY_CHECK then
-    assert [ X[1] * F * Transpose(X[1]) : F in SystemOfForms(B) ] eq [ &+[ X[2][j][i]*SystemOfForms(C)[j] : j in [1..2] ] : i in [1..2] ];
+    assert [ X[1] * F * Transpose(X[1]) : F in SystemOfForms(s) ] eq 
+        [ &+[ X[2][j][i]*SystemOfForms(t)[j] : j in [1..2] ] : i in [1..2] ];
   end if;
 
   return true, <X[1], X[2]>;
 end function;
 
+
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //                                  Intrinsics
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-intrinsic TGIsPseudoIsometric( s::TenSpcElt, t::TenSpcElt : Cent := true, Constructive := true, Method := 0 ) -> BoolElt, Hmtp
-{Determine if two genus 2 alternating tensors are pseudo-isometric over a finite field of odd characteristic.}
+intrinsic TGIsPseudoIsometric( s::TenSpcElt, t::TenSpcElt : Cent := true, 
+    Constructive := true, Method := 0 ) -> BoolElt, Hmtp
+{Determine if two genus 2 alternating tensors are pseudo-isometric over a finite 
+field of odd characteristic.}
   K := BaseRing(s);
   L := BaseRing(t);
   require ISA(Type(K), FldFin) and ISA(Type(L), FldFin) : 
@@ -230,33 +193,45 @@ intrinsic TGIsPseudoIsometric( s::TenSpcElt, t::TenSpcElt : Cent := true, Constr
   require #K eq #L : "Base rings must be the same.";
   require Valence(s) eq 3 and Valence(t) eq 3 : "Tensors must have valence 3.";
   require Characteristic(K) ne 2 : "Characteristic must be odd.";
-  require IsAlternating(s) and IsAlternating(t) : "Tensors must be alternating.";
+  require IsAlternating(s) and IsAlternating(t) : 
+      "Tensors must be alternating.";
   require Type(Cent) eq BoolElt : "'Cent' must be true or false.";
-  require Type(Constructive) eq BoolElt : "'Constructive' must be true or false.";
-  require Type(Method) eq RngIntElt : "'Method' must be an integer in {0, 1, 2}.";
+  require Type(Constructive) eq BoolElt : 
+      "'Constructive' must be true or false.";
+  require Type(Method) eq RngIntElt : 
+      "'Method' must be an integer in {0, 1, 2}.";
 
-  try
-    _ := Eltseq(s);
-    _ := Eltseq(t);
-  catch err
-    error "Cannot compute structure constants.";
-  end try;
 
-  // write tensors over their centroids.
+  s_nondeg, dim_rad_s, dim_crad_s, Z_s := __Radical_removal(s);
+  t_nondeg, dim_rad_t, dim_crad_t, Z_t := __Radical_removal(t);
+
+
   if Cent then
-    vprintf TameGenus, 1 : "Rewriting tensors over their centroid... ";
+    // write tensors over their centroids.
+    vprintf TameGenus, 1 : "\nWriting tensors over their centroids.\n";
     tt := Cputime();
-    S, Hmt_S := TensorOverCentroid(s);
-    T, Hmt_T := TensorOverCentroid(t);
-    vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
+
+    S, Hmt_S := TensorOverCentroid(s_nondeg);
+    T, Hmt_T := TensorOverCentroid(t_nondeg);
+
+    __Print_field(S, "s");
+    __Print_field(T, "t");
+    vprintf TameGenus, 2 : "Writing over centroid timing : %o s\n", Cputime(tt);
+
   else
+
+    // Skip the centroid step.
+    vprintf TameGenus, 1 : "\nCent turned OFF.\n";
     S := s;
+    Hmt_S := Homotopism(S, S, [*Hom(X, X)!1 : X in Frame(S)*]);
     T := t;
+    Hmt_T := Homotopism(T, T, [*Hom(X, X)!1 : X in Frame(T)*]);
+
   end if;
 
   // Check obvious things
   if #BaseRing(S) ne #BaseRing(T) then
-    vprint TameGenus, 1 : "Base rings are not isormorphic.";
+    vprint TameGenus, 1 : "Centroids are not isormorphic.";
     return false, _;
   end if;
   if (Dimension(Domain(S)[1]) ne Dimension(Domain(T)[1])) or 
@@ -265,24 +240,14 @@ intrinsic TGIsPseudoIsometric( s::TenSpcElt, t::TenSpcElt : Cent := true, Constr
     return false, _;
   end if;
 
-  require #BaseRing(S) eq #BaseRing(s) : "Extension fields not implemented.";
   require Dimension(Codomain(S)) le 2 : "Tensors have genus greater than 2.";
 
-  // if Cent is not prime field, do adj-ten method.
-  if not IsPrimeField(BaseRing(S)) then
-    Method := 1; 
-    vprintf TameGenus, 1 : "Centroid is not a prime field, applying adjoint-tensor method.\n";
-  end if;
+  check_pseudo_isom, X := __IsPseudoSG(Hmt_S, Hmt_T : 
+      Constructive := Constructive, Method := Method);
 
-  isit, X := __IsPseudoSG(S, T : Constructive := Constructive, Method := Method);
-
-  if Constructive and isit then
+  /*if Constructive and check_pseudo_isom then
     vprintf TameGenus, 1 : "Putting everything together... ";
     tt := Cputime();
-    //Y := [* ExtractBlock(X,1,1,Dimension(T`Domain[1]),Dimension(T`Domain[1])), 
-    //  ExtractBlock(X,1+Dimension(T`Domain[1]),1+Dimension(T`Domain[1]),Dimension(T`Codomain),Dimension(T`Codomain)) *];
-    //Y := X;
-    //assert [ Y[1] * F * Transpose(Y[1]) : F in SystemOfForms(S) ] eq [ &+[ Y[2][j][i]*SystemOfForms(T)[j] : j in [1..2] ] : i in [1..2] ];
 
     // if the centroid is an extension of the prime field convert back to prime field
     if Cent and (#BaseRing(s) ne #BaseRing(S)) then
@@ -293,29 +258,33 @@ intrinsic TGIsPseudoIsometric( s::TenSpcElt, t::TenSpcElt : Cent := true, Constr
     else
       V := Domain(s)[1];
       W := Codomain(s);
-      //Y1 := Y[1]^-1;
-      //Y2 := Y[2]^-1;
     end if;
     H := Homotopism(s, t, [*X[1], X[1], X[2]*]); // check built in
     vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
     return true, H;
-  end if;
+  end if;*/
 
-  return isit, _;
+  return check_pseudo_isom, _;
 end intrinsic;
 
 
-intrinsic TGIsIsomorphic( G::GrpPC, H::GrpPC : Cent := true, Constructive := true, Method := 0 ) -> BoolElt
+intrinsic TGIsIsomorphic( G::GrpPC, H::GrpPC : Cent := true, 
+    Constructive := true, Method := 0 ) -> BoolElt
 {For genus 2 p-groups G and H, determine if G is isomorphic to H.}
-  if (Exponent(G) ne Exponent(H)) or (#G ne #H) or (NilpotencyClass(G) ne NilpotencyClass(H)) then
+  // Rule out easy pairs
+  if (Exponent(G) ne Exponent(H)) or (#G ne #H) or 
+      (NilpotencyClass(G) ne NilpotencyClass(H)) then
     return false, _;
   end if;
+
   require IsPrime(Exponent(G)) : "Groups do not have exponent p.";
   require NilpotencyClass(G) le 2 : "Groups are not class 2.";
   require IsOdd(#G) : "Groups must have odd order.";
-  require Type(Cent) eq BoolElt : "`Cent' must be true or false.";
-  require Type(Constructive) eq BoolElt : "`Constructive' must be true or false.";
-  require Type(Method) eq RngIntElt : "`Method' must be an integer in {0, 1, 2}.";
+  require Type(Cent) eq BoolElt : "'Cent' must be true or false.";
+  require Type(Constructive) eq BoolElt : 
+      "'Constructive' must be true or false.";
+  require Type(Method) eq RngIntElt : 
+      "'Method' must be an integer in {0, 1, 2}.";
 
   // Abelian case
   if IsAbelian(G) then 
@@ -327,8 +296,8 @@ intrinsic TGIsIsomorphic( G::GrpPC, H::GrpPC : Cent := true, Constructive := tru
   Q, phi_H := pQuotient(H, Exponent(H), 2 : Print := 0);
   
   // Construct the p-central tensors and move to the tensor call.
-  vprintf TameGenus, 1 : "Getting tensor info... ";
-  tt := Cputime();
+  vprintf TameGenus, 1 : 
+      "Extracting p-central tensors and deciding pseudo-isometry.\n";
 	t, maps_G := pCentralTensor(P, 1, 1);
   s, maps_H := pCentralTensor(Q, 1, 1);
   _ := Eltseq(t);
@@ -337,12 +306,12 @@ intrinsic TGIsIsomorphic( G::GrpPC, H::GrpPC : Cent := true, Constructive := tru
   t`Reflexive`Antisymmetric := true;
   s`Reflexive`Alternating := true;
   s`Reflexive`Antisymmetric := true;
-  vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
 
-  isit, Hmt := TGIsPseudoIsometric(t, s : Cent := Cent, Constructive := Constructive, Method := Method);
+  check_pseudo_isom, Hmt := TGIsPseudoIsometric(t, s : Cent := Cent, 
+      Constructive := Constructive, Method := Method);
 
   if Constructive then
-    if isit then
+    if check_pseudo_isom then
       V := Codomain(maps_H[1]);
       G_gens := [G.i : i in [1..Dimension(V)]];
       X := Hmt`Maps[1]; 
@@ -362,5 +331,5 @@ intrinsic TGIsIsomorphic( G::GrpPC, H::GrpPC : Cent := true, Constructive := tru
     end if;
   end if;
 
-  return isit, _;
+  return check_pseudo_isom, _;
 end intrinsic;

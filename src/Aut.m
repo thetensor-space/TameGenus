@@ -85,7 +85,13 @@ __TameGenusAutomorphism := function( G : Cent := true, Method := 0,
   vprintf TameGenus, 1 : 
     "Extracting the p-central tensor and computing pseudo-isometries.\n";
 
+  // Tensor
   t := pCentralTensor(G, 1, 1);
+  _ := Eltseq(t);
+  t`Reflexive`Alternating := true;
+  t`Reflexive`Antisymmetric := true;
+  
+  // Pseudo-isometry group
   PIsom := TGPseudoIsometryGroup(t : Cent := Cent, Method := Method);
 
 

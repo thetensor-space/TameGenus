@@ -12,11 +12,13 @@ X * B1 * Tranpose(X) = B2^Z,
 returns true and (X,Z). Returns false otherwise.
 */
 
+import "GlobalVars.m" : __SANITY_CHECK;
 import "Flat.m": __TransformFIPair, __LiftFlatGenus2;
-import "Util.m": __PGL2PermToMat, __GL2ActionOnPolynomial, __PermutationDegreeMatrix, __FindPermutation, __GetStarAlg, __WriteMatrixOverPrimeField;
+import "Util.m": __PGL2PermToMat, __GL2ActionOnPolynomial, 
+    __PermutationDegreeMatrix, __FindPermutation, __GetStarAlg;
 import "LiftPoly.m": __LiftSlopeGenus2;
 
-__Pfaffian_ISO := function( bB, bC, flats, sloped : Sanity := false )
+__Pfaffian_ISO := function( bB, bC, flats, sloped )
 	k := BaseRing(bB);
   sorted_dims := flats cat sloped;
   si := #flats + 1;
@@ -68,12 +70,12 @@ __Pfaffian_ISO := function( bB, bC, flats, sloped : Sanity := false )
 		Z := GL(2,k)!1;
 		X := C2^(-1) * C1;
 		// Sanity check!
-		//if Sanity then
-		//	LHS := [ X * BB1[1] * Transpose( X ), X * BB1[2] * Transpose( X ) ];
-		//	RHS := [ &+[ Z[i][j]*SystemOfForms(bC)[j] : j in [1..2] ] : i in [1..2] ];
-		//	assert LHS eq RHS;
-		//end if;
-		return true, [*X,Z*];
+		if __SANITY_CHECK then
+		  LHS := [ X * BB1[1] * Transpose( X ), X * BB1[2] * Transpose( X ) ];
+			RHS := [ &+[ Z[i][j]*SystemOfForms(bC)[j] : j in [1..2] ] : i in [1..2] ];
+		  assert LHS eq RHS;
+		end if;
+		return true, [*X, Z*];
 	end if;
 
 	// Now we assume there exists at least one sloped block
@@ -173,7 +175,7 @@ __Pfaffian_ISO := function( bB, bC, flats, sloped : Sanity := false )
 		// Lift the sloped parts
 		M := IdentityMatrix( k, flatdim );
 		for i in [1..#poly1] do
-			Lift := __LiftSlopeGenus2( poly2[i], poly1[perm[i]], Z  : Sanity := Sanity );
+			Lift := __LiftSlopeGenus2( poly2[i], poly1[perm[i]], Z  : Sanity := __SANITY_CHECK );
 			M := DiagonalJoin( M, DiagonalJoin( Transpose(Lift[1]), Lift[2] ) );
 		end for;
 		M := Transpose( M );
@@ -192,9 +194,11 @@ __Pfaffian_ISO := function( bB, bC, flats, sloped : Sanity := false )
 		*/
 
 		// Sanity check!
-		//LHS := [ X * BB1[1] * Transpose( X ), X * BB1[2] * Transpose( X ) ];
-		//RHS := [ &+[ Z[j][i]*SystemOfForms(bC)[j] : j in [1..2] ] : i in [1..2] ];
-		//assert LHS eq RHS;
+    if __SANITY_CHECK then
+  		LHS := [ X * BB1[1] * Transpose( X ), X * BB1[2] * Transpose( X ) ];
+	  	RHS := [ &+[ Z[j][i]*SystemOfForms(bC)[j] : j in [1..2] ] : i in [1..2] ];
+	  	assert LHS eq RHS;
+    end if;
 
 		return true,[*X,Z*];
 	end if;
@@ -202,7 +206,7 @@ __Pfaffian_ISO := function( bB, bC, flats, sloped : Sanity := false )
 	return false,_;
 end function;
 
-__Pfaffian_AUT := function( sB, d : Sanity := false )
+__Pfaffian_AUT := function( sB, d )
 	k := BaseRing(sB);
   p := Characteristic(k);
   B := SystemOfForms(sB);
@@ -293,7 +297,7 @@ __Pfaffian_AUT := function( sB, d : Sanity := false )
 	    // Lift the sloped parts
 	    M := IdentityMatrix( k, 0 );
 	    for i in [1..#poly1] do
-		    Lift := __LiftSlopeGenus2( poly2[i], poly1[perm[i]], Z  : Sanity := Sanity );
+		    Lift := __LiftSlopeGenus2( poly2[i], poly1[perm[i]], Z  : Sanity := __SANITY_CHECK );
 		    M := DiagonalJoin( M, DiagonalJoin( Transpose(Lift[1]), Lift[2] ) );
 	    end for;
 	    M := Transpose( M );
@@ -314,8 +318,10 @@ __Pfaffian_AUT := function( sB, d : Sanity := false )
 	    */
 
 	    // Sanity check!
-      //S := SystemOfForms(sB);
-      //assert [ X*F*Transpose(X) : F in S ] eq [ &+[ Z[j][i]*S[j] : j in [1..#S] ] : i in [1..Nrows(Z)] ];
+      if __SANITY_CHECK then
+        S := SystemOfForms(sB);
+        assert [ X*F*Transpose(X) : F in S ] eq [ &+[ Z[j][i]*S[j] : j in [1..#S] ] : i in [1..Nrows(Z)] ];
+      end if;
       Append( ~inner, X );
       Append( ~outer, Lift[3] );
     end if;

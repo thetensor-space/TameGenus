@@ -7,7 +7,8 @@
 import "GlobalVars.m" : __SANITY_CHECK;
 import "Pfaffian.m" : __Pfaffian_AUT;
 import "Util.m" : __FindPermutation, __PermutationDegreeMatrix, __GetStarAlg, 
-    __WhichMethod, __SmallerGenSet, __Get_Flat_and_Sloped, __Display_order;
+    __WhichMethod, __SmallerGenSet, __Get_Flat_and_Sloped, __Display_order, 
+    __Print_field, __Radical_removal, __Display_adj_info;
 import "Flat.m" : __TransformFIPair, __LiftFlatGenus2;
 import "sloped.m" : PseudoIsometryGroupAdjointTensor;
 import "Iso.m" : __IsPseudoSG;
@@ -97,10 +98,8 @@ __G2_PIsometry := function( t, H : Method := 0 )
   tt := Cputime();
 
   A := AdjointAlgebra(t);
-  _ := RecognizeStarAlgebra(A);
+  __Display_adj_info(A);
 
-  vprintf TameGenus, 1 : "\tdim(Adj) = %o\n", Dimension(A);
-  vprintf TameGenus, 2 : "\tSimple parameters = %o\n", SimpleParameters(A);
   vprintf TameGenus, 2 : "Adjoint construction timing : %o s.\n", Cputime(tt);
 
   // Break off the flat and sloped subtensors of t 
@@ -310,31 +309,7 @@ or 2 for Pfaffian method.}
   */
 
   // Remove the radicals
-  vprintf TameGenus, 1 : "Checking the radicals.\n";
-  tt := Cputime();
-
-  Forms := SystemOfForms(t);
-  Rad := Radical(t, 2);
-  Crad := Coradical(t);
-
-  vprintf TameGenus, 1 : "\tdim(Rad_V) = %o\n\tdim(Rad_W) = %o\n", 
-      Dimension(Rad), Dimension(Crad);
-
-  if Dimension(Rad) gt 0 then
-    C := Complement(Generic(Rad), Rad);
-    RadPerm := GL(Dimension(Domain(t)[1]), K)!Matrix(Basis(C) cat Basis(Rad));
-    nForms := [RadPerm*X*Transpose(RadPerm) : X in Forms];
-    nForms := [ExtractBlock(X, 1, 1, Ncols(Forms[1])-Dimension(Rad), 
-        Ncols(Forms[1])-Dimension(Rad)) : X in nForms];  
-    t_nondeg := Tensor(nForms, 2, 1);
-  else
-    nForms := Forms;
-    t_nondeg := t;
-  end if; 
-
-  timing := Cputime(tt);
-  vprintf TameGenus, 2 : "Radical timing : %o s\n", timing;
-
+  t_nondeg, d_rad, d_crad, Z := __Radical_removal(t);
 
   if Cent then
 
@@ -344,12 +319,7 @@ or 2 for Pfaffian method.}
 
     T, H := TensorOverCentroid(t_nondeg);
 
-    if IsPrimeField(BaseRing(T)) then
-      vprintf TameGenus, 1 : "\tCent(t) = GF(%o)\n", #BaseRing(T);
-    else
-      vprintf TameGenus, 1 : "\tCent(t) = GF(%o^%o)\n", 
-          Factorization(#BaseRing(T))[1][1], Factorization(#BaseRing(T))[1][2];
-    end if;
+    __Print_field(T, "t");
     vprintf TameGenus, 2 : "Writing over centroid timing : %o s\n", Cputime(tt);
 
   else
@@ -382,28 +352,29 @@ or 2 for Pfaffian method.}
   end if;
 
   
-  if Dimension(Rad) gt 0 then
+  if (d_rad gt 0) or (d_crad gt 0) then
 
     // Add pseudo-isometries on radical.
     vprintf TameGenus, 1 : "\nIncluding the pseudo-isometries from radicals.\n";
-
-    Radgens := [DiagonalJoin(IdentityMatrix(K, Ncols(nForms[1])), x) : 
-        x in Generators(GL(Dimension(Rad), K))];
+    
+    dims_t_nd := [Dimension(X) : X in Frame(t_nondeg)];
+    Radgens := [DiagonalJoin(IdentityMatrix(K, dims_t_nd[1]), x) : 
+        x in Generators(GL(d_rad, K))];
     Radcentrals := [];
-    for i in [1..Ncols(nForms[1])] do
-      for j in [1..Dimension(Rad)] do
-        X := IdentityMatrix(K, Ncols(nForms[1]) + Dimension(Rad));
-        X[i][Ncols(nForms[1])+j] := 1;
+    for i in [1..dims_t_nd[1]] do
+      for j in [1..d_rad] do
+        X := IdentityMatrix(K, dims_t_nd[1] + d_rad);
+        X[i][dims_t_nd[1] + j] := 1;
         Append(~Radcentrals, X);
       end for;
     end for;
-    pseudo_in := [DiagonalJoin(X, IdentityMatrix(K, Dimension(Rad))) : 
-        X in IN] cat Radgens cat Radcentrals;
-    pseudo_in := [RadPerm^-1 * pseudo_in[i] * RadPerm : i in [1..#pseudo_in]];
-    pseudo_out := OUT cat [IdentityMatrix(K, #Forms) : 
+    pseudo_in := [DiagonalJoin(X, IdentityMatrix(K, d_rad)) : X in IN] cat 
+        Radgens cat Radcentrals;
+    pseudo_in := [Z^-1 * pseudo_in[i] * Z : i in [1..#pseudo_in]];
+    pseudo_out := OUT cat [IdentityMatrix(K, dims_t_nd[3]) : 
         i in [1..#Radgens + #Radcentrals]];
-    ORD *:= FactoredOrderGL(Dimension(Rad), #K);
-    ORD *:= Factorization(#K)^(Dimension(C)*Dimension(Rad));
+    ORD *:= FactoredOrderGL(d_rad, #K);
+    ORD *:= Factorization(#K)^(dims_t_nd[1]*d_rad - d_rad^2);
 
   else
 
@@ -424,8 +395,8 @@ or 2 for Pfaffian method.}
 
 
   // Put the group together
-  PIsom := sub< GL(Ncols(Forms[1])+#Forms, K) | [DiagonalJoin(pseudo_in[i], 
-      pseudo_out[i]) : i in [1..#pseudo_in]] >;
+  PIsom := sub< GL(Dimension(Domain(t)[1]) + Dimension(Codomain(t)), K) | 
+      [DiagonalJoin(pseudo_in[i], pseudo_out[i]) : i in [1..#pseudo_in]] >;
   // Give it some useful attributes
   DerivedFrom(~PIsom, t, {0..2}, {0, 2});
   PIsom`FactoredOrder := ORD;

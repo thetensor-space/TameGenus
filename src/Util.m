@@ -7,6 +7,10 @@
 import "GlobalVars.m" : __VERSION, __SANITY_CHECK;
 
 
+// -----------------------------------------------------------------------------
+//                             Functions for printing
+// -----------------------------------------------------------------------------
+
 // A function to convert factored orders into a string parsable by humans.
 __Display_order := function(N)
   if #N eq 0 then 
@@ -19,25 +23,86 @@ __Display_order := function(N)
   return str[1..#str-3];
 end function;
 
-// Input: A pair of sequences of mats such that DiagonalJoin(X, Y) generates 
-// PIsom/Isom.
-// Returns a potentially smaller subsequence of X and Y, along with the order.
-__SmallerGenSet := function(X, Y)
-  assert #X eq #Y;
-  K := BaseRing(X[1]);
-  Outer := sub< GL(2, K) | Y >;
-  ORD := LMGFactoredOrder(Outer);
-  Indices := {1..#Y};
-  gens := [];
-  while (#Indices gt 0) and 
-      (ORD ne LMGFactoredOrder(sub< GL(2, K) | Y[gens] >)) do
-    i := Random(Indices);
-    Append(~gens, i);
-    Exclude(~Indices, i);
-  end while;
-  return X[gens], Y[gens], ORD;
-end function;
+__Print_field := procedure(t, str)
+  if IsPrimeField(BaseRing(t)) then
+    vprintf TameGenus, 1 : "\tCent(%o) = GF(%o)\n", str, #BaseRing(t);
+  else
+    vprintf TameGenus, 1 : "\tCent(%o) = GF(%o^%o)\n", str, 
+        Factorization(#BaseRing(t))[1][1], Factorization(#BaseRing(t))[1][2];
+  end if;
+end procedure;
 
+__Display_adj_info := procedure(A : subscript := "")
+  assert RecognizeStarAlgebra(A);
+  vprintf TameGenus, 1 : "\tdim(Adj%o) = %o\n", subscript, Dimension(A);
+
+  if GetVerbose("TameGenus") eq 2 then
+
+    Print_q := function(q)
+      if IsPrime(q) then
+        return IntegerToString(q);
+      else
+        t := Factorization(q)[1];
+        return Sprintf("%o^%o", t[1], t[2]);
+      end if;
+    end function;
+
+    simple := "";
+    for S in SimpleParameters(A) do
+      if S[1] eq "exchange" then
+        simple cat:= Sprintf("Ex(%o, %o) x ", S[2], Print_q(S[3]));
+      elif S[1] eq "symplectic" then
+        simple cat:= Sprintf("Symp(%o, %o) x ", S[2], Print_q(S[3]));
+      elif S[1] eq "unitary" then
+        simple cat:= Sprintf("U(%o, %o) x ", S[2], Print_q(S[3]));
+      elif S[1] eq "orthogonalplus" then
+        simple cat:= Sprintf("O^+(%o, %o) x ", S[2], Print_q(S[3]));
+      elif S[1] eq "orthogonalminus" then
+        simple cat:= Sprintf("O^-(%o, %o) x ", S[2], Print_q(S[3]));
+      else 
+        simple cat:= Sprintf("O^o(%o, %o) x ", S[2], Print_q(S[3]));
+      end if;
+    end for;
+  
+    vprintf TameGenus, 2 : "\tSimple parameters = %o\n", simple[1..#simple-3];
+  end if;
+end procedure;
+
+// -----------------------------------------------------------------------------
+//                             Functions for tensors
+// -----------------------------------------------------------------------------
+
+__Radical_removal := function(t)
+  K := BaseRing(t);
+
+  vprintf TameGenus, 1 : "Checking the radicals.\n";
+  tt := Cputime();
+
+  Forms := SystemOfForms(t);
+  Rad := Radical(t, 2);
+  Crad := Coradical(t);
+
+  vprintf TameGenus, 1 : "\tdim(Rad_V) = %o\n\tdim(Rad_W) = %o\n", 
+      Dimension(Rad), Dimension(Crad);
+
+  if Dimension(Rad) gt 0 then
+    C := Complement(Generic(Rad), Rad);
+    RadPerm := GL(Dimension(Domain(t)[1]), K)!Matrix(Basis(C) cat Basis(Rad));
+    nForms := [RadPerm*X*Transpose(RadPerm) : X in Forms];
+    nForms := [ExtractBlock(X, 1, 1, Ncols(Forms[1])-Dimension(Rad), 
+        Ncols(Forms[1])-Dimension(Rad)) : X in nForms];  
+    t_nondeg := Tensor(nForms, 2, 1);
+  else
+    nForms := Forms;
+    t_nondeg := t;
+    RadPerm := IdentityMatrix(K, Dimension(Domain(t)[1]));
+  end if; 
+
+  timing := Cputime(tt);
+  vprintf TameGenus, 2 : "Radical timing : %o s\n", timing;
+
+  return t_nondeg, Dimension(Rad), Dimension(Crad), RadPerm;
+end function;
 
 /*
 Input a field k, a sequence of matrix degrees, and a permutation (#deg eq #perm)
@@ -110,6 +175,7 @@ __Get_Flat_and_Sloped := function(t)
   Antichmtp := TensorCategory([-1, -1, 1], {{0}, {1, 2}});
   H := Homotopism([*P*T, P*T, IdentityMatrix(K, 2)*], Antichmtp);
   s := t @ H;
+  H := Homotopism(t, s, Maps(H), Antichmtp : Check := false);
 
   // Extract the two subtensors
   Flat := [ExtractBlock(X, 1, 1, &+flatdims, &+flatdims) : 
@@ -128,6 +194,22 @@ __Get_Flat_and_Sloped := function(t)
 end function;
 
 
+/*
+Input a matrix M
+returns [  0   M ]
+        [ -M^t 0 ].
+*/
+__Scharlau := function( M );
+	k := Parent(M[1][1]);
+  MA := MatrixAlgebra(k, Nrows(M) + Ncols(M));
+  top := HorizontalJoin(ZeroMatrix(k, Nrows(M), Nrows(M)), M);
+  bot := HorizontalJoin(-Transpose(M), ZeroMatrix(k, Ncols(M), Ncols(M)));
+	return MA!VerticalJoin(top , bot);
+end function;
+
+// -----------------------------------------------------------------------------
+//                           Functions for polynomials
+// -----------------------------------------------------------------------------
 
 /*
 Input a polynomial f in k[x], and 
@@ -174,18 +256,42 @@ __GL2ActionOnPolynomial := function( f, Z : Gal := 0 )
 	return h;
 end function;
 
-/*
-Input a matrix M
-returns [  0   M ]
-        [ -M^t 0 ].
-*/
-__Scharlau := function( M );
-	k := Parent(M[1][1]);
-  MA := MatrixAlgebra(k, Nrows(M) + Ncols(M));
-  top := HorizontalJoin(ZeroMatrix(k, Nrows(M), Nrows(M)), M);
-  bot := HorizontalJoin(-Transpose(M), ZeroMatrix(k, Ncols(M), Ncols(M)));
-	return MA!VerticalJoin(top , bot);
+// -----------------------------------------------------------------------------
+//                            Miscellaneous functions
+// -----------------------------------------------------------------------------
+
+// return true for adj-ten; false for Pfaffian
+// m : method, q : size of field, d : dims
+__WhichMethod := function(m, q, d)
+  if m eq 1 then
+    vprintf TameGenus, 1 : "\nMethod set to adjoint-tensor.\n";
+    return true;
+  end if;
+  if m eq 2 then
+    vprintf TameGenus, 1 : "\nMethod set to Pfaffian.\n";
+    return false;
+  end if;
+  if q le 11 then
+    vprintf TameGenus, 1 : "\nField is small enough, applying Pfaffian method.\n";
+    return false;
+  end if; 
+  ord := Factorization(q);
+  p := ord[1][1];
+  e := ord[1][2];
+  B := SequenceToMultiset(d);
+  t := Maximum([Multiplicity(B, x) : x in B]);
+  // can probably be improved
+  if q^3*e le Factorial(t) then
+    vprintf TameGenus, 1 : "\nPGammaL is smaller than potential symmetric " cat 
+        "group, applying Pfaffian method.\n";
+    return false;
+  else
+    vprintf TameGenus, 1 : "\nPGammaL is larger than symmetric group, " cat
+        "applying adjoint-tensor method.\n";
+    return true;
+  end if;
 end function;
+
 
 // Needed for __ExtractStarAlg
 __IdentifyBasis := function (Q)
@@ -253,39 +359,27 @@ __GetStarAlg := function( A, T, i, d )
   return AA;
 end function;
 
-// return true for adj-ten; false for Pfaffian
-// m : method, q : size of field, d : dims
-__WhichMethod := function(m, q, d)
-  if m eq 1 then
-    vprintf TameGenus, 1 : "\nMethod set to adjoint-tensor.\n";
-    return true;
-  end if;
-  if m eq 2 then
-    vprintf TameGenus, 1 : "\nMethod set to Pfaffian.\n";
-    return false;
-  end if;
-  if q le 11 then
-    vprintf TameGenus, 1 : "\nField is small enough, applying Pfaffian method.\n";
-    return false;
-  end if; 
-  ord := Factorization(q);
-  p := ord[1][1];
-  e := ord[1][2];
-  B := SequenceToMultiset(d);
-  t := Maximum([Multiplicity(B, x) : x in B]);
-  // can probably be improved
-  if q^3*e le Factorial(t) then
-    vprintf TameGenus, 1 : "\nPGammaL is smaller than potential symmetric " cat 
-        "group, applying Pfaffian method.\n";
-    return false;
-  else
-    vprintf TameGenus, 1 : "\nPGammaL is larger than symmetric group, " cat
-        "applying adjoint-tensor method.\n";
-    return true;
-  end if;
+// Input: A pair of sequences of mats such that DiagonalJoin(X, Y) generates 
+// PIsom/Isom.
+// Returns a potentially smaller subsequence of X and Y, along with the order.
+__SmallerGenSet := function(X, Y)
+  assert #X eq #Y;
+  K := BaseRing(X[1]);
+  Outer := sub< GL(2, K) | Y >;
+  ORD := LMGFactoredOrder(Outer);
+  Indices := {1..#Y};
+  gens := [];
+  while (#Indices gt 0) and 
+      (ORD ne LMGFactoredOrder(sub< GL(2, K) | Y[gens] >)) do
+    i := Random(Indices);
+    Append(~gens, i);
+    Exclude(~Indices, i);
+  end while;
+  return X[gens], Y[gens], ORD;
 end function;
 
-__WriteMatrixOverPrimeField := function( M )
+
+/*__WriteMatrixOverPrimeField := function( M )
   E := BaseRing(M);
   p := Characteristic(E);
   K := GF(p);
@@ -299,7 +393,12 @@ __WriteMatrixOverPrimeField := function( M )
   phi := map< V -> V_ext | x :-> V_ext!([ E!(Eltseq(x)[(j-1)*d+1..j*d]) : j in [1..n]]),
                            y :-> V!(&cat[Eltseq(y[i]) : i in [1..n]]) >;
   return Matrix(K, [ Eltseq(((V.i @ phi)*M) @@ phi) : i in [1..n*d] ]);
-end function;
+end function;*/
+
+
+// =============================================================================
+//                                   Intrinsics
+// =============================================================================
 
 intrinsic TameGenusVersion() -> MonStgElt
 {Returns the version number of TameGenus.}
