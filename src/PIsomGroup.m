@@ -18,37 +18,29 @@ __G1_PIsometry := function( t, H : Print := false )
   K := BaseRing(t);
 
   // Construct generators for isometry group
-  vprintf TameGenus, 1 : "\nConstructing the isometry group.\n";
+  vprintf TameGenus, 1 : "\nConstructing the pseudo-isometry group.\n";
   tt := Cputime();
 
-  if GetVerbose("TameGenus") eq 0 then
-    disp := false;
-  else
-    disp := true;
-  end if;
-  isom := IsometryGroup(SystemOfForms(t) : DisplayStructure := disp);
+  pisom := SimilarityGroup(SystemOfForms(t)[1]);
 
-  isom_order := FactoredOrder(isom); // Isometry group already stores this.
-  vprintf TameGenus, 2 : "\tIsometry order : %o\n", 
-      __Display_order(isom_order);
-  vprintf TameGenus, 2 : "Isometry construction timing : %o s\n", Cputime(tt);
+  pisom_order := FactoredOrder(IsometryGroup(SystemOfForms(t) : 
+      DisplayStructure := false)) * Factorization(#K-1); 
+  vprintf TameGenus, 2 : "\tPseudo-isometry order : %o\n", 
+      __Display_order(pisom_order);
+  vprintf TameGenus, 2 : "Pseudo0isometry construction timing : %o s\n", Cputime(tt);
 
 
-  // Sanity check
-  if __SANITY_CHECK then
-    vprintf TameGenus, 1 : "\nRunning sanity check.\n";
-    tt := Cputime();
-    assert forall{X : X in Generators(isom) | IsHomotopism(t, t, 
-        [*X, X, IdentityMatrix(K, 1)*], HomotopismCategory(3))};
-    vprintf TameGenus, 2 : "Sanity test timing : %o s\n", Cputime(tt);
-  end if;
+  // Use Lift1 to get the action of pisom on the 0 coordinate.
+  pseudo_in := [Matrix(X) : X in Generators(pisom)];
+  pseudo_out := [];
+  for X in pseudo_in do
+    F := Homotopism([*X, X, 0*], HomotopismCategory(3));
+    check_lift, G := Lift1(t, t, F, 0);
+    assert check_lift;
+    Append(~pseudo_out, Matrix(G.0));
+  end for;
 
-  // TODO: Fix this! This is not correct!
-  prim := PrimitiveElement(K);
-  pseudo_in := [X : X in Generators(isom)] cat [prim*IdentityMatrix(K, Nrows(Form[1]))];
-  pseudo_out := [IdentityMatrix(K, 1) : i in [1..Ngens(isom)]] cat [DiagonalMatrix(K, [prim^2])];
-
-
+  
   // Check if there are non-trivial Galois actions
   if #BaseRing(Domain(H)) ne #K then
 
@@ -81,7 +73,7 @@ __G1_PIsometry := function( t, H : Print := false )
   end if;
 
 
-  return pseudo_in, pseudo_out, isom_order * Factorization(#K - 1) * galois_ord;
+  return pseudo_in, pseudo_out, pisom_order * galois_ord;
 end function;
 
 
@@ -375,7 +367,7 @@ or 2 for Pfaffian method.}
   if Dimension(Codomain(T)) eq 1 then
   
     vprintf TameGenus, 1 : "\nTensor has genus 1.\n";
-    IN, OUT, ORD := __G1_PIsometry(T);
+    IN, OUT, ORD := __G1_PIsometry(T, H);
 
   else
 
