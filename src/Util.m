@@ -39,62 +39,6 @@ __SmallerGenSet := function(X, Y)
 end function;
 
 
-// Code due to E. A. O'Brien from 31.01.2019.
-// vector to integer sequence
-__VectorToInt := function (v)
-  r := Eltseq(v);
-  ChangeUniverse(~r, Integers());
-  return r;
-end function;
-
-
-// Code due to E. A. O'Brien from 31.01.2019.
-/* convert matrix A in GL(d, p) describing action on Frattini quotient
-    of d-generator p-group G into automorphism of G */
-__MatrixToAutomorphism := function (P, A)
-  p := FactoredOrder(P)[1][1];
-  d := FrattiniQuotientRank(P);
-  m := Nrows(A);
-  error if m lt d, "Must define action on at least Frattini quotient";
-  zeros := [0: i in [1..NPCgens(P) - m]];
-  Images := [<P.i, P!(__VectorToInt(A[i]) cat zeros)> : i in [1..m]];
-
-  if __SANITY_CHECK then 
-    return hom <P -> P | Images >;
-  else
-    return hom <P -> P | Images : Check := false >;
-  end if;
-end function;
-
-
-/*
-  Given a matrix group of pseudo-isometries of G and a tensor constructed via 
-  pCentralTensor(G), construct the corresponding automorphisms of G.
-*/
-__PseudoIsom_to_GrpAuto := function(M, t)
-  assert assigned t`Coerce;
-  G := Domain(t`Coerce[1]);
-  d := Dimension(Domain(t)[1]);
-  e := Dimension(Codomain(t));
-  K := BaseRing(t);
-  
-  gen_set := Isetseq(PCGenerators(G));
-  assert #gen_set eq d + e;
-  PI := [__MatrixToAutomorphism(G, X) : X in Generators(M)];
-  Cents := [];
-  for i in [1..d] do
-    for j in [1..e] do
-      C := gen_set;
-      C[i] *:= gen_set[d+j];
-      Append(~Cents, C);
-    end for;
-  end for;
-
-  A := AutomorphismGroup(G, gen_set, [gen_set @ alpha : alpha in PI] cat Cents);
-  A`Order := #M * (#K)^(d*e);
-  return A;
-end function;
-
 /*
 Input a field k, a sequence of matrix degrees, and a permutation (#deg eq #perm)
 returns a permutation matrix that acts on blocks of a prescribed size as the given permutation

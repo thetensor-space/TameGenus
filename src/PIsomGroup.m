@@ -97,6 +97,7 @@ __G2_PIsometry := function( t, H : Method := 0 )
   tt := Cputime();
 
   A := AdjointAlgebra(t);
+  _ := RecognizeStarAlgebra(A);
 
   vprintf TameGenus, 1 : "\tdim(Adj) = %o\n", Dimension(A);
   vprintf TameGenus, 2 : "\tSimple parameters = %o\n", SimpleParameters(A);
@@ -195,7 +196,11 @@ __G2_PIsometry := function( t, H : Method := 0 )
 
   vprintf TameGenus, 2 : "\tPseudo-isometry order : %o\n", 
       __Display_order(pseudo_order);
-  vprintf TameGenus, 2 : "%o method timing : %o s\n", method, Cputime(tt);
+  if #s_dims gt 0 then
+    vprintf TameGenus, 2 : "%o method timing : %o s\n", method, Cputime(tt);
+  else
+    vprintf TameGenus, 2 : "Lifting flats timing : %o s\n", Cputime(tt);
+  end if;
 
 
   // Sanity check 
@@ -253,8 +258,7 @@ __G2_PIsometry := function( t, H : Method := 0 )
     pseudo_in cat:= galois_in;
     pseudo_out cat:= galois_out;
 
-    vprintf TameGenus, 2 : "\tGalois order : %o\n", 
-        __Display_order(galois_ord);
+    vprintf TameGenus, 2 : "\tGalois order : %o\n", __Display_order(galois_ord);
 
   else
 
@@ -276,6 +280,7 @@ __G2_PIsometry := function( t, H : Method := 0 )
 
   return pseudo_in, pseudo_out, isom_order * pseudo_order * galois_ord;
 end function;
+
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //                                  Intrinsics
