@@ -63,7 +63,7 @@ end function;
 
 __G1_Isotopism := function(s, t : Const := true)
   vprintf TameGenus, 1 : "\nGenus 1 case.\n";
-  K := Basering(s);
+  K := BaseRing(s);
   A_s := AdjointAlgebra(s);
   A_t := AdjointAlgebra(t);
 
@@ -122,7 +122,7 @@ __IsPseudoSG := function( s, t : Constructive := true, Method := 0 )
 
   // genus 1
   if Dimension(Codomain(s)) eq 1 then
-    return __G1_Isotopism(s, t : Const := Constructive)
+    return __G1_Isotopism(s, t : Const := Constructive);
   end if;
 
   // genus 2

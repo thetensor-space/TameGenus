@@ -6,20 +6,21 @@
 
 import "Util.m" : __GL2ActionOnPolynomial, __Get_Flat_and_Sloped;
 
-__GetGenus2Signature := function( t )
+__GetGenus2Signature := function(H)
+  t := Codomain(H);
   K := BaseRing(t);
   A := AdjointAlgebra(t);
 
   // Just get the part we need: the sloped subtensor and the dims of the blocks.
-  _, t_sloped, _, _, dims := __Get_Flat_and_Sloped(t);
+  _, t_sloped, _, f_dims, s_dims := __Get_Flat_and_Sloped(t);
 
-  if #dims gt 0 then
+  if #s_dims gt 0 then
 
-    R := PolynomialRing( k, 2 );
+    R := PolynomialRing( K, 2 );
     Forms := SystemOfForms(t_sloped);
     polys := {@@};
     start := 1;
-    for d in dims do
+    for d in s_dims do
       X := ExtractBlock(Forms[1], start, start + d div 2, d div 2, d div 2);
       Y := ExtractBlock(Forms[2], start, start + d div 2, d div 2, d div 2);
       start +:= d;
@@ -41,15 +42,25 @@ __GetGenus2Signature := function( t )
     act := OrbitAction(GL(2, K), LineOrbits(GL(2, K))[1][1]); 
     Perms := Image(act); // PGL(2, K)
 
+    // Determine the potential Galois automorphisms
+    k := BaseRing(Domain(H));
+    if #K ne #k then
+      powers := [Degree(k)*d : d in Divisors(Degree(K, k))];
+    else
+      powers := [0];
+    end if;
+
     // Get canonical Pfaffian.
     pfaff_orbits := {@ polys @};
-    for Z in Perms do // include Galois auts here
-      X := cleartop(Z @@ act, K);
-      polys_new := {@@};
-      for f in polys do
-        Include(~polys_new, __GL2ActionOnPolynomial(f, X));
+    for a in powers do
+      for Z in Perms do // include Galois auts here
+        X := cleartop(Z @@ act, K);
+        polys_new := {@@};
+        for f in polys do
+          Include(~polys_new, __GL2ActionOnPolynomial(f, X : Gal := a));
+        end for;
+        Include(~pfaff_orbits, polys_new);
       end for;
-      Include(~pfaff_orbits, polys_new);
     end for;
     pfaff_prod := {@ &*(P) : P in pfaff_orbits @};
     ind := Index(pfaff_prod, Minimum(pfaff_prod)); // internal Magma ordering 
@@ -57,7 +68,7 @@ __GetGenus2Signature := function( t )
 
     // Polynomials are difficult to compare.
     // Here's the (possibly temporary) fix.
-    terms := [* [ 0 : i in [0..Degree(f)] ] : f in can_polys *];
+    terms := [* [ K!0 : i in [0..Degree(f)] ] : f in can_polys *];
     for i in [1..#can_polys] do
       f := can_polys[i];
       T := Terms(f); // sorted via lex
@@ -74,7 +85,7 @@ __GetGenus2Signature := function( t )
     terms := [**];
   end if;
 
-  return [* flats, terms *];
+  return [*f_dims, terms*];
 end function;
 
 
@@ -115,12 +126,16 @@ and the third entry is the list of coefficients for the Pfaffians.}
   t_nondeg := FullyNondegenerateTensor(t);
   if Cent then
     s, H := TensorOverCentroid(t_nondeg);
+  else
+    s := t;
+    H := Homotopism(t, t, [*Hom(V, V)!1 : V in Frame(t_nondeg)*], 
+        HomotopismCategory(3));
   end if;
   
   require Dimension(Codomain(s)) eq 2 : "Not a genus 2 tensor.";
 
   return [*<Dimension(Radical(t, 2)), Dimension(Coradical(t))> *] cat
-      __GetGenus2Signature(s);
+      __GetGenus2Signature(H);
 end intrinsic;
 
 intrinsic Genus2Signature( S::[Mtrx] : Cent := true ) -> List
