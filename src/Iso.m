@@ -71,6 +71,12 @@ __G1_Isotopism := function(s, t : Const := true)
 
     // Hack until bug in StarAlg gets fixed for forms.
     // This code should be replaced by a PerpDecomposition.
+    /* 
+      Idea: get the idempotents in the adjoint algebras
+            use those to put the matrices in block diagonal form
+            the matrix reduces to the top right corner
+            construct the transition matrix
+    */
     I1 := __GetIdempotents(A_s);
     I2 := __GetIdempotents(A_t);
     S1 := Matrix( &cat[ Basis( Image( I1[i] ) ) : i in [1..#I1] ] );
