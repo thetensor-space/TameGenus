@@ -61,6 +61,40 @@ __IsPseudoSGAdjTens := function( sB, sC )
   return isit, [*X, Z*];
 end function;
 
+__G1_Isotopism := function(s, t : Const := true)
+  vprintf TameGenus, 1 : "\nGenus 1 case.\n";
+  K := Basering(s);
+  A_s := AdjointAlgebra(s);
+  A_t := AdjointAlgebra(t);
+
+  if Const then
+
+    // Hack until bug in StarAlg gets fixed for forms.
+    // This code should be replaced by a PerpDecomposition.
+    I1 := __GetIdempotents(A_s);
+    I2 := __GetIdempotents(A_t);
+    S1 := Matrix( &cat[ Basis( Image( I1[i] ) ) : i in [1..#I1] ] );
+    S2 := Matrix( &cat[ Basis( Image( I2[i] ) ) : i in [1..#I2] ] );
+    bForms1 := [ S1*SystemOfForms(s)[1]*Transpose(S1) ];
+    bForms2 := [ S2*SystemOfForms(t)[1]*Transpose(S2) ];
+    N1 := ExtractBlock( bForms1[1], 1, Nrows(bForms1[1]) div 2 + 1, 
+        Nrows(bForms1[1]) div 2, Nrows(bForms1[1]) div 2 );
+    N2 := ExtractBlock( bForms2[1], 1, Nrows(bForms1[1]) div 2 + 1, 
+        Nrows(bForms1[1]) div 2, Nrows(bForms1[1]) div 2 );
+    T := DiagonalJoin( N2 * N1^-1, IdentityMatrix( K, Nrows(N1) ) );
+    X := < S2^-1 * T * S1, IdentityMatrix(K, 1) >;
+
+    // Sanity check
+    if __SANITY_CHECK then
+      assert IsHomotopism(s, t, [*X[1], X[1], X[2]*]);
+    end if;
+
+    return true, DiagonalJoin(X); 
+  end if;
+
+  return true, _;
+end function;
+
 __IsPseudoSG := function( s, t : Constructive := true, Method := 0 )
   K := BaseRing(s);
 
@@ -82,32 +116,7 @@ __IsPseudoSG := function( s, t : Constructive := true, Method := 0 )
 
   // genus 1
   if Dimension(Codomain(s)) eq 1 then
-    vprintf TameGenus, 1 : "\nGenus 1 case.\n";
-    if Constructive then
-
-      // Hack until bug in StarAlg gets fixed for forms.
-      I1 := __GetIdempotents(A_s);
-      I2 := __GetIdempotents(A_t);
-      S1 := Matrix( &cat[ Basis( Image( I1[i] ) ) : i in [1..#I1] ] );
-      S2 := Matrix( &cat[ Basis( Image( I2[i] ) ) : i in [1..#I2] ] );
-      bForms1 := [ S1*SystemOfForms(s)[1]*Transpose(S1) ];
-      bForms2 := [ S2*SystemOfForms(t)[1]*Transpose(S2) ];
-      N1 := ExtractBlock( bForms1[1], 1, Nrows(bForms1[1]) div 2 + 1, 
-          Nrows(bForms1[1]) div 2, Nrows(bForms1[1]) div 2 );
-      N2 := ExtractBlock( bForms2[1], 1, Nrows(bForms1[1]) div 2 + 1, 
-          Nrows(bForms1[1]) div 2, Nrows(bForms1[1]) div 2 );
-      T := DiagonalJoin( N2 * N1^-1, IdentityMatrix( K, Nrows(N1) ) );
-      X := < S2^-1 * T * S1, IdentityMatrix(K, 1) >;
-
-      // Sanity check
-      if __SANITY_CHECK then
-        assert IsHomotopism(s, t, [*X[1], X[1], X[2]*]);
-      end if;
-
-      return true, DiagonalJoin(X); 
-    else
-      return true, _;
-    end if;
+    return __G1_Isotopism(s, t : Const := Constructive)
   end if;
 
   // genus 2
