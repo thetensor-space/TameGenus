@@ -36,22 +36,23 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FO
 
 This package requires two other packages publicly available on GitHub.
   
-  1. eMAGma: <https://github.com/algeboy/eMAGma>
-  2. StarAlge: <https://github.com/algeboy/StarAlge>
+  1. TensorSpace: <https://github.com/thetensor-space/TensorSpace>
+  2. StarAlge: <https://github.com/thetensor-space/StarAlge>
+  3. Sylver: <https://github.com/thetensor-space/Sylver>
   
   Attach the spec file during a Magma run and the intrinsics will be available to use.  To attach the spec file run the following, where `<location>` is the directory containing the TameGenus directory,
 
 ```
-  > AttachSpec("<location>/TameGenus/TameGenus.spec");
+> AttachSpec("<location>/TameGenus/TameGenus.spec");
 ```
 
 
 ## Latest Versions 
 
-Current version: 1.2.
+Current version: 1.9.
 
 Latest versions can be downloaded on GitHub at:
-  <https://github.com/algeboy/TameGenus>
+  <https://github.com/thetensor-space/TameGenus>
 
 
 ## Feedback, Bugs, and Contributions 

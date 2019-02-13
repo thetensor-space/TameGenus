@@ -4,7 +4,7 @@
 */
 
 
-import "Util.m" : __GL2ActionOnPolynomial, __Get_Flat_and_Sloped;
+import "Util.m" : __GL2ActionOnPolynomial, __Get_Flat_and_Sloped, __MyIDMatrix;
 
 __GetGenus2Signature := function(H)
   t := Codomain(H);
@@ -128,7 +128,7 @@ and the third entry is the list of coefficients for the Pfaffians.}
     s, H := TensorOverCentroid(t_nondeg);
   else
     s := t;
-    H := Homotopism(t, t, [*Hom(V, V)!1 : V in Frame(t_nondeg)*], 
+    H := Homotopism(t, t, [*__MyIDMatrix(V) : V in Frame(t_nondeg)*], 
         HomotopismCategory(3));
   end if;
   

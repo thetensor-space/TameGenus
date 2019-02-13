@@ -260,6 +260,10 @@ end function;
 //                            Miscellaneous functions
 // -----------------------------------------------------------------------------
 
+__MyIDMatrix := function(V)
+  return IdentityMatrix(BaseRing(V), Dimension(V));
+end function;
+
 // return true for adj-ten; false for Pfaffian
 // m : method, q : size of field, d : dims
 __WhichMethod := function(m, q, d)

@@ -23,7 +23,7 @@
 \email{James.Wilson@ColoState.Edu}
 
 \date{\today}
-\version{1.2}
+\version{1.9}
 \copyrightyear{2015--2019}
 
 % ------------------------------------------------------------------------------
@@ -44,25 +44,25 @@ When appropriate, all intrinsics dealing with groups also work for tensors ({\tt
 This package includes intrinsics for automorphism and isomorphism computations, canonical labeling, and constructing random groups of genus 1 or 2 of exponent  $\leq p^2$. 
 Mathematical details of these algorithms can be found in \cite{BMW}.
 
-Users will need to attach the latest versions of \texttt{eMAGma} \cite{eMAGma} and \texttt{StarAlge} \cite{StarAlge} to use all the features of this package. 
-The URLs are found in the bibliography. 
+Users will need to attach the latest versions of \texttt{TensorSpace} \cite{TensorSpacePackage}, \texttt{StarAlge} \cite{StarAlge}, and \texttt{Sylver} \cite{Sylver} to use all the features of this package. 
+The URLs are found in the bibliography or in the package \texttt{README.md}.
 
 \subsection*{Citing TameGenus} 
 To cite the Tame Genus package, please use the following\\
 \\
-Joshua Maglione, Peter A. Brooksbank, and James B. Wilson, \emph{Tame Genus}, version 1.2, GitHub, 2017. \url{https://github.com/algeboy/TameGenus}. \\
+Joshua Maglione, Peter A. Brooksbank, and James B. Wilson, \emph{TameGenus}, version 1.9, GitHub, 2019. \url{https://github.com/thetensor-space/TameGenus}. \\
 \\
 For AMSRefs:
 \begin{verbatim}
-\bib{eMAGma}{misc}{
+\bib{TameGenusPkg}{misc}{
    author={Maglione, Joshua},
    author={Brooksbank, Peter A.},
    author={Wilson, James B.},
-   title={Tame Genus},
+   title={TameGenus},
    publisher={GitHub},
-   year={2017},
-   edition={version 1.2},
-   note={\texttt{https://github.com/algeboy/TameGenus}},
+   year={2019},
+   edition={version 1.9},
+   note={\texttt{https://github.com/thetensor-space/TameGenus}},
 }
 \end{verbatim}
 
@@ -181,31 +181,25 @@ We have two intrinsics for constructing automorphism groups: one with group inpu
 TGAutomorphismGroup(G : parameters) : GrpPC -> GrpAuto
     Cent : BoolElt : true
     Method : RngIntElt : 0 
-    Order : BoolElt : false
+    Mat : BoolElt : false
 \end{intrinsics}
 
 Given a $p$-group $G$, of class 2, exponent $p$, and genus $\leq 2$, this returns $\Aut(G)$.
 This currently does not work with $p=2$.
-This intrinsic provides three optional parameters: {\tt Cent}, {\tt Method}, and {\tt Order}.
+This intrinsic provides three optional parameters: {\tt Cent}, {\tt Method}, and {\tt Mat}.
 
 \begin{description}
 \item[\textcolor{blue}{\tt Cent}]
 This parameter is a flag for the algorithm to rewrite the tensor over its centroid. 
-In order to rewrite over the centroid, we assume the centroid is a local ring, see \cite{eMAGma} for details.
+In order to rewrite over the centroid, we assume the centroid is a local ring, see \cite{TensorSpacePackage} for details.
 The default is set to {\tt true}, so by default, the algorithm computes the centroid and rewrites the tensor over the residue field.
 If you know the centroid is trivial, set {\tt Cent} to {\tt false} to save time.
-WARNING: if the centroid is a proper field extension of $\mathbb{F}_p$, then the full automorphism group may not be constructed (this is a bug we will fix in the near future).
 \item[\textcolor{blue}{\tt Method}]
 The default is $0$, and it accepts any input from $\{ 0,1,2\}$. 
 This will set the method for handling the sloped part of the tensor.
-If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not optimally tuned.
-\item[\textcolor{blue}{\tt Order}]
-Finally, {\tt Order} is included so you have the order of the returned automorphism group. 
-The data structure of {\tt GrpAuto} makes it hard to compute the order of the group. 
-However, when computing $\Aut(G)$, we construct a (linear) representation of the group. 
-We can take advantage of the LMG functions \cite{LMG} in Magma to compute the order of the representation. 
-The default is set to {\tt false}. 
-WARNING: if set to {\tt true} this step could take the majority of the computation time.
+If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not yet optimally tuned gut is generally good.
+\item[\textcolor{blue}{\tt Mat}]
+The default is set to \texttt{false}. When set to \texttt{true}, the output will be a (linear) representation of the automorphism group. The row vectors of the matrix correspond to the polycyclic vectors from the polycyclic presentation.
 \end{description}
 
 \index{TGPseudoIsometryGroup}
@@ -222,14 +216,13 @@ This intrinsic provides two optional parameters: {\tt Cent} and {\tt Method}.
 \begin{description}
 \item[\textcolor{blue}{\tt Cent}]
 This parameter is a flag for the algorithm to rewrite the tensor over its centroid. 
-In order to rewrite over the centroid, we assume the centroid is a local ring, see \cite{eMAGma} for details.
+In order to rewrite over the centroid, we assume the centroid is a local ring, see \cite{TensorSpacePackage} for details.
 The default is set to {\tt true}, so by default, the algorithm computes the centroid and rewrites the tensor over the residue field.
-If you know the centroid is trivial, set {\tt Cent} to {\tt false} to save time.
-WARNING: if the centroid is a proper field extension of $\mathbb{F}_q$, then the full pseudo-isometry group may not be constructed (this is a bug we will fix in the near future).
+If you know the centroid is trivial or you do not want the semilinear pseudo-isometry group, set {\tt Cent} to {\tt false} to save time.
 \item[\textcolor{blue}{\tt Method}]
 The default is $0$, and it accepts any input from $\{ 0,1,2\}$. 
 This will set the method for handling the sloped part of the tensor.
-If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not optimally tuned.
+If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not yet optimally tuned gut is generally good.
 \end{description}
 
 \section{Examples}
@@ -253,18 +246,16 @@ There are three optional parameters: {\tt Cent}, {\tt Constructive}, and {\tt Me
 \begin{description}
 \item[\textcolor{blue}{\tt Cent}]
 This parameter is a flag for the algorithm to rewrite the tensors over their centroids. 
-In order to rewrite over the centroid, we assume the centroid is a local ring, see \cite{eMAGma} for details.
+In order to rewrite over the centroid, we assume the centroid is a local ring, see \cite{TensorSpacePackage} for details.
 The default is set to {\tt true}, so by default, the algorithm computes the centroid and rewrites the tensor over the residue field.
 If you know the centroid is trivial, set {\tt Cent} to {\tt false} to save time.
-WARNING: if the centroid is a proper field extension of $\mathbb{F}_p$, then the full coset of (potential) isomorphisms are not fully exhausted. 
-That is, it is possible the algorithm concludes {\tt false} when $G\cong H$ (this is a bug we will fix in the near future).
 \item[\textcolor{blue}{\tt Constructive}]
 The default is {\tt true}. 
 Set to {\tt false} if you do not want the algorithm to explicitly construct an isomorphism.
 \item[\textcolor{blue}{\tt Method}]
 The default is $0$, and it accepts any input from $\{ 0,1,2\}$. 
 This will set the method for handling the sloped part of the tensor.
-If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not optimally tuned.
+If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not yet optimally tuned gut is generally good.
 \end{description}
 
 \index{TGIsPseudoIsometric}
@@ -284,18 +275,16 @@ There are three optional parameters: {\tt Cent}, {\tt Constructive}, and {\tt Me
 \begin{description}
 \item[\textcolor{blue}{\tt Cent}]
 This parameter is a flag for the algorithm to rewrite the tensors over their centroids. 
-In order to rewrite over the centroid, we assume the centroid is a local ring, see \cite{eMAGma} for details.
+In order to rewrite over the centroid, we assume the centroid is a local ring, see \cite{TensorSpacePackage} for details.
 The default is set to {\tt true}, so by default, the algorithm computes the centroid and rewrites the tensor over the residue field.
 If you know the centroid is trivial, set {\tt Cent} to {\tt false} to save time.
-WARNING: if the centroid is a proper field extension of $\mathbb{F}_q$, then the full coset of (potential) pseudo-isometries are not fully exhausted. 
-That is, it is possible the algorithm concludes {\tt false} when $T$ is pseudo-isometric to $S$ (this is a bug we will fix in the near future).
 \item[\textcolor{blue}{\tt Constructive}]
 The default is {\tt true}. 
 Set to {\tt false} if you do not want the algorithm to explicitly construct an isomorphism.
 \item[\textcolor{blue}{\tt Method}]
 The default is $0$, and it accepts any input from $\{ 0,1,2\}$. 
 This will set the method for handling the sloped part of the tensor.
-If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not optimally tuned.
+If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not yet optimally tuned gut is generally good.
 \end{description}
 
 
@@ -328,11 +317,6 @@ The second entry is a list of sequences in $\mathbb{F}_q$, the field the given d
 The sequences in  the second entry are the coefficients of the homogeneous polynomial in $x$ and $y$ in degree $d$:
 \[ c_1x^d + c_2 x^{d-1}y + c_3 x^{d-2}y^2 + \cdots + c_{d+1}y^d. \]
 Because this is a canonical label, two groups (or tensors) are isoclinic (or pseudo-isometric) if, and only if, their genus 2 signatures are equal. 
-
-Currently, this does not work for even $q$. 
-WARNING: if the centroid is a proper field extension of $\mathbb{F}_q$, the field the data is defined over, then this is not a canonical label. 
-That is, two groups can be isomorphic but have two different genus 2 signatures. 
-This is a bug we will fix in the near future.
 
 \section{Examples}
 We list some examples to illustrate the functionality of these intrinsics.
@@ -403,15 +387,15 @@ We list some examples to illustrate the functionality of these intrinsics.
    review={\MR{1918951}},
 }
 
-\bib{eMAGma}{misc}{
+\bib{TensorSpacePackage}{misc}{
    author={Maglione, Joshua},
    author={Wilson, James B.},
-   title={Experimental Multilinear Algebra Group},
+   title={TensorSpace},
    publisher={GitHub},
-   year={2017},
-   edition={version 1.2.3},
+   year={2019},
+   edition={version ???},
    note={Contributions from Peter A. Brooksbank,
-    \url{https://github.com/algeboy/eMAGma}},
+    \url{https://github.com/thetensor-space/TensorSpace}},
 }
 
 \end{biblist}

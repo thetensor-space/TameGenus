@@ -6,7 +6,8 @@
 
 import "GlobalVars.m" : __SANITY_CHECK;
 import "Util.m" : __GL2ActionOnPolynomial, __GetStarAlg, __WhichMethod,
-    __Print_field, __Radical_removal, __Display_adj_info, __Get_Flat_and_Sloped;
+    __Print_field, __Radical_removal, __Display_adj_info, __Get_Flat_and_Sloped,
+    __MyIDMatrix;
 import "Pfaffian.m" : __Pfaffian_ISO;
 import "sloped.m" : IsPseudoIsometricAdjointTensor;
 import "LiftFlat.m" : __LiftFlatGenus2;
@@ -234,7 +235,7 @@ __Galois_wrapped_IsPseudo := function(F, G : Const := true, Method := 0)
       Hmt_Z := Homotopism(t, t @ Z_a(a), [*Z2^a, Z2^a, Z0^a*], 
           HomotopismCategory(3) : Check := __SANITY_CHECK);
     else 
-      Hmt_Z := Homotopism(t, t, [*Hom(V,V)!1, Hom(V,V)!1, Hom(W,W)!1*], 
+      Hmt_Z := Homotopism(t, t, [*__MyIDMatrix(X) : X in Frame(t)*], 
           HomotopismCategory(3) : Check := false);
     end if;
 
@@ -243,7 +244,7 @@ __Galois_wrapped_IsPseudo := function(F, G : Const := true, Method := 0)
     // No Galois, run like normal.
     check_pseudo_isom, X := __IsPseudoSG(S, T : Constructive := Const, 
         Method := Method);
-    Hmt_Z := Homotopism(t, t, [*Hom(V,V)!1, Hom(V,V)!1, Hom(W,W)!1*], 
+    Hmt_Z := Homotopism(t, t, [*__MyIDMatrix(X) : X in Frame(t)*], 
           HomotopismCategory(3) : Check := false);
 
   end if;
@@ -330,9 +331,9 @@ finite field of odd characteristic.}
     // Skip the centroid step.
     vprintf TameGenus, 1 : "\nCent turned OFF.\n";
     S := s;
-    Hmt_S := Homotopism(S, S, [*Hom(X, X)!1 : X in Frame(S)*]);
+    Hmt_S := Homotopism(S, S, [*__MyIDMatrix(X) : X in Frame(S)*]);
     T := t;
-    Hmt_T := Homotopism(T, T, [*Hom(X, X)!1 : X in Frame(T)*]);
+    Hmt_T := Homotopism(T, T, [*__MyIDMatrix(X) : X in Frame(T)*]);
 
   end if;
 
