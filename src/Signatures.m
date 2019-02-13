@@ -4,50 +4,47 @@
 */
 
 
-import "Util.m" : __FindPermutation, __PermutationDegreeMatrix, __GL2ActionOnPolynomial;
+import "Util.m" : __GL2ActionOnPolynomial, __Get_Flat_and_Sloped;
 
 __GetGenus2Signature := function( t )
-  k := BaseRing(t);
-  if not IsNondegenerate(t) then
-    t := NondegenerateTensor(t);
-  end if;
+  K := BaseRing(t);
   A := AdjointAlgebra(t);
-  T, dims := PerpDecomposition(SystemOfForms(t) : Adjoint := A);
-  flats := Sort([ d : d in dims | IsOdd(d) ]);
-  sloped := Sort([ d : d in dims | IsEven(d) ]);
-  sorted_dims := flats cat sloped;
-  P := __PermutationDegreeMatrix( k, dims, __FindPermutation( sorted_dims, dims ) );
-  bForms := [ P*T*F*Transpose(P*T) : F in SystemOfForms(t) ];
 
-  if #sloped gt 0 then
+  // Just get the part we need: the sloped subtensor and the dims of the blocks.
+  _, t_sloped, _, _, dims := __Get_Flat_and_Sloped(t);
 
-    start := &+(flats cat [0]) + 1;
+  if #dims gt 0 then
+
     R := PolynomialRing( k, 2 );
+    Forms := SystemOfForms(t_sloped);
     polys := {@@};
-    for d in sloped do
-      X := ExtractBlock( bForms[1], start, start + d div 2, d div 2, d div 2);
-      Y := ExtractBlock( bForms[2], start, start + d div 2, d div 2, d div 2);
+    start := 1;
+    for d in dims do
+      X := ExtractBlock(Forms[1], start, start + d div 2, d div 2, d div 2);
+      Y := ExtractBlock(Forms[2], start, start + d div 2, d div 2, d div 2);
       start +:= d;
-      det := R!Determinant( X*R.1 + Y*R.2 );
+      det := R!Determinant(X*R.1 + Y*R.2);
       Include(~polys, (Coefficients(det)[1])^-1 * det);
     end for;
 
     //Needed for PGL
-    cleartop := function( X, k )
+    cleartop := function( X, K )
       if X[1][1] ne 0 then
-        X := X[1][1]^-1 * MatrixAlgebra( k, 2 )!X;
+        X := X[1][1]^-1 * MatrixAlgebra(K, 2)!X;
       else
-        X := X[1][2]^-1 * MatrixAlgebra( k, 2 )!X;
+        X := X[1][2]^-1 * MatrixAlgebra(K, 2)!X;
       end if;
       return X;
     end function;
-    act := OrbitAction( GL(2,k), LineOrbits(GL(2,k))[1][1] ); // The action GL on the line (1,0)
-    Perms := Image( act ); // PGL(2,k)
+
+    // The action GL on the line (1,0)
+    act := OrbitAction(GL(2, K), LineOrbits(GL(2, K))[1][1]); 
+    Perms := Image(act); // PGL(2, K)
 
     // Get canonical Pfaffian.
     pfaff_orbits := {@ polys @};
-    for Z in Perms do
-      X := cleartop(Z @@ act, k);
+    for Z in Perms do // include Galois auts here
+      X := cleartop(Z @@ act, K);
       polys_new := {@@};
       for f in polys do
         Include(~polys_new, __GL2ActionOnPolynomial(f, X));
@@ -55,10 +52,10 @@ __GetGenus2Signature := function( t )
       Include(~pfaff_orbits, polys_new);
     end for;
     pfaff_prod := {@ &*(P) : P in pfaff_orbits @};
-    ind := Index(pfaff_prod, Minimum(pfaff_prod)); // internal Magma ordering on K[x,y].
+    ind := Index(pfaff_prod, Minimum(pfaff_prod)); // internal Magma ordering 
     can_polys := [f : f in pfaff_orbits[ind]];
 
-    // Polynomials are annoying to compare in Magma. 
+    // Polynomials are difficult to compare.
     // Here's the (possibly temporary) fix.
     terms := [* [ 0 : i in [0..Degree(f)] ] : f in can_polys *];
     for i in [1..#can_polys] do
@@ -106,28 +103,29 @@ end intrinsic;
 
 intrinsic Genus2Signature( t::TenSpcElt : Cent := true ) -> List
 {Returns the canonical genus 2 signature. The first entry are the dimensions of 
-the radical and co-radical, the second entry is the sequence of flat dimensions, 
+the radical and co-radical, the second entry is the sequence of flat dimensions,
 and the third entry is the list of coefficients for the Pfaffians.}
-  require Type(Cent) eq BoolElt : "`Cent' must be true or false.";
+  require Type(Cent) eq BoolElt : "'Cent' must be true or false.";
   require forall{X : X in t`Domain cat [*t`Codomain*] | Type(X) eq ModTupFld} : 
       "Domain and codomain must be vector spaces.";
-  require IsAlternating(t) : "Forms must be alternating.";
+  require IsAlternating(t) : "Tensor must be alternating.";
   K := BaseRing(t);
-  require Type(K) ne BoolElt : "Forms must be defined over the same field.";
   require ISA(Type(K), FldFin) : "Field must be finite.";
+
   t_nondeg := FullyNondegenerateTensor(t);
   if Cent then
-    s := TensorOverCentroid(t_nondeg);
+    s, H := TensorOverCentroid(t_nondeg);
   end if;
-  require #BaseRing(s) eq #BaseRing(t) : "Extension fields not implemented.";
+  
   require Dimension(Codomain(s)) eq 2 : "Not a genus 2 tensor.";
+
   return [*<Dimension(Radical(t, 2)), Dimension(Coradical(t))> *] cat
       __GetGenus2Signature(s);
 end intrinsic;
 
 intrinsic Genus2Signature( S::[Mtrx] : Cent := true ) -> List
 {Returns the canonical genus 2 signature. The first entry are the dimensions of 
-the radical and co-radical, the second entry is the sequence of flat dimensions, 
+the radical and co-radical, the second entry is the sequence of flat dimensions,
 and the third entry is the list of coefficients for the Pfaffians.}
   return Genus2Signature(Tensor(S, 2, 1) : Cent := Cent);
 end intrinsic;
@@ -135,7 +133,7 @@ end intrinsic;
 intrinsic Genus2Signature( G::GrpPC : Cent := true ) -> List
 {Returns the canonical genus 2 signature. The first entry are the ranks of the 
 center over the Frattini subgroup and the Frattini subgroup over the commutator
-subgroup, the second entry is the sequence of flat dimensions, 
-and the third entry is the list of coefficients for the Pfaffians.}
+subgroup, the second entry is the sequence of flat dimensions, and the third 
+entry is the list of coefficients for the Pfaffians.}
   return Genus2Signature(pCentralTensor(G, 1, 1) : Cent := Cent);
 end intrinsic;

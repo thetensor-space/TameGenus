@@ -311,6 +311,10 @@ or 2 for Pfaffian method.}
   // Remove the radicals
   t_nondeg, d_rad, d_crad, Z := __Radical_removal(t);
 
+  // Once we have a radical wrapper, we can remove this requirement
+  require forall{X : X in Frame(t_nondeg) | Dimension(X) gt 0} : 
+     "Cannot handle tensors with 0-dimensional vector spaces.";
+
   if Cent then
 
     // Write tensor over its centroid. 

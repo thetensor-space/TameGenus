@@ -184,8 +184,9 @@ __IsPseudoSG := function( s, t : Constructive := true, Method := 0 )
 
   // sanity check
   if __SANITY_CHECK then
-    assert [ X[1] * F * Transpose(X[1]) : F in SystemOfForms(s) ] eq 
-        [ &+[ X[2][j][i]*SystemOfForms(t)[j] : j in [1..2] ] : i in [1..2] ];
+    //assert [ X[1] * F * Transpose(X[1]) : F in SystemOfForms(s) ] eq 
+    //    [ &+[ X[2][j][i]*SystemOfForms(t)[j] : j in [1..2] ] : i in [1..2] ];
+    assert IsHomotopism(t, s, [*X[1], X[1], X[2]*], HomotopismCategory(3));
   end if;
 
   return true, <X[1], X[2]>;
@@ -275,8 +276,8 @@ end function;
 
 intrinsic TGIsPseudoIsometric( s::TenSpcElt, t::TenSpcElt : Cent := true, 
     Constructive := true, Method := 0 ) -> BoolElt, Hmtp
-{Determine if two genus 2 alternating tensors are pseudo-isometric over a finite 
-field of odd characteristic.}
+{Determine if two alternating tame genus 3-tensors are pseudo-isometric over a 
+finite field of odd characteristic.}
   K := BaseRing(s);
   L := BaseRing(t);
   require ISA(Type(K), FldFin) and ISA(Type(L), FldFin) : 
@@ -296,6 +297,21 @@ field of odd characteristic.}
   s_nondeg, dim_rad_s, dim_crad_s, Z_s := __Radical_removal(s);
   t_nondeg, dim_rad_t, dim_crad_t, Z_t := __Radical_removal(t);
 
+  // Check radical dimensions
+  if dim_rad_s ne dim_rad_t or dim_crad_s ne dim_crad_t then
+    vprintf TameGenus, 1 : "\nRadicals have different dimensions.\n";
+    return false, _;
+  end if;
+
+  // Check the frames
+  if Frame(s_nondeg) ne Frame(t_nondeg) then
+    vprintf TameGenus, 1 : "\nTensors have non-equivalent frames.\n";
+    return false, _;
+  end if;
+
+  // Once we have a radical wrapper, we can remove this requirement
+  require forall{X : X in Frame(t_nondeg) | Dimension(X) gt 0} : 
+      "Cannot handle tensors with 0-dimensional vector spaces.";
 
   if Cent then
     // write tensors over their centroids.
@@ -320,18 +336,14 @@ field of odd characteristic.}
 
   end if;
 
-  // Check obvious things
+  // Check that their centroids are isomorphic
   if #BaseRing(S) ne #BaseRing(T) then
-    vprint TameGenus, 1 : "Centroids are not isormorphic.";
-    return false, _;
-  end if;
-  if (Dimension(Domain(S)[1]) ne Dimension(Domain(T)[1])) or 
-      (Dimension(Codomain(S)) ne Dimension(Codomain(T))) then
-    vprint TameGenus, 1 : "Domains or codomains not isormorphic.";
+    vprint TameGenus, 1 : "\nCentroids are not isormorphic.";
     return false, _;
   end if;
 
   require Dimension(Codomain(S)) le 2 : "Tensors have genus greater than 2.";
+
 
   return __Galois_wrapped_IsPseudo(Hmt_S, Hmt_T : Const := Constructive, 
       Method := Method);
