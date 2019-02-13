@@ -177,6 +177,83 @@ __IsPseudoSG := function( s, t : Constructive := true, Method := 0 )
 end function;
 
 
+
+__Galois_wrapped_IsPseudo := function(F, G : Const := true, Method := 0)
+  s := Domain(F);
+  S := Codomain(F);
+  t := Domain(G);
+  T := Codomain(G);
+  V := Domain(t)[1];
+  W := Codomain(t);
+
+  if #BaseRing(S) ne #BaseRing(s) then
+
+    // There are potential isomorphisms arising from Galois actions
+
+    // First construct a homotopism that mimics Galois
+    Y := __Standard_Gen(G);
+    Z := __Galois_Cent(Y);
+    dims := [Dimension(X) : X in Frame(t)];
+    Z2 := ExtractBlock(Z, 1, 1, dims[1], dims[1]);
+    Z0 := ExtractBlock(Z, dims[1] + 1, dims[1] + 1, dims[3], dims[3]);
+    Cat := TensorCategory([-1, -1, 1], {{0}, {1, 2}});
+    Z_a := func< a | Homotopism([*Z2^-a, Z2^-a, Z0^a*], Cat) >;
+
+    // Because we haven't changed the centroid of t by applying Z_a, we can use
+    // the same given homotopism.
+    G_a := Homotopism([*G.2^-1, G.1^-1, G.0*], Cat);
+
+    // Now, we loop until either we have an isomorphism or we run out of Galois
+    check_pseudo_isom := false;
+    a := -1;
+    while (not check_pseudo_isom) and (a lt Degree(BaseRing(S), BaseRing(s))) do
+      a +:= 1;
+      T_a := t @ Z_a(a) @ G_a;
+      check_pseudo_isom, X := __IsPseudoSG(S, T_a : 
+          Constructive := Const, Method := Method);
+    end while;
+
+    // update the homotopism to account for the homotopism Z_a
+    if check_pseudo_isom then
+      Hmt_Z := Homotopism(t, t @ Z_a(a), [*Z2^a, Z2^a, Z0^a*], 
+          HomotopismCategory(3) : Check := __SANITY_CHECK);
+    else 
+      Hmt_Z := Homotopism(t, t, [*Hom(V,V)!1, Hom(V,V)!1, Hom(W,W)!1*], 
+          HomotopismCategory(3) : Check := false);
+    end if;
+
+  else
+
+    // No Galois, run like normal.
+    check_pseudo_isom, X := __IsPseudoSG(S, T : Constructive := Const, 
+        Method := Method);
+    Hmt_Z := Homotopism(t, t, [*Hom(V,V)!1, Hom(V,V)!1, Hom(W,W)!1*], 
+          HomotopismCategory(3) : Check := false);
+
+  end if;
+
+  // Build the isotopism if we need to
+  if Const and check_pseudo_isom then
+    Y := [**];
+    // if the centroid is an extension convert back
+    if #BaseRing(s) ne #BaseRing(S) then
+      Y[1] := Matrix([((V.i @ Hmt_Z.2 @ G.2)*X[1]) @@ F.2 : 
+          i in [1..Dimension(V)]]);
+      Y[2] := Matrix([((W.i @ Hmt_Z.0 @ G.0)*X[2]) @@ F.0 : 
+          i in [1..Dimension(W)]]);
+    else
+      Y := [*X[1], X[2]*];
+    end if;
+
+    H := Homotopism(s, t, [*Y[1], Y[1], Y[2]*] : Check := __SANITY_CHECK); 
+
+    return true, H;
+  end if;
+
+  return check_pseudo_isom, _;
+end function;
+
+
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //                                  Intrinsics
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -241,54 +318,8 @@ field of odd characteristic.}
 
   require Dimension(Codomain(S)) le 2 : "Tensors have genus greater than 2.";
 
-  if #BaseRing(S) ne #BaseRing(s) then
-    // There are potential isomorphisms arising from Galois actions
-    // First construct a homotopism that mimics Galois
-    Y := __Standard_Gen(Hmt_T);
-    Z := __Galois_Cent(Y);
-    dims := [Dimension(X) : X in Frame(t_nondeg)];
-    Z2 := ExtractBlock(Z, 1, 1, dims[1], dims[1]);
-    Z0 := ExtractBlock(Z, dims[1] + 1, dims[1] + 1, dims[3], dims[3]);
-    Cat := TensorCategory([-1, -1, 1], {{0}, {1, 2}});
-    F_a := func< a | Homotopism([*Z2^-a, Z2^-a, Z0^a*], Cat) >;
-
-    // Now, we loop until either we have an isomorphism or we run out of Galois
-    check_pseudo_isom := false;
-    a := 0;
-    while (not check_pseudo_isom) and (a lt Degree(BaseRing(S), BaseRing(s))) do
-      T_a := TensorOverCentroid(t_nondeg @ F_a(a));
-      check_pseudo_isom, X := __IsPseudoSG(S, T_a : 
-          Constructive := Constructive, Method := Method);
-      a +:= 1;
-    end while;
-    if check_pseudo_isom then
-      a -:= 1;
-      F := Homotopism(T, T_a, [*Z2^a, Z2^a, Z0^a*], HomotopismCategory(3));
-      Hmt_T := Hmt_T * F;
-    end if;
-  else
-    check_pseudo_isom, X := __IsPseudoSG(S, T : 
-        Constructive := Constructive, Method := Method);
-  end if;
-
-  if Constructive and check_pseudo_isom then
-    Y := [**];
-    // if the centroid is an extension of the prime field convert back to prime field
-    if Cent and (#BaseRing(s) ne #BaseRing(S)) then
-      V := Domain(Domain(Hmt_T))[1];
-      W := Codomain(Domain(Hmt_T));
-      Y[1] := Matrix([((V.i @ Hmt_T.2)*X[1]) @@ Hmt_S.2 : 
-          i in [1..Dimension(V)]]);
-      Y[2] := Matrix([((W.i @ Hmt_T.0)*X[2]) @@ Hmt_S.0 : 
-          i in [1..Dimension(W)]]);
-    else
-      Y := [*X[1], X[2]*];
-    end if;
-    H := Homotopism(s, t, [*X[1], X[1], X[2]*] : Check := __SANITY_CHECK); 
-    return true, H;
-  end if;
-
-  return check_pseudo_isom, _;
+  return __Galois_wrapped_IsPseudo(Hmt_S, Hmt_T : Const := Constructive, 
+      Method := Method);
 end intrinsic;
 
 
