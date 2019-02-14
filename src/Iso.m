@@ -62,6 +62,14 @@ __IsPseudoSGAdjTens := function( sB, sC )
   return isit, [*X, Z*];
 end function;
 
+// Assumes X and Y are alternating, in block diagonal form, with 2x2 blocks.
+__Interweave_units := function(X, Y)
+  d := Nrows(X);
+  assert d eq Nrows(Y);
+  units := &cat[[X[2*(k-1)+1][2*k]^-1, Y[2*(k-1)+1][2*k]] : k in [1..d div 2]];
+  return DiagonalMatrix(units);
+end function;
+
 __G1_Isotopism := function(s, t : Const := true)
   vprintf TameGenus, 1 : "\nGenus 1 case.\n";
   K := BaseRing(s);
@@ -70,33 +78,20 @@ __G1_Isotopism := function(s, t : Const := true)
 
   if Const then
 
-    // Hack until bug in StarAlg gets fixed for forms.
-    // This code should be replaced by a PerpDecomposition.
-    /* 
-      Idea: get the idempotents in the adjoint algebras
-            use those to put the matrices in block diagonal form
-            the matrix reduces to the top right corner
-            construct the transition matrix
-    */
-    I1 := __GetIdempotents(A_s);
-    I2 := __GetIdempotents(A_t);
-    S1 := Matrix( &cat[ Basis( Image( I1[i] ) ) : i in [1..#I1] ] );
-    S2 := Matrix( &cat[ Basis( Image( I2[i] ) ) : i in [1..#I2] ] );
-    bForms1 := [ S1*SystemOfForms(s)[1]*Transpose(S1) ];
-    bForms2 := [ S2*SystemOfForms(t)[1]*Transpose(S2) ];
-    N1 := ExtractBlock( bForms1[1], 1, Nrows(bForms1[1]) div 2 + 1, 
-        Nrows(bForms1[1]) div 2, Nrows(bForms1[1]) div 2 );
-    N2 := ExtractBlock( bForms2[1], 1, Nrows(bForms1[1]) div 2 + 1, 
-        Nrows(bForms1[1]) div 2, Nrows(bForms1[1]) div 2 );
-    T := DiagonalJoin( N2 * N1^-1, IdentityMatrix( K, Nrows(N1) ) );
-    X := < S2^-1 * T * S1, IdentityMatrix(K, 1) >;
+    // We know that there are no radicals, and conjugating by T puts it into 
+    // block diagonal form, where the blocks are 2x2. 
+    _, s_b, H_s := __Get_Flat_and_Sloped(s);
+    _, t_b, H_t := __Get_Flat_and_Sloped(t);
+    D := __Interweave_units(SystemOfForms(s_b)[1], SystemOfForms(t_b)[1]);
+
+    X := < (H_t.2)^-1 * D * H_s.2, IdentityMatrix(K, 1) >;
 
     // Sanity check
     if __SANITY_CHECK then
-      assert IsHomotopism(s, t, [*X[1], X[1], X[2]*]);
+      assert IsHomotopism(t, s, [*X[1], X[1], X[2]*]);
     end if;
 
-    return true, DiagonalJoin(X); 
+    return true, X; 
   end if;
 
   return true, _;

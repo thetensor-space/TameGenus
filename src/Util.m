@@ -72,6 +72,10 @@ end procedure;
 //                             Functions for tensors
 // -----------------------------------------------------------------------------
 
+__MyIDMatrix := function(V)
+  return IdentityMatrix(BaseRing(V), Dimension(V));
+end function;
+
 __Radical_removal := function(t)
   K := BaseRing(t);
 
@@ -173,7 +177,7 @@ __Get_Flat_and_Sloped := function(t)
   //        |   |     v
   //    s : V x V >-> W
   Antichmtp := TensorCategory([-1, -1, 1], {{0}, {1, 2}});
-  H := Homotopism([*P*T, P*T, IdentityMatrix(K, 2)*], Antichmtp);
+  H := Homotopism([*P*T, P*T, __MyIDMatrix(Codomain(t))*], Antichmtp);
   s := t @ H;
   H := Homotopism(t, s, Maps(H), Antichmtp : Check := false);
 
@@ -259,10 +263,6 @@ end function;
 // -----------------------------------------------------------------------------
 //                            Miscellaneous functions
 // -----------------------------------------------------------------------------
-
-__MyIDMatrix := function(V)
-  return IdentityMatrix(BaseRing(V), Dimension(V));
-end function;
 
 // return true for adj-ten; false for Pfaffian
 // m : method, q : size of field, d : dims
