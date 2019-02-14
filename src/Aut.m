@@ -159,6 +159,7 @@ for adjoint-tensor method or 2 for Pfaffian method.}
   
   // Just call Magma funcion for the abelian case.
   if IsAbelian(G) then
+    vprintf TameGenus, 1 : "Group is abelian. Using Magma's default algorithm.";
     return AutomorphismGroup(G);
   end if;
 

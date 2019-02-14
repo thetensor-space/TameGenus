@@ -7,17 +7,13 @@
 import "GlobalVars.m" : __SANITY_CHECK;
 import "Util.m" : __GL2ActionOnPolynomial, __GetStarAlg, __WhichMethod,
     __Print_field, __Radical_removal, __Display_adj_info, __Get_Flat_and_Sloped,
-    __MyIDMatrix;
+    __MyIDMatrix, __Basic_invariant_check, __Transform_Adjoint;
 import "Pfaffian.m" : __Pfaffian_ISO;
 import "sloped.m" : IsPseudoIsometricAdjointTensor;
 import "LiftFlat.m" : __LiftFlatGenus2;
 import "flat.m" : __TransformFIPair;
 import "Semilinear.m" : __Standard_Gen, __Galois_Cent;
 
-__GetIdempotents := function( A )
-  n := Nrows(A.1);
-  return [ A.2^-i*A.1*A.2^i : i in [0..n-1] ];
-end function;
 
 __IsPseudoSGPfaffian := function( flats, sloped, bB, bC : Constructive := true )
   if Constructive then
@@ -105,16 +101,8 @@ __IsPseudoSG := function( s, t : Constructive := true, Method := 0 )
 
   A_s := AdjointAlgebra(s);
   A_t := AdjointAlgebra(t);
-  __Display_adj_info(A_s : subscript := "_s");
-  __Display_adj_info(A_t : subscript := "_t");
 
   vprintf TameGenus, 2 : "Adjoint construction timing : %o s.\n", Cputime(tt);
-
-  // Quick adjoint check
-  if SimpleParameters(A_s) ne SimpleParameters(A_t) then
-    vprintf TameGenus, 1 : "\nAdjoint algebras are not isomorphic.\n";
-    return false, _;
-  end if;
 
   // genus 1
   if Dimension(Codomain(s)) eq 1 then
@@ -144,7 +132,7 @@ __IsPseudoSG := function( s, t : Constructive := true, Method := 0 )
 
 
   // if it's just flat, go to the Pfaffian function.
-  if sdims_s eq [] then
+  if #sdims_s eq 0 then
     adjten := false;
   else
     adjten := __WhichMethod(Method, #K, sdims_s);
@@ -152,25 +140,33 @@ __IsPseudoSG := function( s, t : Constructive := true, Method := 0 )
   
   s_block := Codomain(H_s);
   t_block := Codomain(H_t);
-  assert AdjointAlgebra(s_block) eq sub<Generic(A_s) | [H_s.2 * X * (H_s.2)^-1 :
-      X in Generators(A_s)]>;
-  assert AdjointAlgebra(t_block) eq sub<Generic(A_t) | [H_t.2 * X * (H_t.2)^-1 :
-      X in Generators(A_t)]>;
+  s_block`Bimap`Adjoint := __Transform_Adjoint(A_s, H_s.2);
+  t_block`Bimap`Adjoint := __Transform_Adjoint(A_t, H_t.2);
+  // There is a simplification here, but I don't know what StarAlge needs.
+  //assert AdjointAlgebra(s_block) eq sub<Generic(A_s) | [H_s.2 * X * (H_s.2)^-1 :
+  //    X in Generators(A_s)]>;
+  //assert AdjointAlgebra(t_block) eq sub<Generic(A_t) | [H_t.2 * X * (H_t.2)^-1 :
+  //    X in Generators(A_t)]>;
+  
+  tt := Cputime();
 
   if adjten then
-    vprintf TameGenus, 1 : "Using adjoint-tensor method... ";
-    tt := Cputime();
     check_pisom, X := __IsPseudoSGAdjTens(s_sloped, t_sloped);
     if check_pisom then
       X := [* X[1], Transpose(X[2]) *]; // fixes a transpose issue with adj-tens
     end if;
+    method := "Adjoint-tensor";
   else
-    vprintf TameGenus, 1 : "Using Pfaffian method... ";
-    tt := Cputime();
     check_pisom, X := __IsPseudoSGPfaffian(fdims_s, sdims_s, s_block, t_block : 
         Constructive := Constructive );
+    method := "Pfaffian";
   end if;
-  vprintf TameGenus, 1 : "%o seconds.\n", Cputime(tt);
+
+  if #sdims_s gt 0 then
+    vprintf TameGenus, 2 : "%o method timing : %o s\n", method, Cputime(tt);
+  else
+    vprintf TameGenus, 2 : "Lifting flats timing : %o s\n", Cputime(tt);
+  end if;
 
   if not Constructive or not check_pisom then
     return check_pisom, _; 
@@ -180,8 +176,6 @@ __IsPseudoSG := function( s, t : Constructive := true, Method := 0 )
 
   // sanity check
   if __SANITY_CHECK then
-    //assert [ X[1] * F * Transpose(X[1]) : F in SystemOfForms(s) ] eq 
-    //    [ &+[ X[2][j][i]*SystemOfForms(t)[j] : j in [1..2] ] : i in [1..2] ];
     assert IsHomotopism(t, s, [*X[1], X[1], X[2]*], HomotopismCategory(3));
   end if;
 
@@ -197,10 +191,29 @@ __Galois_wrapped_IsPseudo := function(F, G : Const := true, Method := 0)
   T := Codomain(G);
   V := Domain(t)[1];
   W := Codomain(t);
+  
+  // Compute the adjoint algebras
+  vprintf TameGenus, 1 : "\nComputing the adjoint algebra.\n";
+  tt := Cputime();
+
+  A_s := AdjointAlgebra(S);
+  A_t := AdjointAlgebra(T);
+  __Display_adj_info(A_s : subscript := "_s");
+  __Display_adj_info(A_t : subscript := "_t");
+
+  vprintf TameGenus, 2 : "Adjoint construction timing : %o s.\n", Cputime(tt);
+
+  // Quick adjoint check
+  if SimpleParameters(A_s) ne SimpleParameters(A_t) then
+    vprintf TameGenus, 1 : "\nAdjoint algebras are not isomorphic.\n";
+    return false, _;
+  end if;
+
 
   if #BaseRing(S) ne #BaseRing(s) then
 
     // There are potential isomorphisms arising from Galois actions
+    vprintf TameGenus, 1 : "\nPotential Galois actions present.\n";
 
     // First construct a homotopism that mimics Galois
     Y := __Standard_Gen(G);
@@ -221,8 +234,12 @@ __Galois_wrapped_IsPseudo := function(F, G : Const := true, Method := 0)
     while (not check_pseudo_isom) and (a lt Degree(BaseRing(S), BaseRing(s))) do
       a +:= 1;
       T_a := t @ Z_a(a) @ G_a;
-      check_pseudo_isom, X := __IsPseudoSG(S, T_a : 
-          Constructive := Const, Method := Method);
+      // Throw the adjoint algebra back on 
+      if a eq 0 then
+        T_a`Bimap`Adjoint := A_t;
+      end if;
+      check_pseudo_isom, X := __IsPseudoSG(S, T_a : Constructive := Const, 
+          Method := Method);
     end while;
 
     // update the homotopism to account for the homotopism Z_a
@@ -350,8 +367,8 @@ intrinsic TGIsIsomorphic( G::GrpPC, H::GrpPC : Cent := true,
     Constructive := true, Method := 0 ) -> BoolElt, Map
 {For genus 2 p-groups G and H, determine if G is isomorphic to H.}
   // Rule out easy pairs
-  if (Exponent(G) ne Exponent(H)) or (#G ne #H) or 
-      (NilpotencyClass(G) ne NilpotencyClass(H)) then
+  check_basics := __Basic_invariant_check(G, H);
+  if not check_basics then
     return false, _;
   end if;
 
@@ -366,6 +383,8 @@ intrinsic TGIsIsomorphic( G::GrpPC, H::GrpPC : Cent := true,
 
   // Abelian case
   if IsAbelian(G) then 
+    vprintf TameGenus, 1 : 
+        "Groups are abelian. Using Magma's default algorithm.";
     return IsIsomorphic(G, H);
   end if;
 

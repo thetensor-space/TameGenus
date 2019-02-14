@@ -11,6 +11,20 @@ import "GlobalVars.m" : __VERSION, __SANITY_CHECK;
 //                             Functions for printing
 // -----------------------------------------------------------------------------
 
+__Basic_invariant_check := function(G, H)
+  if #G ne #H then
+    vprintf TameGenus, 1 : "Groups do not have the same order.";
+    return false;
+  elif Exponent(G) ne Exponent(H) then
+    vprintf TameGenus, 1 : "Groups do not have the same exponent.";
+    return false;
+  elif NilpotencyClass(G) ne NilpotencyClass(H) then
+    vprintf TameGenus, 1 : "Groups do not have the same nilpotency class.";
+    return false;
+  end if;
+  return true;
+end function;
+
 // A function to convert factored orders into a string parsable by humans.
 __Display_order := function(N)
   if #N eq 0 then 
@@ -25,9 +39,9 @@ end function;
 
 __Print_field := procedure(t, str)
   if IsPrimeField(BaseRing(t)) then
-    vprintf TameGenus, 1 : "\tCent(%o) = GF(%o)\n", str, #BaseRing(t);
+    vprintf TameGenus, 2 : "\tCent(%o) = GF(%o)\n", str, #BaseRing(t);
   else
-    vprintf TameGenus, 1 : "\tCent(%o) = GF(%o^%o)\n", str, 
+    vprintf TameGenus, 2 : "\tCent(%o) = GF(%o^%o)\n", str, 
         Factorization(#BaseRing(t))[1][1], Factorization(#BaseRing(t))[1][2];
   end if;
 end procedure;
@@ -71,6 +85,16 @@ end procedure;
 // -----------------------------------------------------------------------------
 //                             Functions for tensors
 // -----------------------------------------------------------------------------
+
+// If you need to conjugate a *-algebra by T, then this is faster than 
+// recomputing. This still needs to compute a Taft decomposition. 
+__Transform_Adjoint := function(A, T)
+  A_new := sub< Generic(A) | [T*X*T^-1 : X in Generators(A)] >;
+  newStar := map< A_new -> A_new | x :-> T*((T^-1*x*T) @ A`Star)*T^-1 >;
+  A_new`Star := newStar;
+  assert RecognizeStarAlgebra(A_new);
+  return A_new;
+end function;
 
 __MyIDMatrix := function(V)
   return IdentityMatrix(BaseRing(V), Dimension(V));
@@ -210,6 +234,7 @@ __Scharlau := function( M );
   bot := HorizontalJoin(-Transpose(M), ZeroMatrix(k, Ncols(M), Ncols(M)));
 	return MA!VerticalJoin(top , bot);
 end function;
+
 
 // -----------------------------------------------------------------------------
 //                           Functions for polynomials
