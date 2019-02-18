@@ -5,11 +5,10 @@ PKGDIR="$(dirname $DIR)"                # Directory for dependencies
 START="${HOME}/.magmarc"                # Magma start file location
 
 # Dependencies and .spec locations
-ATTACH1="AttachSpec(\"$DIR/StarAlge.spec\");"
+ATTACH1="AttachSpec(\"$DIR/TameGenus.spec\");"
 ATTACH2="AttachSpec(\"$PKGDIR/Sylver/Sylver.spec\");"
 ATTACH3="AttachSpec(\"$PKGDIR/StarAlge/StarAlge.spec\");"
 ATTACH4="AttachSpec(\"$PKGDIR/TensorSpace/TensorSpace.spec\");"
-ATTACH5="AttachSpec(\"$PKGDIR/Homotopism/Homotopism.spec\");"
 
 
 echo "TameGenus.spec is in $DIR"
@@ -26,7 +25,7 @@ then
 else
     echo "Could not find Sylver, downloading..."
     cd "$PKGDIR"
-    git clone -q https://github.com/algeboy/Sylver
+    git clone -q https://github.com/thetensor-space/Sylver.git
 fi
 
 
@@ -38,7 +37,7 @@ then
 else
     echo "Could not find StarAlge, downloading..."
     cd "$PKGDIR"
-    git clone -q https://github.com/algeboy/StarAlge
+    git clone -q https://github.com/thetensor-space/StarAlge.git
 fi
 
 
@@ -50,22 +49,10 @@ then
 else
     echo "Could not find TensorSpace, downloading..."
     cd "$PKGDIR"
-    git clone -q https://github.com/algeboy/TensorSpace
+    git clone -q https://github.com/thetensor-space/TensorSpace.git
 fi
 
 echo "Dependencies downloaded."
-
-
-# Homotopism install/ update
-if [ -f "$PKGDIR/Homotopism/update.sh" ]
-then
-    echo "Dependencies already installed, updating..."
-    sh "$PKGDIR/Homotopism/update.sh"
-else
-    echo "Could not find Homotopism, downloading..."
-    cd "$PKGDIR"
-    git clone -q https://github.com/algeboy/Homotopism
-fi
 
 
 
@@ -74,7 +61,8 @@ fi
 if [ -f "$START" ]
 then
     echo "Found a Magma start file"
-    for A in "$ATTACH1" "$ATTACH2" "$ATTACH3" "$ATTACH4" "$ATTACH5" do
+    for A in "$ATTACH1" "$ATTACH2" "$ATTACH3" "$ATTACH4"
+    do
         if grep -Fxq "$A" "$START"
         then
             echo "Already installed"
@@ -86,7 +74,8 @@ then
 else
     echo "Creating a Magma start file: $START"
     echo "// Created by an install file for Magma start up." > "$START"
-    for A in "$ATTACH1" "$ATTACH2" "$ATTACH3" "$ATTACH4" "$ATTACH5" do
+    for A in "$ATTACH1" "$ATTACH2" "$ATTACH3" "$ATTACH4"
+    do
         echo "$A" >> "$START"
     done
     echo "Successfully installed"

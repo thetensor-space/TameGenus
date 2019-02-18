@@ -11,7 +11,7 @@ authors.
 
 ## Acknowledgement
 
-`TameGenus` was developed by researchers at Bucknell U. and Colorado State University and partially supported by a National Science Foundation grant to Brooksbank and Wilson, and the Simons Foundation grant to Brooksbank.  We also acknowledge Kent State U. and U. Bielefeld, and U. Auckland where research was undertook and support provided for this package.
+TameGenus was developed by researchers at Bucknell U. and Colorado State University and partially supported by a National Science Foundation grant to Brooksbank and Wilson, and the Simons Foundation grant to Brooksbank.  We also acknowledge Kent State U. and U. Bielefeld, and U. Auckland where research was undertook and support provided for this package.
 
 ## Copying 
 
@@ -34,7 +34,7 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FO
 
 ## Installation 
 
-This package requires two other packages publicly available on GitHub.
+This package requires three other packages publicly available on GitHub.
   
   1. TensorSpace: <https://github.com/thetensor-space/TensorSpace>
   2. StarAlge: <https://github.com/thetensor-space/StarAlge>
@@ -49,7 +49,7 @@ This package requires two other packages publicly available on GitHub.
 
 ## Latest Versions 
 
-Current version: 1.9.
+Current version: 2.0.
 
 Latest versions can be downloaded on GitHub at:
   <https://github.com/thetensor-space/TameGenus>

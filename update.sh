@@ -21,7 +21,7 @@ then
 else
     echo "Could not find Sylver, downloading..."
     cd "$PKGDIR"
-    git clone -q https://github.com/algeboy/Sylver
+    git clone -q https://github.com/thetensor-space/Sylver.git
     echo "Installing Sylver..."
     sh "$PKGDIR/Sylver/install.sh"
 fi
@@ -33,7 +33,7 @@ then
 else
     echo "Could not find StarAlge, downloading..."
     cd "$PKGDIR"
-    git clone -q https://github.com/algeboy/StarAlge
+    git clone -q https://github.com/thetensor-space/StarAlge.git
     echo "Installing StarAlge..."
     sh "$PKGDIR/StarAlge/install.sh"
 fi
@@ -45,7 +45,7 @@ then
 else
     echo "Could not find TensorSpace, downloading..."
     cd "$PKGDIR"
-    git clone -q https://github.com/algeboy/TensorSpace
+    git clone -q https://github.com/thetensor-space/TensorSpace.git
     echo "Installing TensorSpace..."
     sh "$PKGDIR/TensorSpace/install.sh"
 fi
