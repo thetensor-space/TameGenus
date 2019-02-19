@@ -1,12 +1,5 @@
 # TameGenus
 
- * [Acknowledgement](Acknowlegements)
- * [Copying](Copying)
- * [Package Contents](PackageContents)
- * [Installation](Installation)
- * [Uninstallation](Uninstallation)
- * [Feedback, Bugs and Contributions](Feedback,Bugs,andContributions)
-
 A package for isomorphism testing of groups of tame genus for Magma V2.22 and 
 beyond. 
 
@@ -28,6 +21,18 @@ and support provided for this package.
 
 
 
+## Our Team
+
+We invite you explore the repo and join our team.  We welcome and encourage any contributions to the repo. If you need help getting started, please feel free to @-mention any of the contributors below or you can read the repo's "Projects" tab.
+
+| | Name | Username | 
+--|------|----------|
+<img src="https://avatars.githubusercontent.com/galois60" height="50px"/>      | Peter A. Brooksbank | [`@galois60`](https://github.com/galois60)                |
+<img src="https://avatars.githubusercontent.com/joshmaglione" height="50px"/>  | Joshua Maglione     | [`@joshmaglione`](https://github.com/joshmaglione) |
+<img src="https://avatars.githubusercontent.com/algeboy" height="50px"/>       | James B. Wilson     | [`@algeboy`](https://github.com/algeboy)                 |
+
+
+
 ## Copying 
 
 This program is free software: you can redistribute it and/or modify it 
@@ -39,15 +44,18 @@ particular purpose.
 
 
 
-## Package Contents 
-
-  1. Spec file is `./TameGenus.spec`
-  2. Source Code is contained in the folder `src`
-  3. Examples are included in the folder `examples`
-  4. Documentation is included as `TameGenus.pdf` in `doc`
-  5. Example files are demonstrated in `TameGenus.pdf` and their file names 
-     coincide with their example title in the text.
-  6. Performance and debugging tests are contained in the folder `tests`
+## Repository Structure
+```
+TameGenus/
++  doc/                           Documentation folder of all LaTeX files
+   +  TameGenus.pdf               The documentation for TameGenus
++  examples/                      Folder of examples demonstrated in documentation
++  src/                           Source code folder 
++  tests/                         Folder of performance and debugging tests
++  install.sh                     Shell file to install repo
++  TameGenus.spec                 Magma spec file
++  update.sh                      Shell file to update repo
+```
 
 
 
