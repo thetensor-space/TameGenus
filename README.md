@@ -1,6 +1,6 @@
 # TameGenus
 
-A package for isomorphism testing of groups and tensors of tame genus for Magma 
+A package for isomorphism testing of groups and tensors of tame genus for  Magma 
 V2.22 and beyond. 
 
 This software was created by Peter A. Brooksbank, Joshua Maglione, and James B. 
@@ -23,7 +23,7 @@ and support provided for this package.
 
 ## Our Team
 
-We invite you explore the repo and join our team.  We welcome and encourage any contributions to the repo. If you need help getting started, please feel free to @-mention any of the contributors below or you can read the repo's "Projects" tab.
+We invite you explore the repository and join our team.  We welcome and encourage any contributions to the repository. If you need help getting started, please feel free to @-mention any of the contributors below or you can read the repository's [Projects](https://github.com/thetensor-space/TameGenus/projects) tab.
 
 |                                                                              | Name                | Username                         | 
 -------------------------------------------------------------------------------|---------------------|----------------------------------|
@@ -59,25 +59,29 @@ TameGenus/
 
 
 
-## Installation 
+## Install
+
+#### Downloading Latest Releases
+
+The latest release of TameGenus can be downloaded from 
+[here](https://github.com/thetensor-space/TameGenus/releases/latest) 
+as either a `tar.gz` or `zip` file.
 
 #### Linux and Mac users
 
-Download Latest Release zip file from 
-[here](https://github.com/thetensor-space/TameGenus/releases).
-Unzip into a folder into which you would like your Magma packages installed.
-For example, we will suppose `TameGenus-x.y.zip` was downloaded to 
-`my_magma_packages`. Then you could run the following to install.
+We will assume your directory for Magma packages is titled `my_magma_packages`. You can create this directory with
+```
+$ mkdir my_magma_packages
+```
+Download `TameGenus-x.y.tar.gz` file from the latest release into `my_magma_package`.
+Then you could run the following to unzip TameGenus and install the package.
 ```
 $ cd my_magma_packages
-$ gzip TameGenus-2.0.zip
+$ gzip TameGenus-x.y.zip
 $ sh TameGenus/install.sh
 ```
 
-This may install further packages necessary in the same directory, in our 
-example: `my_magma_packages`. It will also modify your Magma start up file 
-(`~/.magmarc`) so that these packages are available at start up of Magma. To 
-avoid this, use manual installation instructions below.
+This may install further packages necessary in `my_magma_packages`. It may also modify your Magma start file (`~/.magmarc`) so that these packages are available at the start of a Magma session. To avoid this, use the manual installation instructions below.
 
 
 #### Manually
@@ -88,18 +92,18 @@ This package requires three other packages publicly available on GitHub.
   1. [TensorSpace](https://github.com/thetensor-space/TensorSpace)
   2. [StarAlge](https://github.com/thetensor-space/StarAlge)
   3. [Sylver](https://github.com/thetensor-space/Sylver)
+
 Check the README files to install each of the required packages.
 
 Attach the spec file during a Magma run and the intrinsics will be available
-to use.  To attach the spec file, run the following, where `<location>` is the 
-directory containing the TameGenus directory,
+to use.  To attach the spec file, run the following, where `<location>` is the directory containing TameGenus,
 ```
 > AttachSpec("<location>/TameGenus/TameGenus.spec");
 ```
 
 
 
-## Uninstallation
+## Uninstall
 
 This package can be removed entirely by deleting the folder into which it was 
 downloaded and removing the following lines from your `~/.magmarc` file.
@@ -119,7 +123,5 @@ AttachSpec("<location>/Sylver/Sylver.spec");
 
 ## Feedback and Bugs
 
-We welcome general feedback about the package and challenging examples. To 
-report bugs, please create an "Issue" in the TameGenus repository site on 
-GitHub, or @-mention any of the above contributors. 
+We welcome general feedback about the package and challenging examples. To report bugs, please create a [New Issue](https://github.com/thetensor-space/TameGenus/issues/new) under the [Issues](https://github.com/thetensor-space/TameGenus/issues) tab in the TameGenus repository, or @-mention any of the above contributors in your forked repository.
 
