@@ -118,9 +118,9 @@ AttachSpec("<location>/Sylver/Sylver.spec");
 
 
 
-## Feedback, Bugs, and Contributions 
+## Feedback and Bugs
 
 We welcome general feedback about the package and challenging examples. To 
-report bugs, please create an "Issue" on TameGenus repository site on GitHub. 
-Contributions are always welcome. To contribute, please fork a copy of 
-TameGenus and create a pull request.
+report bugs, please create an "Issue" in the TameGenus repository site on 
+GitHub, or @-mention any of the above contributors. 
+
