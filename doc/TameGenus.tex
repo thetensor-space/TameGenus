@@ -23,7 +23,7 @@
 \email{James.Wilson@ColoState.Edu}
 
 \date{\today}
-\version{1.9}
+\version{2.0}
 \copyrightyear{2015--2019}
 
 % ------------------------------------------------------------------------------
@@ -47,10 +47,10 @@ Mathematical details of these algorithms can be found in \cite{BMW}.
 Users will need to attach the latest versions of \texttt{TensorSpace} \cite{TensorSpacePackage}, \texttt{StarAlge} \cite{StarAlge}, and \texttt{Sylver} \cite{Sylver} to use all the features of this package. 
 The URLs are found in the bibliography or in the package \texttt{README.md}.
 
-\subsection*{Citing TameGenus} 
-To cite the Tame Genus package, please use the following\\
+\section{Citing TameGenus} 
+To cite the TameGenus package, please use the following\\
 \\
-Joshua Maglione, Peter A. Brooksbank, and James B. Wilson, \emph{TameGenus}, version 1.9, GitHub, 2019. \url{https://github.com/thetensor-space/TameGenus}. \\
+Joshua Maglione, Peter A. Brooksbank, and James B. Wilson, \emph{TameGenus}, version 2.0, GitHub, 2019. \url{https://github.com/thetensor-space/TameGenus}. \\
 \\
 For AMSRefs:
 \begin{verbatim}
@@ -61,7 +61,7 @@ For AMSRefs:
    title={TameGenus},
    publisher={GitHub},
    year={2019},
-   edition={version 1.9},
+   edition={version 2.0},
    note={\texttt{https://github.com/thetensor-space/TameGenus}},
 }
 \end{verbatim}
@@ -77,7 +77,8 @@ Currently, there is only one level of printing, so either it is on of off.
 SetVerbose(MonStgElt, RngIntElt) : -> 
 \end{intrinsics}
 
-{\tt SetVerbose} is a built in Magma function, but with this package, this intrinsic accepts the string {\tt "TameGenus"} and an integer in $\{0,1\}$. 
+{\tt SetVerbose} is a built in Magma function, but with this package, this intrinsic accepts the string {\tt "TameGenus"} and an integer in $\{0,1,2\}$. Verbose printing level 0 turns off all printing. 
+Level 1 will print out what \textsc{Magma} is doing in the TameGenus algorithms, and level 2 will print timings and extra structural information.
 
 \begin{example}[VerbosePrinting]
   We demonstrate the verbose printing by constructing a random genus 2 group of order $3^{22}$.
@@ -197,7 +198,7 @@ If you know the centroid is trivial, set {\tt Cent} to {\tt false} to save time.
 \item[\textcolor{blue}{\tt Method}]
 The default is $0$, and it accepts any input from $\{ 0,1,2\}$. 
 This will set the method for handling the sloped part of the tensor.
-If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not yet optimally tuned gut is generally good.
+If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not yet optimally tuned but is generally good.
 \item[\textcolor{blue}{\tt Mat}]
 The default is set to \texttt{false}. When set to \texttt{true}, the output will be a (linear) representation of the automorphism group. The row vectors of the matrix correspond to the polycyclic vectors from the polycyclic presentation.
 \end{description}
@@ -222,7 +223,7 @@ If you know the centroid is trivial or you do not want the semilinear pseudo-iso
 \item[\textcolor{blue}{\tt Method}]
 The default is $0$, and it accepts any input from $\{ 0,1,2\}$. 
 This will set the method for handling the sloped part of the tensor.
-If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not yet optimally tuned gut is generally good.
+If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not yet optimally tuned but is generally good.
 \end{description}
 
 \section{Examples}
@@ -255,7 +256,7 @@ Set to {\tt false} if you do not want the algorithm to explicitly construct an i
 \item[\textcolor{blue}{\tt Method}]
 The default is $0$, and it accepts any input from $\{ 0,1,2\}$. 
 This will set the method for handling the sloped part of the tensor.
-If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not yet optimally tuned gut is generally good.
+If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not yet optimally tuned but is generally good.
 \end{description}
 
 \index{TGIsPseudoIsometric}
@@ -355,23 +356,23 @@ We list some examples to illustrate the functionality of these intrinsics.
 \bib{StarAlge}{misc}{
    author={Brooksbank, Peter A.},
    author={Wilson, James B.},
-   title={Star Algebra},
+   title={StarAlge},
    publisher={GitHub},
-   year={2017},
-%   edition={version 1.2.3},
-   note={\url{https://github.com/algeboy/StarAlge}},
+   year={2019},
+   %edition={version 1.2.3},
+   note={\url{https://github.com/thetensor-space/StarAlge}},
 }
 
-\bib{LMG}{misc}{
-   author={B\"{a}\"{a}rnhielm, Henrik},
-   author={Holt, Derek F.},
-   author={Leedham-Green, C. R.}
-   author={O'Brien, E. A.},
-   title={The Large Matrix Group Package},
-   publisher={\textsc{Magma}},
-   year={2017},
-   note={\url{http://magma.maths.usyd.edu.au/magma/handbook/text/680}},
-}
+%\bib{LMG}{misc}{
+%   author={B\"{a}\"{a}rnhielm, Henrik},
+%   author={Holt, Derek F.},
+%   author={Leedham-Green, C. R.},
+%   author={O'Brien, E. A.},
+%   title={The Large Matrix Group Package},
+%   publisher={\textsc{Magma}},
+%   year={2017},
+%   note={\url{http://magma.maths.usyd.edu.au/magma/handbook/text/680}},
+%}
 
 \bib{LGM:book}{book}{
    author={Leedham-Green, C. R.},
@@ -387,13 +388,23 @@ We list some examples to illustrate the functionality of these intrinsics.
    review={\MR{1918951}},
 }
 
+\bib{Sylver}{misc}{
+   author={Maglione, Joshua},
+   author={Wilson, James B.},
+   title={Sylver},
+   publisher={GitHub},
+   year={2019},
+   %edition={version 1.2.3},
+   note={\url{https://github.com/thetensor-space/Sylver}},
+}
+
 \bib{TensorSpacePackage}{misc}{
    author={Maglione, Joshua},
    author={Wilson, James B.},
    title={TensorSpace},
    publisher={GitHub},
    year={2019},
-   edition={version ???},
+   %edition={version ???},
    note={Contributions from Peter A. Brooksbank,
     \url{https://github.com/thetensor-space/TensorSpace}},
 }
