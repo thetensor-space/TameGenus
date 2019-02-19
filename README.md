@@ -1,7 +1,7 @@
 # TameGenus
 
-A package for isomorphism testing of groups of tame genus for Magma V2.22 and 
-beyond. 
+A package for isomorphism testing of groups and tensors of tame genus for Magma 
+V2.22 and beyond. 
 
 This software was created by Peter A. Brooksbank, Joshua Maglione, and James B. 
 Wilson, Copyright 2015--2019. Distributed under MIT License.
@@ -25,11 +25,11 @@ and support provided for this package.
 
 We invite you explore the repo and join our team.  We welcome and encourage any contributions to the repo. If you need help getting started, please feel free to @-mention any of the contributors below or you can read the repo's "Projects" tab.
 
-| | Name | Username | 
---|------|----------|
+|                                                                              | Name                | Username                         | 
+-------------------------------------------------------------------------------|---------------------|----------------------------------|
 <img src="https://avatars.githubusercontent.com/galois60" height="50px"/>      | Peter A. Brooksbank | [`@galois60`](https://github.com/galois60)                |
-<img src="https://avatars.githubusercontent.com/joshmaglione" height="50px"/>  | Joshua Maglione     | [`@joshmaglione`](https://github.com/joshmaglione) |
-<img src="https://avatars.githubusercontent.com/algeboy" height="50px"/>       | James B. Wilson     | [`@algeboy`](https://github.com/algeboy)                 |
+<img src="https://avatars.githubusercontent.com/joshmaglione" height="50px"/>  | Joshua Maglione     | [`@joshmaglione`](https://github.com/joshmaglione)        |
+<img src="https://avatars.githubusercontent.com/algeboy" height="50px"/>       | James B. Wilson     | [`@algeboy`](https://github.com/algeboy)                  |
 
 
 
@@ -65,51 +65,50 @@ TameGenus/
 
 Download Latest Release zip file from 
 [here](https://github.com/thetensor-space/TameGenus/releases).
-Unzip into a folder into which you would like your Magma packages installed, 
-e.g.:
+Unzip into a folder into which you would like your Magma packages installed.
+For example, we will suppose `TameGenus-x.y.zip` was downloaded to 
+`my_magma_packages`. Then you could run the following to install.
 ```
-$ mkdir my_magma_packages
 $ cd my_magma_packages
 $ gzip TameGenus-2.0.zip
+$ sh TameGenus/install.sh
 ```
-Then install the package by running the following shell command:
-```
-$ sh install.sh
-```
-This will may install further packages necessary in the same directory.  
-It will also modify your Magma start up file so that these packages 
-are available at start up of Magma.  To avoid this, use manual installation
-instructions below.
+
+This may install further packages necessary in the same directory, in our 
+example: `my_magma_packages`. It will also modify your Magma start up file 
+(`~/.magmarc`) so that these packages are available at start up of Magma. To 
+avoid this, use manual installation instructions below.
+
 
 #### Manually
 
-Currently, we do not have an install file compatible with Windows. Instead, 
-attach the spec file during a Magma run and the intrinsics will be available
+Currently, we do not have an install file compatible with Windows. 
+
+This package requires three other packages publicly available on GitHub.
+  1. [TensorSpace](https://github.com/thetensor-space/TensorSpace)
+  2. [StarAlge](https://github.com/thetensor-space/StarAlge)
+  3. [Sylver](https://github.com/thetensor-space/Sylver)
+Check the README files to install each of the required packages.
+
+Attach the spec file during a Magma run and the intrinsics will be available
 to use.  To attach the spec file, run the following, where `<location>` is the 
 directory containing the TameGenus directory,
 ```
 > AttachSpec("<location>/TameGenus/TameGenus.spec");
 ```
 
-This package requires three other packages publicly available on GitHub.
-  
-  1. TensorSpace: <https://github.com/thetensor-space/TensorSpace>
-  2. StarAlge: <https://github.com/thetensor-space/StarAlge>
-  3. Sylver: <https://github.com/thetensor-space/Sylver>
-  
-Check the README files to install each of the required packages.
 
 
-
-## Uninstallion
+## Uninstallation
 
 This package can be removed entirely by deleting the folder into which it was 
-downloaded and removing the following lines from your `/.magmarc` file.
+downloaded and removing the following lines from your `~/.magmarc` file.
 ```
 AttachSpec("<location>/TameGenus/TameGenus.spec");
 ```
+
 To remove the dependencies, delete the folders for TensorSpace, StarAlge, and 
-Sylver along with the following lines from your `./magmarc` file.
+Sylver along with the following lines from your `~/.magmarc` file.
 ```
 AttachSpec("<location>/TensorSpace/TensorSpace.spec");
 AttachSpec("<location>/StarAlge/StarAlge.spec");
