@@ -125,13 +125,16 @@ is a power of p.}
   require g gt 0 : "Argument 3 must be positive.";
   require Type(Exponentp) eq BoolElt : "Exponentp must be true or false.";
 
-  Forms := __WriteOverPrimeField([M - Transpose(M) : 
-      M in [RandomMatrix(GF(q),n,n) : i in [1..g]]]);
-  X := Random(GL(Nrows(Forms[1]), BaseRing(Forms[1])));
-  Z := Random(GL(#Forms, BaseRing(Forms[1])));
-  Forms := [X*F*Transpose(X) : F in Forms];
-  Forms := [&+[Z[i][j]*Forms[i] : i in [1..#Forms]] : j in [1..#Forms]];
-  return __FormsToGroup( Forms : ExponentP := Exponentp );
+  repeat
+    Forms := __WriteOverPrimeField([M - Transpose(M) : 
+        M in [RandomMatrix(GF(q),n,n) : i in [1..g]]]);
+    X := Random(GL(Nrows(Forms[1]), BaseRing(Forms[1])));
+    Z := Random(GL(#Forms, BaseRing(Forms[1])));
+    Forms := [X*F*Transpose(X) : F in Forms];
+    Forms := [&+[Z[i][j]*Forms[i] : i in [1..#Forms]] : j in [1..#Forms]];
+    grp := __FormsToGroup( Forms : ExponentP := Exponentp );
+  until Genus(grp) lt 2;// Sometimes get genus 2 over a nonfield, these don't count for now
+  return grp;
 end intrinsic;
 
 intrinsic RandomGenus2Group( q::RngIntElt, d::[RngIntElt] : Exponentp := true ) 

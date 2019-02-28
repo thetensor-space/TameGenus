@@ -105,8 +105,10 @@ intrinsic Genus( t::TenSpcElt ) -> RngIntElt
   pi, C0 := Induce(Centroid(FullyNondegenerateTensor(t)),0);
   if IsSimple(C0) then
     s := TensorOverCentroid(FullyNondegenerateTensor(t));
+    return Dimension(Codomain(s));
+  else
+    return Dimension(Codomain(FullyNondegenerateTensor(t)));
   end if;
-	return Dimension(Codomain(s));
 end intrinsic;
 
 intrinsic Genus( G::GrpPC ) -> RngIntElt
