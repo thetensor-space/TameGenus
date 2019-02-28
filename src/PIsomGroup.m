@@ -31,12 +31,12 @@ __G1_PIsometry := function( t, H : Print := false )
   vprintf TameGenus, 2 : "Pseudo0isometry construction timing : %o s\n", Cputime(tt);
 
 
-  // Use Lift1 to get the action of pisom on the 0 coordinate.
+  // Use InducePseudoIsometry to get the action of pisom on the 0 coordinate.
   pseudo_in := [Matrix(X) : X in Generators(pisom)];
   pseudo_out := [];
   for X in pseudo_in do
     F := Homotopism([*X, X, 0*], HomotopismCategory(3));
-    check_lift, G := Lift1(t, t, F, 0);
+    check_lift, G := InducePseudoIsometry(t, t, F, 0);
     assert check_lift;
     Append(~pseudo_out, Matrix(G.0));
   end for;
@@ -315,21 +315,21 @@ or 2 for Pfaffian method.}
   require forall{X : X in Frame(t_nondeg) | Dimension(X) gt 0} : 
      "Cannot handle tensors with 0-dimensional vector spaces.";
 
-  if Cent then
-
+  // JBW centroid work around.----------------------
+  // TensorOverCentroid only works over fields right now.
+  // so check.
+  pi, C0 := Induce(Centroid(t_nondeg),0);
+  if Cent and IsSimple(C0) then
     // Write tensor over its centroid. 
     vprintf TameGenus, 1 : "\nWriting tensor over its centroid.\n";
     tt := Cputime();
-
     T, H := TensorOverCentroid(t_nondeg);
-
     __Print_field(T, "t");
     vprintf TameGenus, 2 : "Writing over centroid timing : %o s\n", Cputime(tt);
-
   else
 
     // Skip the centroid step.
-    vprintf TameGenus, 1 : "\nCent turned OFF.\n";
+    vprintf TameGenus, 1 : "\nSkipping centroid.\n";
     T := t_nondeg;
     dims_T := [Dimension(X) : X in Frame(T)];
     H := Homotopism(T, T, [*IdentityMatrix(K, dims_T[1]), 

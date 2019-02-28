@@ -12,6 +12,7 @@
   	sloped.m
   	Flat.m
   	Aut.m
+		InducePseudoIsometry.m
   	Iso.m
   	pseudo.m
   	PIsomGroup.m
