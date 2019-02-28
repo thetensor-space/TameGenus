@@ -326,7 +326,12 @@ finite field of odd characteristic.}
   require forall{X : X in Frame(t_nondeg) | Dimension(X) gt 0} : 
       "Cannot handle tensors with 0-dimensional vector spaces.";
 
-  if Cent then
+  // JBW centroid work around.----------------------
+  // TensorOverCentroid only works over fields right now.
+  // so check.
+  pi, C0 := Induce(Centroid(s_nondeg),0);
+  pi, D0 := Induce(Centroid(t_nondeg),0);
+  if Cent and IsSimple(C0) and IsSimple(D0) then
     // write tensors over their centroids.
     vprintf TameGenus, 1 : "\nWriting tensors over their centroids.\n";
     tt := Cputime();

@@ -99,7 +99,13 @@ intrinsic Genus( t::TenSpcElt ) -> RngIntElt
   catch err
     error "Cannot compute structure constants.";
   end try;
-  s := TensorOverCentroid(FullyNondegenerateTensor(t));
+    // JBW centroid work around.----------------------
+  // TensorOverCentroid only works over fields right now.
+  // so check.
+  pi, C0 := Induce(Centroid(FullyNondegenerateTensor(t)),0);
+  if IsSimple(C0) then
+    s := TensorOverCentroid(FullyNondegenerateTensor(t));
+  end if;
 	return Dimension(Codomain(s));
 end intrinsic;
 
@@ -124,7 +130,11 @@ and the third entry is the list of coefficients for the Pfaffians.}
   require ISA(Type(K), FldFin) : "Field must be finite.";
 
   t_nondeg := FullyNondegenerateTensor(t);
-  if Cent then
+    // JBW centroid work around.----------------------
+  // TensorOverCentroid only works over fields right now.
+  // so check.
+  pi, C0 := Induce(Centroid(t_nondeg),0);
+  if Cent and IsSimple(C0) then
     s, H := TensorOverCentroid(t_nondeg);
   else
     s := t;
