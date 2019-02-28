@@ -36,7 +36,7 @@ __G1_PIsometry := function( t, H : Print := false )
   pseudo_out := [];
   for X in pseudo_in do
     F := Homotopism([*X, X, 0*], HomotopismCategory(3));
-    check_lift, G := InducePseudoIsometry(t, t, F, 0);
+    check_lift, G := InduceHomotopism(t, t, F, 0);
     assert check_lift;
     Append(~pseudo_out, Matrix(G.0));
   end for;
