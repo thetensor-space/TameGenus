@@ -133,7 +133,7 @@ is a power of p.}
     Forms := [X*F*Transpose(X) : F in Forms];
     Forms := [&+[Z[i][j]*Forms[i] : i in [1..#Forms]] : j in [1..#Forms]];
     grp := __FormsToGroup( Forms : ExponentP := Exponentp );
-  until Genus(grp) lt 2;// Sometimes get genus 2 over a nonfield, these don't count for now
+  until Genus(grp) le g;// Sometimes get genus 2 over a nonfield, these don't count for now
   return grp;
 end intrinsic;
 
