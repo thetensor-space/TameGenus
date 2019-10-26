@@ -347,9 +347,9 @@ finite field of odd characteristic.}
 
     // Skip the centroid step.
     vprintf TameGenus, 1 : "\nCent turned OFF.\n";
-    S := s;
+    S := s_nondeg;
     Hmt_S := Homotopism(S, S, [*__MyIDMatrix(X) : X in Frame(S)*]);
-    T := t;
+    T := t_nondeg;
     Hmt_T := Homotopism(T, T, [*__MyIDMatrix(X) : X in Frame(T)*]);
 
   end if;
@@ -363,8 +363,20 @@ finite field of odd characteristic.}
   require Dimension(Codomain(S)) le 2 : "Tensors have genus greater than 2.";
 
 
-  return __Galois_wrapped_IsPseudo(Hmt_S, Hmt_T : Const := Constructive, 
+  is_iso, H := __Galois_wrapped_IsPseudo(Hmt_S, Hmt_T : Const := Constructive, 
       Method := Method);
+
+  if is_iso and dim_rad_s gt 0 then
+    X := DiagonalJoin(H.2, IdentityMatrix(BaseRing(S), dim_rad_s));
+    return true, Homotopism(s, t, [*Z_t^-1*X*Z_s, Z_t^-1*X*Z_s, H.0*]);
+  else
+    // H will not be defined if is_iso is false.
+    if is_iso then
+      return is_iso, H;
+    else
+      return is_iso, _;
+    end if;
+  end if;
 end intrinsic;
 
 

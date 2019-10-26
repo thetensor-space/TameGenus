@@ -100,6 +100,9 @@ __MyIDMatrix := function(V)
   return IdentityMatrix(BaseRing(V), Dimension(V));
 end function;
 
+/*
+  Given a tensor t, return the fully nondegenerate tensor, the dimensions of its radical and co-radical, and a matrix corresponding to the isometry putting t into form. 
+*/
 __Radical_removal := function(t)
   K := BaseRing(t);
 

@@ -318,7 +318,7 @@ or 2 for Pfaffian method.}
   // JBW centroid work around.----------------------
   // TensorOverCentroid only works over fields right now.
   // so check.
-  pi, C0 := Induce(Centroid(t_nondeg),0);
+  pi, C0 := Induce(Centroid(t_nondeg), 0);
   if Cent and IsSimple(C0) then
     // Write tensor over its centroid. 
     vprintf TameGenus, 1 : "\nWriting tensor over its centroid.\n";
