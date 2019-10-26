@@ -204,7 +204,7 @@ __Galois_wrapped_IsPseudo := function(F, G : Const := true, Method := 0)
   vprintf TameGenus, 2 : "Adjoint construction timing : %o s.\n", Cputime(tt);
 
   // Quick adjoint check
-  if SimpleParameters(A_s) ne SimpleParameters(A_t) then
+  if Multiset(SimpleParameters(A_s)) ne Multiset(SimpleParameters(A_t)) then
     vprintf TameGenus, 1 : "\nAdjoint algebras are not isomorphic.\n";
     return false, _;
   end if;
@@ -408,7 +408,7 @@ intrinsic TGIsIsomorphic( G::GrpPC, H::GrpPC : Cent := true,
   // To smooth things out
   P, phi_G := pQuotient(G, Exponent(G), 2 : Print := 0);
   Q, phi_H := pQuotient(H, Exponent(H), 2 : Print := 0);
-  
+
   // Construct the p-central tensors and move to the tensor call.
   vprintf TameGenus, 1 : 
       "Extracting p-central tensors and deciding pseudo-isometry.\n";
