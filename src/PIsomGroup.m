@@ -340,19 +340,21 @@ or 2 for Pfaffian method.}
     __Print_field(T, "t");
     vprintf TameGenus, 2 : "Writing over centroid timing : %o s\n", Cputime(tt);
   else
-
     // Skip the centroid step.
-    vprintf TameGenus, 1 : "\nSkipping centroid.\n";
+    vprintf TameGenus, 1 : "\nEither Cent turned off or centroid not simple.\n";
     T := t_fn;
     dims_T := [Dimension(X) : X in Frame(T)];
     H := Homotopism(T, T, [*IdentityMatrix(K, dims_T[1]), 
         IdentityMatrix(K, dims_T[2]), IdentityMatrix(K, dims_T[3])*]);
-
   end if;
 
 
   // Check genus <= 2.
-  require Dimension(Codomain(T)) le 2 : "Tensor is not genus 1 or 2.";
+  if Cent and not IsSimple(C0) then
+    require Dimension(Codomain(T)) le 2 : "Centroid is not a field. Algorithm only implemented for centroids that are fields.";
+  else
+    require Dimension(Codomain(T)) le 2 : "Tensor is not genus 1 or 2.";
+  end if;
 
 
   // Construct pseudo-isometry group

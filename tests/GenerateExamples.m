@@ -53,4 +53,6 @@ RunTameGenusTest := function(N)
             return [*G, K*];
         end try;
     end for;
+    "Passed!";
+    return 0;
 end function;

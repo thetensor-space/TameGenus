@@ -329,6 +329,10 @@ finite field of odd characteristic.}
   // TensorOverCentroid only works over fields right now.
   pi, C0 := Induce(Centroid(s_nondeg),0);
   pi, D0 := Induce(Centroid(t_nondeg),0);
+  if Dimension(C0) ne Dimension(D0) then
+    vprintf TameGenus, 1: "\nTensors have non-isomorphic centroids.\n";
+    return false, _;
+  end if;
   if Cent and IsSimple(C0) and IsSimple(D0) then
     // write tensors over their centroids.
     vprintf TameGenus, 1 : "\nWriting tensors over their centroids.\n";
@@ -342,7 +346,7 @@ finite field of odd characteristic.}
     vprintf TameGenus, 2 : "Writing over centroid timing : %o s\n", Cputime(tt);
   else
     // Skip the centroid step.
-    vprintf TameGenus, 1 : "\nCent turned OFF.\n";
+    vprintf TameGenus, 1 : "\nEither Cent turned off or centroid not simple.\n";
     S := s_nondeg;
     Hmt_S := Homotopism(S, S, [*__MyIDMatrix(X) : X in Frame(S)*]);
     T := t_nondeg;
@@ -355,7 +359,12 @@ finite field of odd characteristic.}
     return false, _;
   end if;
 
-  require Dimension(Codomain(S)) le 2 : "Tensors have genus greater than 2.";
+  // Check genus <= 2.
+  if Cent and not (IsSimple(C0) and IsSimple(D0)) then
+    require Dimension(Codomain(S)) le 2 : "Centroid is not a field. Algorithm only implemented for centroids that are fields.";
+  else
+    require Dimension(Codomain(S)) le 2 : "Tensors have genus greater than 2.";
+  end if;
 
 
   is_iso, H := __Galois_wrapped_IsPseudo(Hmt_S, Hmt_T : Const := Constructive, 
@@ -363,8 +372,8 @@ finite field of odd characteristic.}
 
   if is_iso then
     if dim_rad_s + dim_crad_s gt 0 then
-      X := DiagonalJoin(H.2, IdentityMatrix(BaseRing(S), dim_rad_s));
-      Y := DiagonalJoin(H.0, IdentityMatrix(BaseRing(S), dim_crad_s));
+      X := DiagonalJoin(H.2, IdentityMatrix(K, dim_rad_s));
+      Y := DiagonalJoin(H.0, IdentityMatrix(K, dim_crad_s));
       H := Homotopism(s, t, [*Z1_t^-1 * X * Z1_s, Z1_t^-1 * X * Z1_s, Z2_t * Y * Z2_s^-1*]); 
     end if; 
     return true, H; 
@@ -417,7 +426,8 @@ intrinsic TGIsIsomorphic( G::GrpPC, H::GrpPC : Cent := true,
   if Constructive then
     if check_pseudo_isom then
       V := Codomain(maps_H[1]);
-      G_gens := [G.i : i in [1..Ngens(G)]];
+      // G_gens := [G.i : i in [1..Ngens(G)]];
+      G_gens := [g : g in Generators(G)];
       X := Hmt.2;
       im := [(V!((x @ phi_G @ maps_G[1])*X)) @@ maps_H[1] @@ phi_H : x in G_gens];
       
