@@ -129,10 +129,21 @@ __Radical_removal := function(t)
     RadPerm := IdentityMatrix(K, Dimension(Domain(t)[1]));
   end if; 
 
+  if Dimension(Crad) gt 0 then
+    t_im := Image(t_nondeg);
+    C_im := Complement(Generic(Codomain(t)), t_im);
+    CradPerm := (GL(#Forms, K)!Matrix(Basis(t_im) cat Basis(C_im)))^-1;
+    fnForms := [&+[CradPerm[i][j]*nForms[i] : i in [1..#nForms]] : j in [1..#nForms]];
+    t_full_non := Tensor(fnForms[1..Dimension(t_im)], 2, 1);
+  else
+    t_full_non := t_nondeg;
+    CradPerm := IdentityMatrix(K, #Forms);
+  end if;
+
   timing := Cputime(tt);
   vprintf TameGenus, 2 : "Radical timing : %o s\n", timing;
 
-  return t_nondeg, Dimension(Rad), Dimension(Crad), RadPerm;
+  return t_full_non, Dimension(Rad), Dimension(Crad), RadPerm, CradPerm;
 end function;
 
 /*
