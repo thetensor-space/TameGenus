@@ -15,6 +15,21 @@ import "Iso.m" : __IsPseudoSG;
 import "Semilinear.m" : __RewriteMat, __Galois_check;
 
 
+__Radical_auts := function(K, d_nd, d_rad)
+  Radgens := [DiagonalJoin(IdentityMatrix(K, d_nd), x) : 
+      x in Generators(GL(d_rad, K))];
+  Radcentrals := [];
+  for i in [1..d_nd] do
+    for j in [1..d_rad] do
+      X := IdentityMatrix(K, d_nd + d_rad);
+      X[i][d_nd + j] := 1;
+      Append(~Radcentrals, X);
+    end for;
+  end for;
+  return Radgens cat Radcentrals;
+end function;
+
+
 __G1_PIsometry := function( t, H : Print := false )
   K := BaseRing(t);
 
@@ -309,28 +324,26 @@ or 2 for Pfaffian method.}
   */
 
   // Remove the radicals
-  t_nondeg, d_rad, d_crad, Z := __Radical_removal(t);
+  t_fn, d_rad, d_crad, Z1, Z2 := __Radical_removal(t);
 
   // Once we have a radical wrapper, we can remove this requirement
-  require forall{X : X in Frame(t_nondeg) | Dimension(X) gt 0} : 
+  require forall{X : X in Frame(t_fn) | Dimension(X) gt 0} : 
      "Cannot handle tensors with 0-dimensional vector spaces.";
 
-  // JBW centroid work around.----------------------
-  // TensorOverCentroid only works over fields right now.
-  // so check.
-  pi, C0 := Induce(Centroid(t_nondeg), 0);
+  // TensorOverCentroid only implemented for fields.
+  pi, C0 := Induce(Centroid(t_fn), 0);
   if Cent and IsSimple(C0) then
     // Write tensor over its centroid. 
     vprintf TameGenus, 1 : "\nWriting tensor over its centroid.\n";
     tt := Cputime();
-    T, H := TensorOverCentroid(t_nondeg);
+    T, H := TensorOverCentroid(t_fn);
     __Print_field(T, "t");
     vprintf TameGenus, 2 : "Writing over centroid timing : %o s\n", Cputime(tt);
   else
 
     // Skip the centroid step.
     vprintf TameGenus, 1 : "\nSkipping centroid.\n";
-    T := t_nondeg;
+    T := t_fn;
     dims_T := [Dimension(X) : X in Frame(T)];
     H := Homotopism(T, T, [*IdentityMatrix(K, dims_T[1]), 
         IdentityMatrix(K, dims_T[2]), IdentityMatrix(K, dims_T[3])*]);
@@ -355,36 +368,36 @@ or 2 for Pfaffian method.}
 
   end if;
 
-  
-  if (d_rad gt 0) or (d_crad gt 0) then
-
+  dims_t_fn := [Dimension(X) : X in Frame(t_fn)];
+  if d_rad gt 0 then
     // Add pseudo-isometries on radical.
-    vprintf TameGenus, 1 : "\nIncluding the pseudo-isometries from radicals.\n";
-    
-    dims_t_nd := [Dimension(X) : X in Frame(t_nondeg)];
-    Radgens := [DiagonalJoin(IdentityMatrix(K, dims_t_nd[1]), x) : 
-        x in Generators(GL(d_rad, K))];
-    Radcentrals := [];
-    for i in [1..dims_t_nd[1]] do
-      for j in [1..d_rad] do
-        X := IdentityMatrix(K, dims_t_nd[1] + d_rad);
-        X[i][dims_t_nd[1] + j] := 1;
-        Append(~Radcentrals, X);
-      end for;
-    end for;
+    vprintf TameGenus, 1 : "\nIncluding the pseudo-isometries from the radical.\n";
+  
+    rad_auts := __Radical_auts(K, dims_t_fn[1], d_rad);
     pseudo_in := [DiagonalJoin(X, IdentityMatrix(K, d_rad)) : X in IN] cat 
-        Radgens cat Radcentrals;
-    pseudo_in := [Z^-1 * pseudo_in[i] * Z : i in [1..#pseudo_in]];
-    pseudo_out := OUT cat [IdentityMatrix(K, dims_t_nd[3]) : 
-        i in [1..#Radgens + #Radcentrals]];
+        rad_auts;
+    pseudo_in := [Z1^-1 * pseudo_in[i] * Z1 : i in [1..#pseudo_in]];
+    pseudo_out := OUT cat [IdentityMatrix(K, dims_t_fn[3]) : 
+        i in [1..#rad_auts]];
     ORD *:= FactoredOrderGL(d_rad, #K);
-    ORD *:= Factorization(#K)^(dims_t_nd[1]*d_rad - d_rad^2);
-
+    ORD *:= Factorization(#K)^(dims_t_fn[1]*d_rad); // Doublecheck
   else
-
     pseudo_in := IN;
     pseudo_out := OUT;
+  end if;
 
+  if d_crad gt 0 then
+    // Add pseudo-isometries on co-radical.
+    vprintf TameGenus, 1 : "\nIncluding the pseudo-isometries from the co-radical.\n";
+
+    crad_auts := [Transpose(X) : X in __Radical_auts(K, dims_t_fn[3], d_crad)];
+    pseudo_in cat:= [IdentityMatrix(K, dims_t_fn[1] + d_rad) : 
+        i in [1..#crad_auts]];
+    pseudo_out := [DiagonalJoin(X, IdentityMatrix(K, d_crad)) : X in pseudo_out]
+        cat crad_auts;
+    pseudo_out := [Z2 * X * Z2^-1 : X in pseudo_out];
+    ORD *:= FactoredOrderGL(d_rad, #K);
+    ORD *:= Factorization(#K)^(dims_t_fn[3]*d_crad);
   end if;
 
 

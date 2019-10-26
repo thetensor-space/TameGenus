@@ -307,8 +307,8 @@ finite field of odd characteristic.}
       "'Method' must be an integer in {0, 1, 2}.";
 
 
-  s_nondeg, dim_rad_s, dim_crad_s, Z_s := __Radical_removal(s);
-  t_nondeg, dim_rad_t, dim_crad_t, Z_t := __Radical_removal(t);
+  s_nondeg, dim_rad_s, dim_crad_s, Z1_s, Z2_s := __Radical_removal(s);
+  t_nondeg, dim_rad_t, dim_crad_t, Z1_t, Z2_t := __Radical_removal(t);
 
   // Check radical dimensions
   if dim_rad_s ne dim_rad_t or dim_crad_s ne dim_crad_t then
@@ -326,9 +326,7 @@ finite field of odd characteristic.}
   require forall{X : X in Frame(t_nondeg) | Dimension(X) gt 0} : 
       "Cannot handle tensors with 0-dimensional vector spaces.";
 
-  // JBW centroid work around.----------------------
   // TensorOverCentroid only works over fields right now.
-  // so check.
   pi, C0 := Induce(Centroid(s_nondeg),0);
   pi, D0 := Induce(Centroid(t_nondeg),0);
   if Cent and IsSimple(C0) and IsSimple(D0) then
@@ -342,16 +340,13 @@ finite field of odd characteristic.}
     __Print_field(S, "s");
     __Print_field(T, "t");
     vprintf TameGenus, 2 : "Writing over centroid timing : %o s\n", Cputime(tt);
-
   else
-
     // Skip the centroid step.
     vprintf TameGenus, 1 : "\nCent turned OFF.\n";
     S := s_nondeg;
     Hmt_S := Homotopism(S, S, [*__MyIDMatrix(X) : X in Frame(S)*]);
     T := t_nondeg;
     Hmt_T := Homotopism(T, T, [*__MyIDMatrix(X) : X in Frame(T)*]);
-
   end if;
 
   // Check that their centroids are isomorphic
@@ -366,16 +361,15 @@ finite field of odd characteristic.}
   is_iso, H := __Galois_wrapped_IsPseudo(Hmt_S, Hmt_T : Const := Constructive, 
       Method := Method);
 
-  if is_iso and dim_rad_s gt 0 then
-    X := DiagonalJoin(H.2, IdentityMatrix(BaseRing(S), dim_rad_s));
-    return true, Homotopism(s, t, [*Z_t^-1*X*Z_s, Z_t^-1*X*Z_s, H.0*]);
+  if is_iso then
+    if dim_rad_s + dim_crad_s gt 0 then
+      X := DiagonalJoin(H.2, IdentityMatrix(BaseRing(S), dim_rad_s));
+      Y := DiagonalJoin(H.0, IdentityMatrix(BaseRing(S), dim_crad_s));
+      H := Homotopism(s, t, [*Z1_t^-1 * X * Z1_s, Z1_t^-1 * X * Z1_s, Z2_t * Y * Z2_s^-1*]); 
+    end if; 
+    return true, H; 
   else
-    // H will not be defined if is_iso is false.
-    if is_iso then
-      return is_iso, H;
-    else
-      return is_iso, _;
-    end if;
+    return false, _;
   end if;
 end intrinsic;
 

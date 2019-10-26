@@ -105,6 +105,7 @@ end function;
 */
 __Radical_removal := function(t)
   K := BaseRing(t);
+  GradCat := TensorCategory([1, 1, 1], {{2, 1}, {0}});
 
   vprintf TameGenus, 1 : "Checking the radicals.\n";
   tt := Cputime();
@@ -122,7 +123,7 @@ __Radical_removal := function(t)
     nForms := [RadPerm*X*Transpose(RadPerm) : X in Forms];
     nForms := [ExtractBlock(X, 1, 1, Ncols(Forms[1])-Dimension(Rad), 
         Ncols(Forms[1])-Dimension(Rad)) : X in nForms];  
-    t_nondeg := Tensor(nForms, 2, 1);
+    t_nondeg := Tensor(nForms, 2, 1, GradCat);
   else
     nForms := Forms;
     t_nondeg := t;
@@ -134,7 +135,7 @@ __Radical_removal := function(t)
     C_im := Complement(Generic(Codomain(t)), t_im);
     CradPerm := (GL(#Forms, K)!Matrix(Basis(t_im) cat Basis(C_im)))^-1;
     fnForms := [&+[CradPerm[i][j]*nForms[i] : i in [1..#nForms]] : j in [1..#nForms]];
-    t_full_non := Tensor(fnForms[1..Dimension(t_im)], 2, 1);
+    t_full_non := Tensor(fnForms[1..Dimension(t_im)], 2, 1, GradCat);
   else
     t_full_non := t_nondeg;
     CradPerm := IdentityMatrix(K, #Forms);
