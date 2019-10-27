@@ -7,7 +7,8 @@
 import "GlobalVars.m" : __SANITY_CHECK;
 import "Util.m" : __GL2ActionOnPolynomial, __GetStarAlg, __WhichMethod,
     __Print_field, __Radical_removal, __Display_adj_info, __Get_Flat_and_Sloped,
-    __MyIDMatrix, __Basic_invariant_check, __Transform_Adjoint;
+    __MyIDMatrix, __Basic_invariant_check, __Transform_Adjoint, 
+    __TensorOverCentroid;
 import "Pfaffian.m" : __Pfaffian_ISO;
 import "sloped.m" : IsPseudoIsometricAdjointTensor;
 import "LiftFlat.m" : __LiftFlatGenus2;
@@ -326,46 +327,17 @@ finite field of odd characteristic.}
   require forall{X : X in Frame(t_nondeg) | Dimension(X) gt 0} : 
       "Cannot handle tensors with 0-dimensional vector spaces.";
 
-  // TensorOverCentroid only works over fields right now.
-  pi, C0 := Induce(Centroid(s_nondeg),0);
-  pi, D0 := Induce(Centroid(t_nondeg),0);
-  if Dimension(C0) ne Dimension(D0) then
-    vprintf TameGenus, 1: "\nTensors have non-isomorphic centroids.\n";
-    return false, _;
-  end if;
-  if Cent and IsSimple(C0) and IsSimple(D0) then
-    // write tensors over their centroids.
-    vprintf TameGenus, 1 : "\nWriting tensors over their centroids.\n";
-    tt := Cputime();
-
-    S, Hmt_S := TensorOverCentroid(s_nondeg);
-    T, Hmt_T := TensorOverCentroid(t_nondeg);
-
-    __Print_field(S, "s");
-    __Print_field(T, "t");
-    vprintf TameGenus, 2 : "Writing over centroid timing : %o s\n", Cputime(tt);
-  else
-    // Skip the centroid step.
-    vprintf TameGenus, 1 : "\nEither Cent turned off or centroid not simple.\n";
-    S := s_nondeg;
-    Hmt_S := Homotopism(S, S, [*__MyIDMatrix(X) : X in Frame(S)*]);
-    T := t_nondeg;
-    Hmt_T := Homotopism(T, T, [*__MyIDMatrix(X) : X in Frame(T)*]);
-  end if;
+  // Get tensors over their centroids
+  S, Hmt_S, success, issue := __TensorOverCentroid(s_nondeg, Cent);
+  require success : issue;
+  T, Hmt_T, success, issue := __TensorOverCentroid(t_nondeg, Cent);
+  require success : issue;
 
   // Check that their centroids are isomorphic
   if #BaseRing(S) ne #BaseRing(T) then
     vprint TameGenus, 1 : "\nCentroids are not isormorphic.";
     return false, _;
   end if;
-
-  // Check genus <= 2.
-  if Cent and not (IsSimple(C0) and IsSimple(D0)) then
-    require Dimension(Codomain(S)) le 2 : "Centroid is not a field. Algorithm only implemented for centroids that are fields.";
-  else
-    require Dimension(Codomain(S)) le 2 : "Tensors have genus greater than 2.";
-  end if;
-
 
   is_iso, H := __Galois_wrapped_IsPseudo(Hmt_S, Hmt_T : Const := Constructive, 
       Method := Method);

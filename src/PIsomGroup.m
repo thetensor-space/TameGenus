@@ -8,7 +8,7 @@ import "GlobalVars.m" : __SANITY_CHECK;
 import "Pfaffian.m" : __Pfaffian_AUT;
 import "Util.m" : __FindPermutation, __PermutationDegreeMatrix, __GetStarAlg, 
     __WhichMethod, __SmallerGenSet, __Get_Flat_and_Sloped, __Display_order, 
-    __Print_field, __Radical_removal, __Display_adj_info;
+    __Print_field, __Radical_removal, __Display_adj_info, __TensorOverCentroid;
 import "Flat.m" : __TransformFIPair, __LiftFlatGenus2;
 import "sloped.m" : PseudoIsometryGroupAdjointTensor;
 import "Iso.m" : __IsPseudoSG;
@@ -330,32 +330,9 @@ or 2 for Pfaffian method.}
   require forall{X : X in Frame(t_fn) | Dimension(X) gt 0} : 
      "Cannot handle tensors with 0-dimensional vector spaces.";
 
-  // TensorOverCentroid only implemented for fields.
-  pi, C0 := Induce(Centroid(t_fn), 0);
-  if Cent and IsSimple(C0) then
-    // Write tensor over its centroid. 
-    vprintf TameGenus, 1 : "\nWriting tensor over its centroid.\n";
-    tt := Cputime();
-    T, H := TensorOverCentroid(t_fn);
-    __Print_field(T, "t");
-    vprintf TameGenus, 2 : "Writing over centroid timing : %o s\n", Cputime(tt);
-  else
-    // Skip the centroid step.
-    vprintf TameGenus, 1 : "\nEither Cent turned off or centroid not simple.\n";
-    T := t_fn;
-    dims_T := [Dimension(X) : X in Frame(T)];
-    H := Homotopism(T, T, [*IdentityMatrix(K, dims_T[1]), 
-        IdentityMatrix(K, dims_T[2]), IdentityMatrix(K, dims_T[3])*]);
-  end if;
-
-
-  // Check genus <= 2.
-  if Cent and not IsSimple(C0) then
-    require Dimension(Codomain(T)) le 2 : "Centroid is not a field. Algorithm only implemented for centroids that are fields.";
-  else
-    require Dimension(Codomain(T)) le 2 : "Tensor is not genus 1 or 2.";
-  end if;
-
+  // Get the tensor over its centroid
+  T, H, success, issue := __TensorOverCentroid(t_fn, Cent);
+  require success : issue;
 
   // Construct pseudo-isometry group
   if Dimension(Codomain(T)) eq 1 then

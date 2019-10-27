@@ -4,7 +4,8 @@
 */
 
 
-import "Util.m" : __GL2ActionOnPolynomial, __Get_Flat_and_Sloped, __MyIDMatrix;
+import "Util.m" : __GL2ActionOnPolynomial, __Get_Flat_and_Sloped, __MyIDMatrix, 
+    __Radical_removal, __TensorOverCentroid;
 
 __GetGenus2Signature := function(H)
   t := Codomain(H);
@@ -99,16 +100,10 @@ intrinsic Genus( t::TenSpcElt ) -> RngIntElt
   catch err
     error "Cannot compute structure constants.";
   end try;
-    // JBW centroid work around.----------------------
-  // TensorOverCentroid only works over fields right now.
-  // so check.
-  pi, C0 := Induce(Centroid(FullyNondegenerateTensor(t)),0);
-  if IsSimple(C0) then
-    s := TensorOverCentroid(FullyNondegenerateTensor(t));
-    return Dimension(Codomain(s));
-  else
-    return Dimension(Codomain(FullyNondegenerateTensor(t)));
-  end if;
+  t_fn := __Radical_removal(t);
+  T, _, success, issue := __TensorOverCentroid(t_fn, true);
+  require success : issue;
+  return Dimension(Codomain(T));
 end intrinsic;
 
 intrinsic Genus( G::GrpPC ) -> RngIntElt
@@ -131,21 +126,10 @@ and the third entry is the list of coefficients for the Pfaffians.}
   K := BaseRing(t);
   require ISA(Type(K), FldFin) : "Field must be finite.";
 
-  t_nondeg := FullyNondegenerateTensor(t);
-    // JBW centroid work around.----------------------
-  // TensorOverCentroid only works over fields right now.
-  // so check.
-  pi, C0 := Induce(Centroid(t_nondeg),0);
-  if Cent and IsSimple(C0) then
-    s, H := TensorOverCentroid(t_nondeg);
-  else
-    s := t;
-    H := Homotopism(t, t, [*__MyIDMatrix(V) : V in Frame(t_nondeg)*], 
-        HomotopismCategory(3));
-  end if;
+  t_fn := __Radical_removal(t);
+  s, H, success, issue := __TensorOverCentroid(t_fn, Cent);
+  require success : issue;
   
-  require Dimension(Codomain(s)) eq 2 : "Not a genus 2 tensor.";
-
   return [*<Dimension(Radical(t, 2)), Dimension(Coradical(t))> *] cat
       __GetGenus2Signature(H);
 end intrinsic;

@@ -86,6 +86,38 @@ end procedure;
 //                             Functions for tensors
 // -----------------------------------------------------------------------------
 
+// Given a fully nondegenerate tensor t, rewrite t over its centroid or not and 
+// a homotopism.
+__TensorOverCentroid := function(t, Cent)
+  K := BaseRing(t);
+  pi, C0 := Induce(Centroid(t), 0);
+  if Cent and IsSimple(C0) then
+    // Write tensor over its centroid. 
+    vprintf TameGenus, 1 : "\nWriting tensor over its centroid.\n";
+    tt := Cputime();
+    T, H := TensorOverCentroid(t);
+    __Print_field(T, "t");
+    vprintf TameGenus, 2 : "Writing over centroid timing : %o s\n", Cputime(tt);
+  else
+    // Skip the centroid step.
+    vprintf TameGenus, 1 : "\nEither Cent turned off or centroid not simple.\n";
+    T := t;
+    dims_T := [Dimension(X) : X in Frame(T)];
+    H := Homotopism(T, T, [*IdentityMatrix(K, dims_T[1]), 
+        IdentityMatrix(K, dims_T[2]), IdentityMatrix(K, dims_T[3])*]);
+  end if;
+
+  // Check genus <= 2.
+  if Dimension(Codomain(T)) gt 2 then
+    if Cent and not IsSimple(C0) then
+      return t, _, false, "Centroid is not a field. Algorithm only implemented for centroids that are fields.";
+    else
+      return t, _, false, "Tensor is not genus 1 or 2.";
+    end if;
+  end if;
+  return T, H, true, "";
+end function;
+
 // If you need to conjugate a *-algebra by T, then this is faster than 
 // recomputing. This still needs to compute a Taft decomposition. 
 __Transform_Adjoint := function(A, T)
