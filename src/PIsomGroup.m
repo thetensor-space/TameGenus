@@ -398,7 +398,7 @@ or 2 for Pfaffian method.}
     pseudo_out := [DiagonalJoin(X, IdentityMatrix(K, d_crad)) : X in pseudo_out]
         cat crad_auts;
     pseudo_out := [Z2 * X * Z2^-1 : X in pseudo_out];
-    ORD *:= FactoredOrderGL(d_rad, #K);
+    ORD *:= FactoredOrderGL(d_crad, #K);
     ORD *:= Factorization(#K)^(dims_t_fn[3]*d_crad);
   end if;
 
