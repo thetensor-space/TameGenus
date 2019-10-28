@@ -708,14 +708,6 @@ IsPseudoIsometricAdjointTensor := function (B, C)
      k := BaseRing (Parent (F1));
      MA := MatrixAlgebra (k, d);
      ma := MatrixAlgebra (k, d2);
-     
-/* edit by PAB on 4/7/2016 after bug report from J. Maglione */
-/* check that <F1,G1> and <F2,G2> are both 2-dimensional */
-/*if (Dimension (sub < KMatrixSpace (k,d,d) | F1 , G1 >) ne 2 or
-   Dimension (sub < KMatrixSpace (k,d,d) | F2 , G2 >) ne 2) then
-   return false, _, _;
-end if; */
-// above check moved to the main Iso code whenever adj-tens gets called. -Josh
 
      /* check that <b1> is sloped */
      isit, F1, G1 := IsSloped (F1, G1);

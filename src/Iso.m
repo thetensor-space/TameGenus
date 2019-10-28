@@ -54,7 +54,13 @@ end function;
 __IsPseudoSGAdjTens := function( sB, sC )
   isit, X, Z := IsPseudoIsometricAdjointTensor( sB, sC );
   if not isit then 
-    return false, _;
+    // IsPseudoIsometricAdjointTensor is not symmetric. JFM Oct 28, 2019
+    swapped, X, Z := IsPseudoIsometricAdjointTensor( sC, sB );
+    if swapped then
+      return true, [*X^-1, Z^-1*];
+    else
+      return false, _;
+    end if;
   end if;
   return isit, [*X, Z*];
 end function;
