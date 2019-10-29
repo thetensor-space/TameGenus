@@ -157,6 +157,9 @@ __IsPseudoSG := function( s, t : Constructive := true, Method := 0 )
   
   tt := Cputime();
 
+  // It seems adjoint tensor is bugged. Turning it off for now. JFM Oct 29, 2019
+  adjten := false;
+
   if adjten then
     check_pisom, X := __IsPseudoSGAdjTens(s_sloped, t_sloped);
     if check_pisom then
