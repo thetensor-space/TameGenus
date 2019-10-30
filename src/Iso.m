@@ -157,16 +157,18 @@ __IsPseudoSG := function( s, t : Constructive := true, Method := 0 )
   
   tt := Cputime();
 
-  // It seems adjoint tensor is bugged. Turning it off for now. JFM Oct 29, 2019
-  adjten := false;
-
   if adjten then
     check_pisom, X := __IsPseudoSGAdjTens(s_sloped, t_sloped);
     if check_pisom then
       X := [* X[1], Transpose(X[2]) *]; // fixes a transpose issue with adj-tens
+    else
+      // There is a bug in adjoint tensor that will claim non pseudo-isometric 
+      // when the tensors are pseudo-isometric. 
+      adjten := false;
     end if;
     method := "Adjoint-tensor";
-  else
+  end if;
+  if not adjten then
     check_pisom, X := __IsPseudoSGPfaffian(fdims_s, sdims_s, s_block, t_block : 
         Constructive := Constructive );
     method := "Pfaffian";
