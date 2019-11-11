@@ -152,24 +152,24 @@ __Radical_removal := function(t)
   if Dimension(Rad) gt 0 then
     C := Complement(Generic(Rad), Rad);
     RadPerm := GL(Dimension(Domain(t)[1]), K)!Matrix(Basis(C) cat Basis(Rad));
+    r := Ncols(Forms[1])-Dimension(Rad);
     nForms := [RadPerm*X*Transpose(RadPerm) : X in Forms];
-    nForms := [ExtractBlock(X, 1, 1, Ncols(Forms[1])-Dimension(Rad), 
-        Ncols(Forms[1])-Dimension(Rad)) : X in nForms];  
-    t_nondeg := Tensor(nForms, 2, 1, GradCat);
+    nForms := [ExtractBlock(X, 1, 1, r, r) : X in nForms];  
   else
     nForms := Forms;
-    t_nondeg := t;
     RadPerm := IdentityMatrix(K, Dimension(Domain(t)[1]));
   end if; 
 
   if Dimension(Crad) gt 0 then
-    t_im := Image(t_nondeg);
-    C_im := Complement(Generic(Codomain(t)), t_im);
+    Cod := Codomain(t);
+    t_im := sub<Cod | [Cod![nForms[i][j][k] : i in [1..#nForms]] : 
+        j in [1..Ncols(nForms[1])], k in [1..Ncols(nForms[1])]]>;
+    C_im := Complement(Cod, t_im);
     CradPerm := (GL(#Forms, K)!Matrix(Basis(t_im) cat Basis(C_im)))^-1;
     fnForms := [&+[CradPerm[i][j]*nForms[i] : i in [1..#nForms]] : j in [1..#nForms]];
     t_full_non := Tensor(fnForms[1..Dimension(t_im)], 2, 1, GradCat);
   else
-    t_full_non := t_nondeg;
+    t_full_non := Tensor(nForms, 2, 1, GradCat);
     CradPerm := IdentityMatrix(K, #Forms);
   end if;
 
