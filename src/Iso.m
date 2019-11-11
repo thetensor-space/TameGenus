@@ -335,8 +335,12 @@ finite field of odd characteristic.}
   end if;
 
   // Once we have a radical wrapper, we can remove this requirement
-  require forall{X : X in Frame(t_nondeg) | Dimension(X) gt 0} : 
-      "Cannot handle tensors with 0-dimensional vector spaces.";
+  if exists {X : X in Frame(t_nondeg) | Dimension(X) eq 0} then 
+    I2 := IdentityMatrix(K, Dimension(Frame(t)[1]));
+    I0 := IdentityMatrix(K, Dimension(Frame(t)[3]));
+    H := Homotopism(s, t, [*I2, I2, I0*]);
+    return true, H;
+  end if;
 
   // Get tensors over their centroids
   S, Hmt_S, success, issue := __TensorOverCentroid(s_nondeg, Cent);

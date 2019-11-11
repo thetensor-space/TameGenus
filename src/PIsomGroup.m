@@ -326,24 +326,31 @@ or 2 for Pfaffian method.}
   // Remove the radicals
   t_fn, d_rad, d_crad, Z1, Z2 := __Radical_removal(t);
 
-  // Once we have a radical wrapper, we can remove this requirement
-  require forall{X : X in Frame(t_fn) | Dimension(X) gt 0} : 
-     "Cannot handle tensors with 0-dimensional vector spaces.";
+  // If there is a 0-dimensional vector space, then we do something else.
+  if forall {X : X in Frame(t_fn) | Dimension(X) gt 0} then 
 
-  // Get the tensor over its centroid
-  T, H, success, issue := __TensorOverCentroid(t_fn, Cent);
-  require success : issue;
+    // Get the tensor over its centroid
+    T, H, success, issue := __TensorOverCentroid(t_fn, Cent);
+    require success : issue;
 
-  // Construct pseudo-isometry group
-  if Dimension(Codomain(T)) eq 1 then
-  
-    vprintf TameGenus, 1 : "\nTensor has genus 1.\n";
-    IN, OUT, ORD := __G1_PIsometry(T, H);
+    // Construct pseudo-isometry group
+    if Dimension(Codomain(T)) eq 1 then
+    
+      vprintf TameGenus, 1 : "\nTensor has genus 1.\n";
+      IN, OUT, ORD := __G1_PIsometry(T, H);
+
+    else
+
+      vprintf TameGenus, 1 : "\nTensor has genus 2.\n";
+      IN, OUT, ORD := __G2_PIsometry(T, H : Method := Method);
+
+    end if;
 
   else
 
-    vprintf TameGenus, 1 : "\nTensor has genus 2.\n";
-    IN, OUT, ORD := __G2_PIsometry(T, H : Method := Method);
+    IN := [];
+    OUT := [];
+    ORD := Factorization(1);
 
   end if;
 
