@@ -147,9 +147,9 @@ end function;
 
 intrinsic TGAutomorphismGroup( G::GrpPC : Cent := true, Method := 0, 
     Mat := false ) -> GrpAuto
-{Returns the group of automorphisms of the group G with tame genus. To use a 
-specific method, in the case of genus 2, regardless of structure set Method to 1 
-for adjoint-tensor method or 2 for Pfaffian method.}
+{Returns the group of automorphisms of the indecomposable group G with tame 
+genus. To use a specific method, in the case of genus 2, regardless of 
+structure set Method to 1 for adjoint-tensor method or 2 for Pfaffian method.}
   require IsPrime(Exponent(G)) : "Group must have exponent p.";
   require NilpotencyClass(G) le 2 : "Group is not class 2.";
   require Type(Cent) eq BoolElt : "'Cent' must be true or false.";

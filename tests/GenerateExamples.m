@@ -15,7 +15,7 @@ RunTameGenusTest := function(N)
             Y := Random(GL(2 + c, K));
             H := Homotopism([*X, X, Y*], TensorCategory([1, 1, -1], {{2, 1}, {0}}));
             t := Tensor(Forms, 2, 1, GradCat);
-        until IsSimple(Centroid(FullyNondegenerateTensor(t))); 
+        until IsIndecomposable(FullyNondegenerateTensor(t)); 
         return t, t @ H;
     end function;
 

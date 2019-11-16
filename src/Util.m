@@ -480,3 +480,33 @@ intrinsic TameGenusVersion() -> MonStgElt
 {Returns the version number of TameGenus.}
   return __VERSION;
 end intrinsic;
+
+intrinsic IsIndecomposable( t::TenSpcElt ) -> BoolElt
+{Decides if the given tensor is directly decomposable. Constructing such a 
+decomposition is not yet implemented.}
+  C := Centroid(t);
+  _, S := WedderburnDecomposition(C);
+  return IsSimple(S);
+end intrinsic;
+
+intrinsic IsIndecomposable( G::GrpPC ) -> BoolElt
+{Decides if the class 2 nilpotent group G is directly indecomposable. 
+Constructing an actual decomposition is not implemented.}
+  require IsNilpotent(G) : "Only implemented for nilpotent groups.";
+  require NilpotencyClass(G) le 2 : 
+      "Only implemented for nilpotent groups with class at most 2.";
+  is_prime_power, p, n := IsPrimePower(#G);
+
+  // Nilpotent and not a p-group
+  if not is_prime_power then
+    return false;
+  end if;
+
+  // Abelian case
+  if NilpotencyClass(G) eq 1 then
+    return n eq 1;
+  end if;
+
+  t := pCentralTensor(G, p, 1, 1);
+  return IsIndecomposable(t);
+end intrinsic;

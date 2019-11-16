@@ -302,9 +302,9 @@ end function;
 
 intrinsic TGPseudoIsometryGroup( t::TenSpcElt : Cent := true, Method := 0 ) -> 
     GrpMat
-{Construct the pseudo-isometry group for an alternating bimap of genus 1 or 2. 
-To use a specific method for genus 2, set Method to 1 for adjoint-tensor method 
-or 2 for Pfaffian method.}
+{Construct the pseudo-isometry group for an indecomposable alternating bimap of 
+genus 1 or 2. To use a specific method for genus 2, set Method to 1 for 
+adjoint-tensor method or 2 for Pfaffian method.}
   require forall{X : X in Frame(t) | Type(X) eq ModTupFld} : 
       "Domain and codomain must be vector spaces.";
   require Valence(t) eq 3 : "Tensor must have valence 3.";

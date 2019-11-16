@@ -301,8 +301,8 @@ end function;
 
 intrinsic TGIsPseudoIsometric( s::TenSpcElt, t::TenSpcElt : Cent := true, 
     Constructive := true, Method := 0 ) -> BoolElt, Hmtp
-{Determine if two alternating tame genus 3-tensors are pseudo-isometric over a 
-finite field of odd characteristic.}
+{Determine if two indecomposable alternating tame genus 3-tensors are 
+pseudo-isometric over a finite field of odd characteristic.}
   K := BaseRing(s);
   L := BaseRing(t);
   require ISA(Type(K), FldFin) and ISA(Type(L), FldFin) : 
@@ -372,7 +372,8 @@ end intrinsic;
 
 intrinsic TGIsIsomorphic( G::GrpPC, H::GrpPC : Cent := true, 
     Constructive := true, Method := 0 ) -> BoolElt, Map
-{For genus 2 p-groups G and H, determine if G is isomorphic to H.}
+{For indecomposable genus 2 p-groups G and H, determine if G is isomorphic to 
+H.}
   // Rule out easy pairs
   check_basics := __Basic_invariant_check(G, H);
   if not check_basics then
