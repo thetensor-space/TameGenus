@@ -39,18 +39,17 @@
 
 \chapter{Introduction}
 
-The goal of this package is to provide {\sc Magma} \cite{Magma} with high performance functionality for groups with tame genus. 
-When appropriate, all intrinsics dealing with groups also work for tensors ({\tt TenSpcElt}). 
-This package includes intrinsics for automorphism and isomorphism computations, canonical labeling, and constructing random groups of genus 1 or 2 of exponent  $\leq p^2$. 
-Mathematical details of these algorithms can be found in \cite{BMW}.
+The goal of this package is to provide \textsc{Magma}~\cite{Magma} with high performance isomorphism tests for groups with tame genus. A group has tame genus if its genus is less than $3$. We include automorphism group constructors, along with canonical signatures. For definitions, theorems, and desriptions of algorithms, the reader should consult~\cite{BMW}.
+When appropriate, intrinsics for groups also work for tensors (\texttt{TenSpcElt}). 
+This package includes a number of intrinsics for automorphism and isomorphism computations, canonical labeling, and constructing random groups of genus 1 or 2 of exponent  $\leq p^2$. The index at the end of the documentation records all intrinsics provided by TameGenus. 
 
-Users will need to attach the latest versions of \texttt{TensorSpace} \cite{TensorSpacePackage}, \texttt{StarAlge} \cite{StarAlge}, and \texttt{Sylver} \cite{Sylver} to use all the features of this package. 
-The URLs are found in the bibliography or in the package \texttt{README.md}.
+The latest versions of \texttt{TensorSpace}~\cite{TensorSpacePackage}, \texttt{StarAlge}~\cite{StarAlge}, and \texttt{Sylver}~\cite{Sylver} are required to use this package. 
+The URLs are found in the bibliography or in the package \texttt{README.md}. Linux users can use the \texttt{install.sh} or \texttt{update.sh} bash files to install or update dependencies.
 
 \section{Citing TameGenus} 
 To cite the TameGenus package, please use the following\\
 \\
-Joshua Maglione, Peter A. Brooksbank, and James B. Wilson, \emph{TameGenus}, version 2.0, GitHub, 2019. \url{https://github.com/thetensor-space/TameGenus}. \\
+Joshua Maglione, Peter A. Brooksbank, and James B. Wilson, \emph{TameGenus}, version 2.0, GitHub, 2019. (\url{https://github.com/thetensor-space/TameGenus}). \\
 \\
 For AMSRefs:
 \begin{verbatim}
@@ -70,14 +69,13 @@ For AMSRefs:
 \section{Verbose Printing and Version}
 
 We have included intrinsics to allow for verbose printing. 
-Currently, there is only one level of printing, so either it is on of off. 
 
 \index{SetVerbose}
 \begin{intrinsics}
 SetVerbose(MonStgElt, RngIntElt) : -> 
 \end{intrinsics}
 
-{\tt SetVerbose} is a built in Magma function, but with this package, this intrinsic accepts the string {\tt "TameGenus"} and an integer in $\{0,1,2\}$. Verbose printing level 0 turns off all printing. 
+\texttt{SetVerbose} is a built in Magma function, but with this package, this intrinsic accepts the string \texttt{"TameGenus"} and an integer in $\{0,1,2\}$. Verbose printing level 0 turns off all printing. 
 Level 1 will print out what \textsc{Magma} is doing in the TameGenus algorithms, and level 2 will print timings and extra structural information.
 
 \begin{example}[VerbosePrinting]
@@ -85,7 +83,7 @@ Level 1 will print out what \textsc{Magma} is doing in the TameGenus algorithms,
 
 \begin{code}
 > G := RandomGenus2Group(3, [4, 6, 10]);
-> #G eq 3^22;
+> #G eq 3^(4 + 6 + 10 + 2);
 true
 > Genus(G);
 2
@@ -93,7 +91,7 @@ true
 
 With the verbose printing, we can see how long each part of the algorithm takes and the information it obtains about the input.
 \begin{code}
-
+> SetVerbose("TameGenus", 1);
 \end{code}
 \end{example}
 
@@ -105,6 +103,13 @@ TameGenusVersion() : -> MonStgElt
 \end{intrinsics}
 
 Returns the version number for the TameGenus package attached in Magma.
+
+\begin{example}[Version]
+    We quickly verify that we have the latest version of TameGenus. 
+\begin{code}
+
+\end{code}
+\end{example}
 
 
 \chapter{Constructors}
@@ -120,15 +125,15 @@ TGRandomGroup(q, n, g : parameters) : RngIntElt, RngIntElt, RngIntElt -> GrpPC
 \end{intrinsics}
 
 Given $q=p^m$, $n>0$, and $g>0$, returns a $p$-group $G$ with genus $\leq g$ and order $q^{n+g}=p^{m(n+g)}$. 
-If $q$ is not a prime, then the centroid of the group will be a proper field extension of $\mathbb{F}_p$, isomorphic to $\mathbb{F}_q$. 
-If $\circ: V\times V\rightarrowtail W$ is the commutation tensor of $G$, then $\dim_{\mathcal{C}(\circ)}(V)=n$ and $\dim_{\mathcal{C}(\circ)}(W)=g$, where $\mathcal{C}(\circ)$ is the centroid of $\circ$. 
-The algorithm is based on the Universal Coefficients Theorem, see \cite{LGM:book}*{Chapter~9} the statement and proof.
-There is one optional parameter: {\tt Exponentp}. 
+If $q$ is not a prime, then the centroid of the group will be a proper field extension of $\mathbb{F}_p$, containing $\mathbb{F}_q$. 
+If $\circ: V\times V\rightarrowtail W$ is the commutation tensor of $G$, then $\dim_{\mathcal{C}(\circ)}(V)\leq n$ and $\dim_{\mathcal{C}(\circ)}(W)\leq g$, where $\mathcal{C}(\circ)$ is the centroid of $\circ$. The centroid may strictly contain $\mathbb{F}_q$, in which case the dimensions of $V$ and $W$ divide $n$ and $g$, respectively. It is also possible that the returned group is not directly indecomposable; this may cause other intrinsics to reject such output. 
+The algorithm is based on the Universal Coefficients Theorem, see \cite{LGM:book}*{Chapter~9} for the statement and proof.
+There is one optional parameter: \texttt{Exponentp}. 
 
 \begin{description}
 \item[\textcolor{blue}{\tt Exponentp}]
-The default is set to {\tt true}.
-Set to false if you want the returned group to have exponent $\leq p^2$.  
+The default is \texttt{true}.
+Set to \texttt{false} if returned group need not have exponent $p$.  
 \end{description}
 
 \index{RandomGenus2Group}
@@ -138,13 +143,13 @@ RandomGenus2Group(q, d : parameters) : RngIntElt, [RngIntElt] -> GrpPC
 \end{intrinsics}
 
 Given $q=p^m$ and $d=[d_1, \dots, d_k]$, where $d_i>0$, it returns a genus 2 group $G$ whose commutation tensor $\circ : V\times V\rightarrowtail W$ has centroid $\mathcal{C}(\circ)\cong \mathbb{F}_q$ and whose $\perp$-decomposition has blocks of dimensions $d_1,\dots,d_k$ (over $\mathcal{C}(\circ)$).
-If $d_i=1$, then this increases the dimension of the radical by 1 (over $\mathcal{C}(\circ)$).
-There is one optional parameter: {\tt Exponentp}. 
+If $d_i=1$, then this increases the dimension of the radical of $\circ$ by 1 (over $\mathcal{C}(\circ)$).
+There is one optional parameter: \texttt{Exponentp}. 
 
 \begin{description}
 \item[\textcolor{blue}{\tt Exponentp}]
-The default is set to {\tt true}.
-Set to false if you want the returned group to have exponent $\leq p^2$.  
+The default is \texttt{true}.
+Set to \texttt{false} if returned group need not have exponent $p$.  
 \end{description}
 
 \index{RandomGenus1Group}
@@ -154,13 +159,13 @@ RandomGenus1Group(q, d, r : parameters) : RngIntElt, RngIntElt, RngIntElt -> Grp
 \end{intrinsics}
 
 Given $q=p^m$, $d>0$, and $r\geq 0$, it returns a group $G$ with genus 1 and of order $q^{2d+r+1}$.
-The center of $G$ has order $q^{r+1}$, and $G$ is $dm$-generated.
-There is one optional parameter: {\tt Exponentp}. 
+The center of $G$ has order $q^{r+1}$, and $G$ is $m(2d+r)$-generated.
+There is one optional parameter: \texttt{Exponentp}. 
 
 \begin{description}
 \item[\textcolor{blue}{\tt Exponentp}]
-The default is set to {\tt true}.
-Set to false if you want the returned group to have exponent $\leq p^2$.  
+The default is \texttt{true}.
+Set to \texttt{false} if returned group need not have exponent $p$.  
 \end{description}
 
 \index{Genus2Group}
@@ -169,67 +174,41 @@ Genus2Group(f) : RngUPolElt -> GrpPC
 Genus2Group(f) : RngMPolElt -> GrpPC
 \end{intrinsics}
 
-Given either a univariate or homogeneous multivariate polynomial in $x$ (and $y$), it returns a group $G$ whose tensor from communtation has a Pfaffian equivalent to $f$.
+Given either a univariate or homogeneous multivariate polynomial in $x$ (and $y$) over $\mathbb{F}_q$, it returns a group $G$ whose commutator $\mathbb{F}_q$-tensor has a Pfaffian equivalent to $f$.
 
-\section{Examples}
+\section{Direct indecomposability}
 
-\chapter{Automorphism groups}
+The definition of genus requires knowing the (direct) indecomposable factors of a group $G$. Although we do not have intrinsics to produce a list of subgroups that are indecomposable, we have an efficient test to decide if the given group is indecomposable. There is an analog for tensors as well. 
 
-We have two intrinsics for constructing automorphism groups: one with group inputs and the other with tensor inputs. 
-
-\index{TGAutomorphismGroup}
+\index{IsIndecomposable!groups}\index{IsIndecomposable!tensors}
 \begin{intrinsics}
-TGAutomorphismGroup(G : parameters) : GrpPC -> GrpAuto
-    Cent : BoolElt : true
-    Method : RngIntElt : 0 
-    Mat : BoolElt : false
+IsIndecomposable(G) : GrpPC -> BoolElt
+IsIndecomposable(t) : TenSpcElt -> BoolElt
 \end{intrinsics}
 
-Given a $p$-group $G$, of class 2, exponent $p$, and genus $\leq 2$, this returns $\Aut(G)$.
-This currently does not work with $p=2$.
-This intrinsic provides three optional parameters: {\tt Cent}, {\tt Method}, and {\tt Mat}.
+Given either a group $G$ or a tensor $t$, decide if the given object is indecomposable. 
 
-\begin{description}
-\item[\textcolor{blue}{\tt Cent}]
-This parameter is a flag for the algorithm to rewrite the tensor over its centroid. 
-In order to rewrite over the centroid, we assume the centroid is a local ring, see \cite{TensorSpacePackage} for details.
-The default is set to {\tt true}, so by default, the algorithm computes the centroid and rewrites the tensor over the residue field.
-If you know the centroid is trivial, set {\tt Cent} to {\tt false} to save time.
-\item[\textcolor{blue}{\tt Method}]
-The default is $0$, and it accepts any input from $\{ 0,1,2\}$. 
-This will set the method for handling the sloped part of the tensor.
-If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not yet optimally tuned but is generally good.
-\item[\textcolor{blue}{\tt Mat}]
-The default is set to \texttt{false}. When set to \texttt{true}, the output will be a (linear) representation of the automorphism group. The row vectors of the matrix correspond to the polycyclic vectors from the polycyclic presentation.
-\end{description}
+\noindent \textbf{Warning:} We make no claim that the intrinsics in this package will accept input that return \texttt{false} from \texttt{IsIndecomposable}. There are indeed cases where the group or tensor is not indecomposable (e.g.\ nontrivial radical) where all the intrinsics will work fine. 
 
-\index{TGPseudoIsometryGroup}
+\section{Genus}
+
+
+
+\index{Genus!groups}\index{Genus!tensors}
 \begin{intrinsics}
-TGPseudoIsometryGroup(T : parameters) : TenSpcElt -> GrpMat
-    Cent : BoolElt : true
-    Method : RngIntElt : 0
+Genus(G) : GrpPC -> RngIntElt
+Genus(T) : TenSpcElt -> RngIntElt
 \end{intrinsics}
 
-Given an alternating tensor $T : V \times V \rightarrowtail W$, where $V$ and $W$ are $\mathbb{F}_q$-vector spaces, returns the pseudo-isometry group $\pseudo(T)\leq \GL(V)\times \GL(W)$.
-This currently does not work for even $q$. 
-This intrinsic provides two optional parameters: {\tt Cent} and {\tt Method}. 
+Given an indecomposable $p$-group $G$, it returns the genus of $G$. 
+That is, the rank of $[G,G]$ over the centroid.
+For an indecomposable tensor $t: V\times V\rightarrowtail W$, it returns the rank of $W$ over its centroid. 
 
-\begin{description}
-\item[\textcolor{blue}{\tt Cent}]
-This parameter is a flag for the algorithm to rewrite the tensor over its centroid. 
-In order to rewrite over the centroid, we assume the centroid is a local ring, see \cite{TensorSpacePackage} for details.
-The default is set to {\tt true}, so by default, the algorithm computes the centroid and rewrites the tensor over the residue field.
-If you know the centroid is trivial or you do not want the semilinear pseudo-isometry group, set {\tt Cent} to {\tt false} to save time.
-\item[\textcolor{blue}{\tt Method}]
-The default is $0$, and it accepts any input from $\{ 0,1,2\}$. 
-This will set the method for handling the sloped part of the tensor.
-If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not yet optimally tuned but is generally good.
-\end{description}
 
-\section{Examples}
-We list some examples to illustrate the functionality of the automorphism intrinsics.
 
-\chapter{Isomorphisms}
+\chapter{Isomorphism}
+
+We have two intrinsics for deciding isomorphism: one for groups and one for tensors. 
 
 \index{TGIsIsomorphic}
 \begin{intrinsics}
@@ -239,88 +218,124 @@ TGIsIsomorphic(G, H : parameters) : GrpPC, GrpPC -> BoolElt
     Method : RngIntElt : 0
 \end{intrinsics}
 
-Given class 2, exponent $p$, $p$-groups $G$ and $H$ of genus $\leq 2$, decides if $G\cong H$.
+Given class $\leq 2$, exponent $p$, indecomposable $p$-groups $G$ and $H$ of genus $\leq 2$, decides if $G\cong H$.
 If $G\cong H$, then an isomorphism is provided unless specified otherwise.
-Currently this does not work for $p=2$.  
-There are three optional parameters: {\tt Cent}, {\tt Constructive}, and {\tt Method}.
+Currently, this does not work for $p=2$. When the groups are decomposable, the intrinsic might decide isomorphism (e.g.\ when the centers properly contain the derived group), or it might return an error. In particular, an incorrect decision should not occur.  
+There are three optional parameters: \texttt{Cent}, \texttt{Constructive}, and \texttt{Method}.
 
 \begin{description}
 \item[\textcolor{blue}{\tt Cent}]
-This parameter is a flag for the algorithm to rewrite the tensors over their centroids. 
-In order to rewrite over the centroid, we assume the centroid is a local ring, see \cite{TensorSpacePackage} for details.
-The default is set to {\tt true}, so by default, the algorithm computes the centroid and rewrites the tensor over the residue field.
-If you know the centroid is trivial, set {\tt Cent} to {\tt false} to save time.
+This parameter is a flag for the algorithm to rewrite the tensors over their centroids. In order to rewrite over the centroid, we assume the centroid is a local ring, see~\cite{TensorSpacePackage} for details. The default is \texttt{true}, so by default, the algorithm computes the centroid and rewrites the tensor over the residue field.
+If this step should be avoided, set to \texttt{false} to save some time.
 \item[\textcolor{blue}{\tt Constructive}]
-The default is {\tt true}. 
-Set to {\tt false} if you do not want the algorithm to explicitly construct an isomorphism.
+The default is \texttt{true}. 
+Set to \texttt{false} if an explicit isomorphism is not needed.
 \item[\textcolor{blue}{\tt Method}]
-The default is $0$, and it accepts any input from $\{ 0,1,2\}$. 
+The default is $0$, and any input from $\{ 0,1,2\}$ is acceptable. 
 This will set the method for handling the sloped part of the tensor.
-If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not yet optimally tuned but is generally good.
+If the adjoint-tensor method should be used, set to $1$. If the Pfaffian method should be used, set to $2$. The default will try to find the optimal method based on the input; this is not yet optimally tuned but is generally good.
 \end{description}
 
 \index{TGIsPseudoIsometric}
 \begin{intrinsics}
-TGIsPseudoIsometric(T, S : parameters) : TenSpcElt, TenSpcElt -> BoolElt
+TGIsPseudoIsometric(s, t : parameters) : TenSpcElt, TenSpcElt -> BoolElt
     Cent : BoolElt : true
     Constructive : BoolElt : true
     Method : RngIntElt : 0
 \end{intrinsics}
 
 \color{black}
-Given alternating tensors $T, S : V\times V \rightarrowtail W$, where $V$ and $W$ are $\mathbb{F}_q$-vector spaces, it decides if $T$ is pseudo-isometric to $S$.
-If $T$ is pseudo-isometric to $S$, then a pseudo-isometry is provided (as an element of $\GL(V)\times \GL(W)$) unless specified otherwise. 
+Given indecomposable, alternating tensors $s, t : V\times V \rightarrowtail W$, where $V$ and $W$ are $\mathbb{F}_q$-vector spaces, decide if $s$ is pseudo-isometric to $t$.
+If so, a pseudo-isometry is also returned as an element of $\GL(V)\times \GL(W)$ unless specified otherwise. 
 Currently this does not work for even $q$. 
-There are three optional parameters: {\tt Cent}, {\tt Constructive}, and {\tt Method}.
+When the tensor are decomposable, the intrinsic might decide isomorphism (e.g.\ when the tensors have nontrivial radical), or it might return an error. In particular, an incorrect decision should not occur.  
+There are three optional parameters: \texttt{Cent}, \texttt{Constructive}, and \texttt{Method}.
 
 \begin{description}
 \item[\textcolor{blue}{\tt Cent}]
-This parameter is a flag for the algorithm to rewrite the tensors over their centroids. 
-In order to rewrite over the centroid, we assume the centroid is a local ring, see \cite{TensorSpacePackage} for details.
-The default is set to {\tt true}, so by default, the algorithm computes the centroid and rewrites the tensor over the residue field.
-If you know the centroid is trivial, set {\tt Cent} to {\tt false} to save time.
+This parameter is a flag for the algorithm to rewrite the tensors over their centroids. In order to rewrite over the centroid, we assume the centroid is a local ring, see~\cite{TensorSpacePackage} for details. The default is \texttt{true}, so by default, the algorithm computes the centroid and rewrites the tensor over the residue field.
+If this step should be avoided, set to \texttt{false} to save some time.
 \item[\textcolor{blue}{\tt Constructive}]
-The default is {\tt true}. 
-Set to {\tt false} if you do not want the algorithm to explicitly construct an isomorphism.
+The default is \texttt{true}. 
+Set to \texttt{false} if an explicit isomorphism is not needed.
 \item[\textcolor{blue}{\tt Method}]
-The default is $0$, and it accepts any input from $\{ 0,1,2\}$. 
+The default is $0$, and any input from $\{ 0,1,2\}$ is acceptable. 
 This will set the method for handling the sloped part of the tensor.
-If you want to use the adjoint-tensor method, set {\tt Method} to $1$, and if you want to use the Pfaffian method, set {\tt Method} to $2$. The default will try to find the optimal method based on the input; this is not yet optimally tuned gut is generally good.
+If the adjoint-tensor method should be used, set to $1$. If the Pfaffian method should be used, set to $2$. The default will try to find the optimal method based on the input; this is not yet optimally tuned but is generally good.
 \end{description}
 
 
-\section{Examples}
-We list some examples to illustrate the functionality of the isomorphism intrinsics.
+
+\chapter{Automorphism groups}
+
+Like with isomorphisms, we have two distinct automorphism intrinsics. 
+
+\index{TGAutomorphismGroup}
+\begin{intrinsics}
+TGAutomorphismGroup(G : parameters) : GrpPC -> GrpAuto
+    Cent : BoolElt : true
+    Method : RngIntElt : 0 
+    Mat : BoolElt : false
+\end{intrinsics}
+
+Given an indecomposable $p$-group $G$, of class $\leq 2$, exponent $p$, and genus $\leq 2$, return $\Aut(G)$.
+This currently does not work with $p=2$. When $G$ is decomposable, the intrinsic might construct $\Aut(G)$ (e.g.\ when the center properly contains the derived group), or it might return an error. In particular, the wrong (or incomplete) automorphism group should not be returned. 
+This intrinsic provides three optional parameters: \texttt{Cent}, \texttt{Method}, and \texttt{Mat}.
+
+\begin{description}
+\item[\textcolor{blue}{\tt Cent}]
+This parameter is a flag for the algorithm to rewrite the tensors over their centroids. In order to rewrite over the centroid, we assume the centroid is a local ring, see~\cite{TensorSpacePackage} for details. The default is \texttt{true}, so by default, the algorithm computes the centroid and rewrites the tensor over the residue field.
+If this step should be avoided, set to \texttt{false} to save some time.
+\item[\textcolor{blue}{\tt Method}]
+The default is $0$, and any input from $\{ 0,1,2\}$ is acceptable. 
+This will set the method for handling the sloped part of the tensor.
+If the adjoint-tensor method should be used, set to $1$. If the Pfaffian method should be used, set to $2$. The default will try to find the optimal method based on the input; this is not yet optimally tuned but is generally good.
+\item[\textcolor{blue}{\tt Mat}]
+The default is \texttt{false}. When \texttt{true}, the output will be a linear representation of the automorphism group. The row vectors of the matrix correspond to the polycyclic vectors from the polycyclic presentation.
+\end{description}
+
+\index{TGPseudoIsometryGroup}
+\begin{intrinsics}
+TGPseudoIsometryGroup(t : parameters) : TenSpcElt -> GrpMat
+    Cent : BoolElt : true
+    Method : RngIntElt : 0
+\end{intrinsics}
+
+Given an indecomposable, alternating tensor $t : V \times V \rightarrowtail W$, where $V$ and $W$ are $\mathbb{F}_q$-vector spaces, return the pseudo-isometry group $\pseudo(t)\leq \GL(V)\times \GL(W)$.
+This currently does not work for even $q$. When $t$ is decomposable, the intrinsic might construct $\pseudo(t)$ (e.g.\ when $t$ has a nontrivial radical), or it might return an error. In particular, the wrong (or incomplete) pseudo-isometry group should not be returned. 
+This intrinsic provides two optional parameters: \texttt{Cent} and \texttt{Method}. 
+
+\begin{description}
+\item[\textcolor{blue}{\tt Cent}]
+This parameter is a flag for the algorithm to rewrite the tensors over their centroids. In order to rewrite over the centroid, we assume the centroid is a local ring, see~\cite{TensorSpacePackage} for details. The default is \texttt{true}, so by default, the algorithm computes the centroid and rewrites the tensor over the residue field.
+If this step should be avoided, set to \texttt{false} to save some time.
+\item[\textcolor{blue}{\tt Method}]
+The default is $0$, and any input from $\{ 0,1,2\}$ is acceptable. 
+This will set the method for handling the sloped part of the tensor.
+If the adjoint-tensor method should be used, set to $1$. If the Pfaffian method should be used, set to $2$. The default will try to find the optimal method based on the input; this is not yet optimally tuned but is generally good.
+\end{description}
+
+
 
 
 \chapter{Canonical Labeling}
 
-\index{Genus!groups}\index{Genus!tensors}
-\begin{intrinsics}
-Genus(G) : GrpPC -> RngIntElt
-Genus(T) : TenSpcElt -> RngIntElt
-\end{intrinsics}
-
-Given a $p$-group $G$, returns the genus of $G$. 
-That is, the dimension of $[G,G]$ over its centroid.
-For a tensor $T$, it returns the dimension of its image over its centroid. 
-
 \index{Genus2Signature!groups}\index{Genus2Signature!tensors}
 \begin{intrinsics}
 Genus2Signature(G) : GrpPC -> List
-Genus2Signature(T) : TenSpcElt -> List
+Genus2Signature(t) : TenSpcElt -> List
 \end{intrinsics}
 
-Given a genus 2 group or tensor, returns the canonical genus 2 signature. 
-The list has two parts.
+Given a genus 2 indecomposable group or tensor, returns the canonical genus 2 signature as a list. 
+The list has four parts.
 The first entry is a sequence of odd integers corresponding to the dimensions of the flat indecomposable spaces.
-The second entry is a list of sequences in $\mathbb{F}_q$, the field the given data is defined over.
-The sequences in  the second entry are the coefficients of the homogeneous polynomial in $x$ and $y$ in degree $d$:
+The second entry is a list of sequences in $\mathbb{F}_q$ of possibly different lengths. Here, $\mathbb{F}_q$ is the residue field of the centroid $\mathcal{C}(\circ)$, which is a local ring. 
+A sequence $[c_1,\dots, c_{d+1}]$ in the second entry corresponds to the coefficients of the homogeneous polynomial in $x$ and $y$ in degree $d$:
 \[ c_1x^d + c_2 x^{d-1}y + c_3 x^{d-2}y^2 + \cdots + c_{d+1}y^d. \]
 Because this is a canonical label, two groups (or tensors) are isoclinic (or pseudo-isometric) if, and only if, their genus 2 signatures are equal. 
 
-\section{Examples}
-We list some examples to illustrate the functionality of these intrinsics.
+When the input is decomposable, the intrinsic might construct the signature (e.g.\ when the tensor has a nontrivial radical), or it might return an error. In particular, the wrong signature should not be returned. 
+
 
 \begin{bibdiv}
 \begin{biblist}
