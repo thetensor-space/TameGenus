@@ -149,3 +149,42 @@ subgroup, the second entry is the sequence of flat dimensions, and the third
 entry is the list of coefficients for the Pfaffians.}
   return Genus2Signature(pCentralTensor(G, 1, 1) : Cent := Cent);
 end intrinsic;
+
+intrinsic IsTameGenusTensor( t::TenSpcElt ) -> BoolElt
+{Decides if the given tensor is a tensor which can be handled by the TameGenus package.}
+  s := __Radical_removal(t);
+  if Dimension(Codomain(s)) le 2 or Dimension(Domain(s)[1]) eq 0 then
+    return true;
+  else 
+    T, _, success, issue := __TensorOverCentroid(s, true);
+    // This means that tensor is decomposable
+    if not success then
+      vprint TameGenus, 1 : issue;
+      return false;
+    end if;
+    // This means that the tensor just has genus that is too large
+    if Dimension(Codomain(T)) gt 2 then
+      vprint TameGenus, 1 : "Group does not have genus 1 or 2.";
+      return false;
+    end if;
+  end if;
+  return true;
+end intrinsic;
+
+intrinsic IsTameGenusGroup( G::GrpPC ) -> BoolElt
+{Decides if the given group is a group which can be handled by the TameGenus package.}
+  prime_power, p, n := IsPrimePower(#G);
+  // First we check that the group has the basic properties
+  if (NilpotencyClass(G) gt 2) or (not prime_power) or 
+    (p eq 2) or (Exponent(G) ne p) then
+    vprint TameGenus, 1 : "Group is not an odd p-group of nilpotency class at most 2 with exponent p.";
+    return false;
+  end if;
+  // Give abelian groups a pass
+  if IsAbelian(G) then
+    return true;
+  end if;
+  // Now we check the tensor has good properties
+  t := pCentralTensor(G, p, 1, 1);
+  return IsTameGenusTensor(t);
+end intrinsic;
