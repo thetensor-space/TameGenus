@@ -347,6 +347,7 @@ pseudo-isometric over a finite field of odd characteristic.}
   require success : issue;
   T, Hmt_T, success, issue := __TensorOverCentroid(t_nondeg, Cent);
   require success : issue;
+  require Dimension(Codomain(T)) le 2 and Dimension(Codomain(S)) le 2 : issue;
 
   // Check that their centroids are isomorphic
   if #BaseRing(S) ne #BaseRing(T) then

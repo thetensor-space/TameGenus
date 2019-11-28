@@ -332,6 +332,7 @@ adjoint-tensor method or 2 for Pfaffian method.}
     // Get the tensor over its centroid
     T, H, success, issue := __TensorOverCentroid(t_fn, Cent);
     require success : issue;
+    require Dimension(Codomain(T)) le 2 : issue;
 
     // Construct pseudo-isometry group
     if Dimension(Codomain(T)) eq 1 then

@@ -112,7 +112,7 @@ __TensorOverCentroid := function(t, Cent)
     if Cent and not IsSimple(C0) then
       return t, _, false, "Centroid is not a field. Algorithm only implemented for centroids that are fields.";
     else
-      return t, _, false, "Tensor is not genus 1 or 2.";
+      return t, _, true, "Tensor is not genus 1 or 2.";
     end if;
   end if;
   return T, H, true, "";

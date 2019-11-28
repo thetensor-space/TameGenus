@@ -129,6 +129,7 @@ and the third entry is the list of coefficients for the Pfaffians.}
   t_fn := __Radical_removal(t);
   s, H, success, issue := __TensorOverCentroid(t_fn, Cent);
   require success : issue;
+  require Dimension(Codomain(s)) le 2 : issue;
   
   return [*<Dimension(Radical(t, 2)), Dimension(Coradical(t))> *] cat
       __GetGenus2Signature(H);
