@@ -107,7 +107,8 @@ Returns the version number for the TameGenus package attached in Magma.
 \begin{example}[Version]
     We quickly verify that we have the latest version of TameGenus. 
 \begin{code}
-
+> TameGenusVersion();
+2.0    
 \end{code}
 \end{example}
 
@@ -136,6 +137,36 @@ The default is \texttt{true}.
 Set to \texttt{false} if returned group need not have exponent $p$.  
 \end{description}
 
+\begin{example}[RandomGenusGroups]
+    We construct a random group using the \texttt{TGRandomGroup} constructor. Specifically, we create a group $G$ with exponent $5$ such that $\circ_G$ has centroid containing $K=\mathbb{F}_{5^{7}}$ with genus at most $4$ and where $\dim_K(G/\Phi(G)) = 8$. First, we create the group.
+\begin{code}
+> G := TGRandomGroup(5^7, 8, 4);
+> #G eq 5^(7*(8 + 4));
+true    
+\end{code}
+
+    Now we check properties of the group we created. We expect its genus to be at most 4.
+\begin{code}
+> Genus(G);
+4
+\end{code}
+
+    We verify that the commutator tensor (coming from the $p$-central series) has a centroid containing the field of order $5^7$.
+\begin{code}
+> t := pCentralTensor(G);
+> t;
+Tensor of valence 3, U2 x U1 >-> U0
+U2 : Full Vector space of degree 56 over GF(5)
+U1 : Full Vector space of degree 56 over GF(5)
+U0 : Full Vector space of degree 28 over GF(5)
+> C := Centroid(t);
+> Dimension(C);
+7
+> IsSimple(C);
+true
+\end{code}
+\end{example}
+
 \index{RandomGenus2Group}
 \begin{intrinsics}
 RandomGenus2Group(q, d : parameters) : RngIntElt, [RngIntElt] -> GrpPC
@@ -151,6 +182,34 @@ There is one optional parameter: \texttt{Exponentp}.
 The default is \texttt{true}.
 Set to \texttt{false} if returned group need not have exponent $p$.  
 \end{description}
+
+\begin{example}[PrescribedBlocks]
+    Unlike the \texttt{TGRandomGroup} constructor, if we want to construct a genus 2 group with prescribed block dimensions, we can do this with \texttt{RandomGenus2Group}. If we want an elementary abelian direct factor, we can append a sequence of $1$s whose sum is the rank of such a factor. We construct a genus 2 group $G$ with an indecomposable blocks of dimensions $10$, $7$, $4$, $4$, and $1$. Therefore, $G\cong H\times \mathbb{Z}/(p)$, where $H$ is direct indecomposable and of order $7^{25+2}$. 
+\begin{code}
+> G := RandomGenus2Group(7, [10, 7, 4, 4, 1]);
+> #G eq 7^(10 + 7 + 4 + 4 + 1 + 2);
+true        
+\end{code}
+
+    We can see these blocks with the genus 2 signature of the group. 
+\begin{code}
+> S := Genus2Signature(G);
+> S;
+[* <1, 0>,
+[ 7 ],
+[*
+[ 1, 4, 5 ],
+[ 1, 1, 3 ],
+[ 1, 2, 6, 2, 2, 3 ]
+*]
+*]    
+\end{code}
+
+To learn how to read the above data, see the documentation for \texttt{Genus2Signature}. This shows that $\circ_G$ has a $1$-dimensional radical and is full. Moreover, it is $\perp$-decomposable as a flat $7$-dimensional block with three sloped blocks. The corresponding Pfaffians (unique up to $\mathrm{PGL}(2, 7)$) are 
+\begin{align*}
+    & x^2 + 4xy + 5y^2, & & x^2 + xy + 3y^2, & & x^5 + 2x^4y + 6x^3y^2 + 2x^2y^3 + 2xy^4 + 3y^5.
+\end{align*}
+\end{example}
 
 \index{RandomGenus1Group}
 \begin{intrinsics}
@@ -168,6 +227,38 @@ The default is \texttt{true}.
 Set to \texttt{false} if returned group need not have exponent $p$.  
 \end{description}
 
+\begin{example}[Heisenbergs]
+    The classic Heisenberg group over a field is an example of a genus 1 group, and one can generalize this construction in a number of ways. We will create the following matrix group, as a polycyclic group, over $\mathbb{F}_{81}$:
+    \begin{align*}
+        G &= \left\{\begin{bmatrix}
+            1 & * & * & * \\
+              & 1 & 0 & * \\
+              &   & 1 & * \\
+              &   &   & 1 
+        \end{bmatrix}\right\}
+    \end{align*}
+\begin{code}
+> G := RandomGenus1Group(81, 2, 0);
+> #G eq 81^(2*2 + 1);
+true 
+\end{code}
+
+    We will verify that that $G$ is genus 1, but first note that the derived subgroup is isomorphic to $(\mathbb{Z}/(3))^4$.
+\begin{code}
+> D := DerivedSubgroup(G);
+> IsElementaryAbelian(D);
+true
+> #D eq 3^4;
+true    
+\end{code}
+
+    Although the underlying field $\mathbb{F}_{81}$ is hidden within the relations of the polycyclic presentation, we can still determine it and compute the genus over this larger field.
+\begin{code}
+> Genus(G);
+1
+\end{code}
+\end{example}
+
 \index{Genus2Group}
 \begin{intrinsics}
 Genus2Group(f) : RngUPolElt -> GrpPC
@@ -176,9 +267,33 @@ Genus2Group(f) : RngMPolElt -> GrpPC
 
 Given either a univariate or homogeneous multivariate polynomial in $x$ (and $y$) over $\mathbb{F}_q$, it returns a group $G$ whose commutator $\mathbb{F}_q$-tensor has a Pfaffian equivalent to $f$.
 
+\begin{example}[Pfaffians]
+    We take the constructor \texttt{RandomGenus2Group} and specialize to sloped genus 2 groups. We will construct the genus 2 group $G$ whose (univariate) Pfaffian is equivalent to $f(x) = x^3(x-1)^2(x-2)$ in $\mathbb{F}_{9}[x]$. Therefore, we expect $|G|=9^{2\cdot 6 + 2}$. 
+\begin{code}
+> P<x> := PolynomialRing(GF(9));
+> f := x^3*(x-1)^2*(x-2);
+> G := Genus2Group(f);
+> #G eq 9^(2*6 + 2);
+true    
+\end{code}
+
+    The genus 2 signature will reveal the correct block structure. All six $\perp$-indecomposable subspaces will be $2$-dimensional, but they will partition similar to the splitting behavoir of the polynomial $f$.
+\begin{code}
+> S := Genus2Signature(G);
+> S[3];
+[*
+[ 1, 1 ],
+[ 1, 0, 0 ],
+[ 0, 0, 0, 1 ]
+*]    
+\end{code}
+
+    This shows that homogenization of $f$ is equivalent to the polynomial $g(x,y) = x^2y^3(x+y)$.
+\end{example}
+
 \section{Direct indecomposability}
 
-The definition of genus requires knowing the (direct) indecomposable factors of a group $G$. Although we do not have intrinsics to produce a list of subgroups that are indecomposable, we have an efficient test to decide if the given group is indecomposable. There is an analog for tensors as well. 
+The definition of genus requires knowing the (direct) indecomposable factors of a group $G$. Although we do not have intrinsics to produce a list of subgroups that are indecomposable, we have an efficient test to decide if the given nilpotent group is indecomposable. There is an analog for tensors as well. These are based off of ideas from~\cite{Wilson:decomposable}. 
 
 \index{IsIndecomposable!groups}\index{IsIndecomposable!tensors}
 \begin{intrinsics}
@@ -189,6 +304,48 @@ IsIndecomposable(t) : TenSpcElt -> BoolElt
 Given either a group $G$ or a tensor $t$, decide if the given object is indecomposable. 
 
 \noindent \textbf{Warning:} We make no claim that the intrinsics in this package will accept input that return \texttt{false} from \texttt{IsIndecomposable}. There are indeed cases where the group or tensor is not indecomposable (e.g.\ nontrivial radical) where all the intrinsics will work fine. 
+
+\begin{example}[Decomposable]
+    We can create a decomposable genus 2 group from the above constructors. For example, the group $G$ with the Pfaffian $xy$ will be decomposable.
+\begin{code}
+> P<x, y> := PolynomialRing(GF(7), 2);
+> f := x*y;
+> G := Genus2Group(f);
+> G;
+GrpPC : G of order 117649 = 7^6
+PC-Relations:
+G.3^G.1 = G.3 * G.5, 
+G.4^G.2 = G.4 * G.6
+> IsIndecomposable(G);
+false
+\end{code}
+
+    This example also shows that \texttt{TGRandomGroup} may return a group which is directly decomposable. 
+\end{example}
+
+\begin{example}[DirectNotCentral]
+    Note that the commutator tensor of a group can be directly indecomposable while still having a nontrivial $\perp$-decomposition. We create the directly indecomposable group $G$ which is a central product of two genus 2 groups. 
+\begin{code}
+> G := RandomGenus2Group(5, [3, 4]);
+> #G eq 5^(3 + 4 + 2);
+true
+> IsIndecomposable(G);
+true        
+\end{code}
+
+    We can observe the central factors from the genus 2 signature of the group.
+\begin{code}
+> Genus2Signature(G);
+[* <0, 0>,
+[ 3 ],
+[*
+[ 1, 0, 2 ]
+*]
+*]    
+\end{code}
+\end{example}
+
+
 
 \section{Genus}
 

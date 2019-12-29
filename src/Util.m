@@ -91,7 +91,8 @@ end procedure;
 __TensorOverCentroid := function(t, Cent)
   K := BaseRing(t);
   pi, C0 := Induce(Centroid(t), 0);
-  if Cent and IsSimple(C0) then
+  _, SS0 := WedderburnDecomposition(C0);
+  if Cent and IsSimple(SS0) then
     // Write tensor over its centroid. 
     vprintf TameGenus, 1 : "\nWriting tensor over its centroid.\n";
     tt := Cputime();
@@ -109,10 +110,10 @@ __TensorOverCentroid := function(t, Cent)
 
   // Check genus <= 2.
   if Dimension(Codomain(T)) gt 2 then
-    if Cent and not IsSimple(C0) then
-      return t, _, false, "Centroid is not a field. Algorithm only implemented for centroids that are fields.";
+    if Cent and not IsSimple(SS0) then
+      return T, _, false, "Centroid is not a field. Algorithm only implemented for centroids that are fields.";
     else
-      return t, _, true, "Tensor is not genus 1 or 2.";
+      return T, _, true, "Tensor is not genus 1 or 2.";
     end if;
   end if;
   return T, H, true, "";
