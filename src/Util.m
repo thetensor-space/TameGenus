@@ -143,6 +143,11 @@ __Radical_removal := function(t)
   vprintf TameGenus, 1 : "Checking the radicals.\n";
   tt := Cputime();
 
+  // In case there is a 0-dimensional vector space in frame.
+  if exists{X : X in Frame(t) | Dimension(X) eq 0} then
+    return t, Dimension(Domain(t)[1]), Dimension(Codomain(t)), _, _;
+  end if;
+
   Forms := SystemOfForms(t);
   Rad := Radical(t, 2);
   Crad := Coradical(t);

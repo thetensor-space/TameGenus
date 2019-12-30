@@ -125,6 +125,12 @@ intrinsic TGSignature( t::TenSpcElt : Cent := true ) -> List
   require ISA(Type(K), FldFin) : "Field must be finite.";
 
   t_fn := __Radical_removal(t);
+  // In case there is a 0-dimensional vector space in the frame.
+  if exists{X : X in Frame(t_fn) | Dimension(X) eq 0} then
+    return [*<#K, Dimension(Domain(t_fn)[1]), Dimension(Codomain(t_fn))>,
+    <Dimension(Radical(t_fn, 2)), Dimension(Coradical(t_fn))>*] cat 
+    [*[**], [**]*];
+  end if;
   s, H, success, issue := __TensorOverCentroid(t_fn, Cent);
   require success : issue;
   require Dimension(Codomain(s)) le 2 : issue;

@@ -863,17 +863,90 @@ When the input is decomposable, the intrinsic might construct the signature (e.g
 \begin{example}[ManyBlocks]
     We construct a genus 2 group $G$ with many sloped and flat blocks. 
 \begin{code}
-> blocks := [1, 1, 1, 2, 2, 3, 3, 4, 5, 5, 7, 10, 11];
-> G := RandomGenus2Group(11, blocks);
-> #G eq 11^(&+blocks + 2); 
+> blocks := [1, 1, 1, 2, 2, 3, 3, 5, 6];
+> G := RandomGenus2Group(9, blocks);
+> #G eq 9^(&+blocks + 2);
 true    
 \end{code}
 
-    We expect the commutator tensor from $G$ to have a $3$-dimensional radical 
+    We expect the commutator tensor from $G$ to have a $3$-dimensional (over $\mathbb{F}_9$) radical, and to have data corresponding to the blocks above.
+\begin{code}
+> TGSignature(G);
+[* <9, 21, 2>, <6, 0>,
+    [ 3, 3, 5 ],
+    [*
+        [ 0, 1 ],
+        [ 1, 1 ],
+        [ 1, 2, 2, 2 ]
+    *]
+*]    
+\end{code}
+
+    The first entry of this list tells us that the associated fully nondegenerate tensor of $G$ has the frame $\mathbb{F}_9^{21}\times\mathbb{F}_9^{21}\rightarrowtail \mathbb{F}_9^2$. The second entry says that the commutator tensor from $G$ has $6$-dimensional radical over $\mathbb{F}_3$, the field for which the commutator tensor was initially defined over. In other words, $G\cong H\times \mathbb{F}_9^3$. The third entry tells us that $H$ is a central product of six indecomposable groups: three flats of orders $9^{3+2}$, $9^{3+2}$, and $9^{5+2}$, and three sloped with Pfaffians in $\mathbb{F}_9[x,y]$ equivalent to 
+    \begin{align*}
+        & y, & & x + y, & & x^3 + 2x^2y + 2xy^2 + 2y^3.
+    \end{align*}
 \end{example}
 
-\begin{example}
+\begin{example}[MoreSmallGroups]
+    We run through all the small groups of order $3^7$ and determine their tame genus signatures. There are $9310$ such groups, and $10$ of them are covered by \textsf{TameGenus}.
+\begin{code}
+> TG_SG := SmallGroupProcess(3^7, IsTameGenusGroup);
+> 
+> repeat
+repeat>     G := Current(TG_SG);
+repeat>     _, ID := CurrentLabel(TG_SG);
+repeat>     print "Small group ID:", ID;
+repeat>     TGSignature(G);
+repeat>     Advance(~TG_SG);
+repeat> until IsEmpty(TG_SG);    
+\end{code}
 
+    The loop yields the following output.
+\begin{code}
+Small group ID: 9106
+[* <3, 3, 2>, <2, 0>,
+    [ 3 ],
+    [* *]
+*]
+Small group ID: 9107
+[* <3, 4, 2>, <1, 0>,
+    [],
+    [*
+        [ 1, 0 ],
+        [ 0, 1 ]
+    *]
+*]
+Small group ID: 9108
+[* <3, 4, 2>, <1, 0>,
+    [],
+    [*
+        [ 0, 0, 1 ]
+    *]
+*]
+Small group ID: 9109
+[* <9, 2, 1>, <1, 0>, [* *], [* *] *]
+Small group ID: 9110
+[* <3, 5, 2>, <0, 0>,
+    [ 3 ],
+    [*
+        [ 0, 1 ]
+    *]
+*]
+Small group ID: 9111
+[* <3, 5, 2>, <0, 0>,
+    [ 5 ],
+    [* *]
+*]
+Small group ID: 9302
+[* <3, 2, 1>, <4, 0>, [* *], [* *] *]
+Small group ID: 9305
+[* <3, 4, 1>, <2, 0>, [* *], [* *] *]
+Small group ID: 9308
+[* <3, 6, 1>, <0, 0>, [* *], [* *] *]
+Small group ID: 9310
+[* <3, 7, 0>, <7, 0>, [* *], [* *] *]    
+\end{code}
 \end{example}
 
 
