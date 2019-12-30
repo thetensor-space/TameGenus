@@ -53,31 +53,29 @@ __FormsToGroup := function( Forms : ExponentP := false )
 end function;
 
 __WriteOverPrimeField := function( Forms )
-  M := Tensor(Forms, 2, 1, TensorCategory([1,1,1], {{0},{1,2}}));
-  K := BaseRing(M);
+  K := BaseRing(Forms[1]);
   if IsPrimeField(K) then
     return Forms;
   end if;
-  k := GF(Characteristic(K));
-  e := Round(Log(#k, #K));
-  D_old := M`Domain;
-  D_new := [KSpace( k, Dimension(D)*e ) : D in D_old];
-  C_old := M`Codomain;
-  C_new := KSpace( k, Dimension(M`Codomain)*e );
-  maps_D := [ map< D_new[i] -> D_old[i] | 
-    x :-> D_old[i]![K![Coordinates(D_new[i],x)[j] : j in [(k-1)*e+1..k*e]] : 
-        k in [1..Dimension(D_old[i])] ],
-    y :-> D_new[i]!(&cat[&cat[Eltseq(s) : s in Coordinates(D_old[i],y)]]) > : 
-        i in [1..#D_old] ];
-  map_C := map< C_old -> C_new | 
-    x :-> C_new!(&cat[ &cat[ Eltseq( s ) : s in Coordinates(C_old,x) ] ]),
-    y :-> C_old![ K![ Coordinates(C_new,y)[j] : j in [(k-1)*e+1..k*e] ] : 
-        k in [1..Dimension(C_old)] ] >;
-  F := function(x)
-    return (< x[i] @ maps_D[i] : i in [1..#x] > @ M) @ map_C;
-  end function;
-  N := Tensor(D_new, C_new, F, TensorCategory([1,1,1], {{0},{1,2}}));
-  sys := SystemOfForms(N);
+  E := GF(Characteristic(K));
+  e := Degree(K, E);
+  n := Ncols(Forms[1]);
+  alpha := CompanionMatrix(DefiningPolynomial(K, E));
+  sys := [ZeroMatrix(E, n*e, n*e) : i in [1..e*#Forms]];
+  // Build the matrices blocks at a time. We know our input is alternating.
+  for i in [1..n] do
+    for j in [i+1..n] do
+      for k in [1..#Forms] do
+        vec := ElementToSequence(Forms[k][i][j], E);
+        M := &+[vec[l]*alpha^(l-1) : l in [1..e]];
+        blocks := [M*alpha^(l-1) : l in [1..e]];
+        for l in [1..e] do
+          InsertBlock(~(sys[(k-1)*e + l]), blocks[l], (i-1)*e + 1, (j-1)*e + 1);
+          InsertBlock(~(sys[(k-1)*e + l]), -blocks[l], (j-1)*e + 1, (i-1)*e + 1);
+        end for;
+      end for;
+    end for;
+  end for;
   return sys;
 end function;
 

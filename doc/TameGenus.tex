@@ -41,13 +41,13 @@
 
 The goal of this package is to provide \textsc{Magma}~\cite{Magma} with high performance isomorphism tests for groups with tame genus. A group has tame genus if its genus is less than $3$. We include automorphism group constructors, along with canonical signatures. For definitions, theorems, and desriptions of algorithms, the reader should consult~\cite{BMW}.
 When appropriate, intrinsics for groups also work for tensors (\texttt{TenSpcElt}). 
-This package includes a number of intrinsics for automorphism and isomorphism computations, canonical labeling, and constructing random groups of genus 1 or 2 of exponent  $\leq p^2$. The index at the end of the documentation records all intrinsics provided by TameGenus. 
+This package includes a number of intrinsics for automorphism and isomorphism computations, canonical labeling, and constructing random groups of genus 1 or 2 of exponent  $\leq p^2$. The index at the end of the documentation records all intrinsics provided by \textsf{TameGenus}. 
 
 The latest versions of \texttt{TensorSpace}~\cite{TensorSpacePackage}, \texttt{StarAlge}~\cite{StarAlge}, and \texttt{Sylver}~\cite{Sylver} are required to use this package. 
-The URLs are found in the bibliography or in the package \texttt{README.md}. Linux users can use the \texttt{install.sh} or \texttt{update.sh} bash files to install or update dependencies.
+The URLs are found in the bibliography or in the package \texttt{README.md}. Linux users can use the \texttt{install.sh} or \texttt{update.sh} bash files to install or update dependencies. Note that the \texttt{install.sh} will check for the \texttt{.magmarc} file in the home directory.
 
-\section{Citing TameGenus} 
-To cite the TameGenus package, please use the following\\
+\section{Citing \textsf{TameGenus}} 
+To cite the \textsf{TameGenus} package, please use the following\\
 \\
 Joshua Maglione, Peter A. Brooksbank, and James B. Wilson, \emph{TameGenus}, version 2.0, GitHub, 2019. (\url{https://github.com/thetensor-space/TameGenus}). \\
 \\
@@ -76,10 +76,10 @@ SetVerbose(MonStgElt, RngIntElt) : ->
 \end{intrinsics}
 
 \texttt{SetVerbose} is a built in Magma function, but with this package, this intrinsic accepts the string \texttt{"TameGenus"} and an integer in $\{0,1,2\}$. Verbose printing level 0 turns off all printing. 
-Level 1 will print out what \textsc{Magma} is doing in the TameGenus algorithms, and level 2 will print timings and extra structural information.
+Level 1 will print out what \textsc{Magma} is doing in the \textsf{TameGenus} algorithms, and level 2 will print timings and extra structural information.
 
 \begin{example}[VerbosePrinting]
-  We demonstrate the verbose printing by constructing a random genus 2 group of order $3^{22}$.
+  We demonstrate the verbose printing by constructing a random genus 2 group of order $3^{20 + 2}$.
 
 \begin{code}
 > G := RandomGenus2Group(3, [4, 6, 10]);
@@ -95,17 +95,17 @@ With the verbose printing, we can see how long each part of the algorithm takes 
 \end{code}
 \end{example}
 
-We have included an intrinsic to check which version of TameGenus you have attached in Magma.
+We have included an intrinsic to check which version of \textsf{TameGenus} you have attached in Magma.
 
 \index{TameGenusVersion}
 \begin{intrinsics}
 TameGenusVersion() : -> MonStgElt
 \end{intrinsics}
 
-Returns the version number for the TameGenus package attached in Magma.
+Returns the version number for the \textsf{TameGenus} package attached in Magma.
 
 \begin{example}[Version]
-    We quickly verify that we have the latest version of TameGenus. 
+    We quickly verify that we have the latest version of \textsf{TameGenus}. 
 \begin{code}
 > TameGenusVersion();
 2.0    
@@ -335,12 +335,12 @@ true
 
     We can observe the central factors from the genus 2 signature of the group.
 \begin{code}
-> Genus2Signature(G);
-[* <0, 0>,
-[ 3 ],
-[*
-[ 1, 0, 2 ]
-*]
+> TGSignature(G);
+[* <5, 7, 2>, <0, 0>,
+    [ 3 ],
+    [*
+        [ 1, 0, 2 ]
+    *]
 *]    
 \end{code}
 \end{example}
@@ -354,27 +354,151 @@ true
 \index{Genus!groups}\index{Genus!tensors}
 \begin{intrinsics}
 Genus(G) : GrpPC -> RngIntElt
-Genus(T) : TenSpcElt -> RngIntElt
+Genus(t) : TenSpcElt -> RngIntElt
 \end{intrinsics}
 
 Given an indecomposable $p$-group $G$, it returns the genus of $G$. 
 That is, the rank of $[G,G]$ over the centroid.
 For an indecomposable tensor $t: V\times V\rightarrowtail W$, it returns the rank of $W$ over its centroid. 
 
+\begin{example}[Genus]\label{ex:Genus}
+    We will determine the genus of some groups in the Small Group library. First, let $G$ be the group of order $3^6$ with ID number 440. Its derived subgroup is isomorphic to $(\mathbb{Z}/(3))^2$, and $G$ is genus 2. 
+\begin{code}
+> G := SmallGroup(3^6, 440);
+> #DerivedSubgroup(G) eq 3^2;
+true
+> IsElementaryAbelian(DerivedSubgroup(G));
+true
+> Genus(G);
+2       
+\end{code}
+
+    Let $H$ be the group of order $3^6$ with ID number 469. Its derived subgroup is isomorphic to $(\mathbb{Z}/(3))^2$ also, but $H$ is genus 1. 
+\begin{code}
+> H := SmallGroup(3^6, 469);
+> #DerivedSubgroup(H) eq 3^2;
+true
+> IsElementaryAbelian(DerivedSubgroup(H));
+true
+> Genus(H);
+1    
+\end{code}
+
+    We can see this difference in multiple ways. If we extract the commutator tensor from both groups, one will be bilinear over a quadratic field extension where the other is not. The algebra that records this is the centroid of a bilinear map. 
+\begin{code}
+> s := pCentralTensor(G);
+> t := pCentralTensor(H);
+> C_G := Centroid(s);
+> C_H := Centroid(t);
+> C_G;
+Matrix Algebra of degree 6 with 2 generators over GF(3)
+> C_H;
+Matrix Algebra of degree 6 with 2 generators over GF(3)    
+\end{code}
+
+    The centroid associated to the tensor $s$ is $2$-dimensional but with a nontrivial Jacobson radical. The centroid associated to the tensor $t$ is $2$-dimensional and a simple $\mathbb{F}_3$-algebra.
+\begin{code}
+> Dimension(C_G);
+2
+> Dimension(C_H);
+2
+> WedderburnDecomposition(C_G);
+Matrix Algebra of degree 6 with 1 generator over GF(3)
+Matrix Algebra of degree 6 with 1 generator over GF(3)
+> IsSimple(C_H);
+true    
+\end{code}
+\end{example}
 
 \index{IsTameGenusGroup}
 \begin{intrinsics}
-IsTameGenusGroup : Group -> BoolElt
+IsTameGenusGroup(G) : Group -> BoolElt
 \end{intrinsics}
 
-Decides if the functions in the TameGenus package can be applied to the given group.
+Decides if the functions in the \textsf{TameGenus} package can be applied to the given group $G$.
 
 \index{IsTameGenusTensor}
 \begin{intrinsics}
-IsTameGenusTensor : TenSpcElt -> BoolElt
+IsTameGenusTensor(t) : TenSpcElt -> BoolElt
 \end{intrinsics}
 
-Decides if the functions in the TameGenus package can be applied to the given tensor.
+Decides if the functions in the \textsf{TameGenus} package can be applied to the given tensor $t$.
+
+\begin{example}[NonExample]
+    We create a group that is not covered by the \textsf{TameGenus} package. From the Genus example, see Example~\ref{ex:Genus}, the small groups of order $3^6$ with IDs 440 and 469 both have tame genus: 2 and 1 respectively. The direct product of the two groups has genus 2, but because the group is not directly decomposable, the current implementation of \textsf{TameGenus} cannot handle it.
+\begin{code}
+> H1 := SmallGroup(3^6, 440);
+> H2 := SmallGroup(3^6, 469);
+> G := DirectProduct(H1, H2);
+> G;
+GrpPC : G of order 531441 = 3^12
+PC-Relations:
+    G.2^G.1 = G.2 * G.5, 
+    G.3^G.1 = G.3 * G.6, 
+    G.3^G.2 = G.3 * G.5, 
+    G.4^G.1 = G.4 * G.5, 
+    G.8^G.7 = G.8 * G.11, 
+    G.9^G.7 = G.9 * G.12, 
+    G.9^G.8 = G.9 * G.11^2 * G.12, 
+    G.10^G.7 = G.10 * G.11 * G.12, 
+    G.10^G.8 = G.10 * G.11
+> IsTameGenusGroup(G);
+false
+\end{code}
+\end{example}
+
+\begin{example}[AllTheSmallGroups]
+    We can use the \texttt{IsTameGenusGroup} and \texttt{IsTameGenusTensor} to filter large databases down to the ones covered by \textsf{TameGenus}. We do that here with the Small Group library for groups of order $3^6$, and we find there are seven such groups. 
+\begin{code}
+> G2_SG := [*G : G in SmallGroups(3^6) | IsTameGenusGroup(G)*];
+> #G2_SG;
+7    
+\end{code}
+
+    We further filter these groups based on their genus, and we find there are three groups of positive genus (and one abelian group). 
+\begin{code}
+> G1 := [*G : G in TG_SG | Genus(G) eq 1*];
+> G2 := [*G : G in TG_SG | Genus(G) eq 2*];
+> #G1;
+3
+> #G2;
+3    
+\end{code}
+
+    Now we determine the tame genus signatures to show that all these groups yield different signatures. We first consider the genus 1 groups. 
+\begin{code}
+> for G in G1 do
+for>     TGSignature(G);
+for> end for;
+[* <9, 2, 1>, <0, 0>, [* *], [* *] *]
+[* <3, 2, 1>, <3, 0>, [* *], [* *] *]
+[* <3, 4, 1>, <1, 0>, [* *], [* *] *]    
+\end{code}
+
+    The genus 2 groups have the following signatures.
+\begin{code}
+> for G in G2 do
+for>     TGSignature(G);
+for> end for;
+[* <3, 3, 2>, <1, 0>,
+    [ 3 ],
+    [* *]
+*]
+[* <3, 4, 2>, <0, 0>,
+    [],
+    [*
+        [ 0, 0, 1 ]
+    *]
+*]
+[* <3, 4, 2>, <0, 0>,
+    [],
+    [*
+        [ 1, 0 ],
+        [ 0, 1 ]
+    *]
+*]    
+\end{code}
+\end{example}
 
 
 
@@ -409,9 +533,108 @@ This will set the method for handling the sloped part of the tensor.
 If the adjoint-tensor method should be used, set to $1$. If the Pfaffian method should be used, set to $2$. The default will try to find the optimal method based on the input; this is not yet optimally tuned but is generally good.
 \end{description}
 
+\begin{example}[IsomorphismTesting]
+    We will create an isomorphic pair of groups in two different ways, and then we will construct an isomorphism between the two. This example can be seen as verifying Theorem~1.1 of~\cite{LM:semi-extraspecial}. We construct groups $G$ and $H$ from two random irreducible cubic polynomials in $\mathbb{F}_{67}[x]$. 
+\begin{code}
+> f := RandomIrreduciblePolynomial(GF(67), 3);
+> g := RandomIrreduciblePolynomial(GF(67), 3);
+> f, g;
+$.1^3 + 36*$.1^2 + 26*$.1 + 33
+$.1^3 + 57*$.1^2 + 24*$.1 + 65
+> G := Genus2Group(f);
+> H := Genus2Group(g);
+\end{code}
+
+    The default method, in this case, will run the adjoint-tensor method. We can see it running if we turn on verbose printing. 
+\begin{code}
+> SetVerbose("TameGenus", 1);
+> isomorphic, phi := TGIsIsomorphic(G, H);
+Extracting p-central tensors and deciding pseudo-isometry.
+Checking the radicals.
+        dim(Rad_V) = 0
+        dim(Rad_W) = 0
+Checking the radicals.
+        dim(Rad_V) = 0
+        dim(Rad_W) = 0
+
+Writing tensor over its centroid.
+
+Writing tensor over its centroid.
+
+Computing the adjoint algebra.
+        dim(Adj_s) = 12
+        dim(Adj_t) = 12
+
+Computing the adjoint algebra.
+
+Genus 2 case.
+
+Decomposing tensors into flat and sloped subtensors.
+        Block dims = [ 6 ]
+
+PGammaL is larger than symmetric group, applying adjoint-tensor method.    
+\end{code}
+
+    We see that the two groups are isomorphic, and $\phi$ is such an isomorphism.
+\begin{code}
+> isomorphic;
+true
+> phi;
+Homomorphism of GrpPC : G into GrpPC : H induced by
+    G.1 |--> H.1 * H.2^41 * H.3^30 * H.4^58 * H.5^43 * H.6^30
+    G.2 |--> H.1^53 * H.2^4 * H.3^34 * H.4^54 * H.5^6 * H.6^25
+    G.3 |--> H.1^5 * H.2^7 * H.3^49 * H.4^52 * H.5^21 * H.6^7
+    G.4 |--> H.1^30 * H.2^4 * H.3^17 * H.4^53 * H.5^40 * H.6^9
+    G.5 |--> H.1^14 * H.2^21 * H.3^30 * H.4^24 * H.5^38 * H.6^34
+    G.6 |--> H.1^47 * H.2^46 * H.3^66 * H.4^65 * H.5^30 * H.6^30
+    G.7 |--> H.7^10 * H.8^18
+    G.8 |--> H.7^54 * H.8^12    
+\end{code}
+
+    If we want to run the Pfaffian test, we set the \texttt{Method} to 2. This method is considerably slower for these groups.
+\begin{code}
+> isomorphic, phi2 := TGIsIsomorphic(G, H : Method := 2);
+Extracting p-central tensors and deciding pseudo-isometry.
+Checking the radicals.
+        dim(Rad_V) = 0
+        dim(Rad_W) = 0
+Checking the radicals.
+        dim(Rad_V) = 0
+        dim(Rad_W) = 0
+
+Writing tensor over its centroid.
+
+Writing tensor over its centroid.
+
+Computing the adjoint algebra.
+        dim(Adj_s) = 12
+        dim(Adj_t) = 12
+
+Computing the adjoint algebra.
+
+Genus 2 case.
+
+Decomposing tensors into flat and sloped subtensors.
+        Block dims = [ 6 ]
+
+Method set to Pfaffian.   
+> phi2;
+Homomorphism of GrpPC : G into GrpPC : H induced by
+    G.1 |--> H.1^47 * H.2^54 * H.3^54
+    G.2 |--> H.1^63 * H.2^33 * H.3^15
+    G.3 |--> H.1^26 * H.2^3 * H.3^60
+    G.4 |--> H.4^44 * H.5^61 * H.6^16
+    G.5 |--> H.4^66 * H.5^26 * H.6^36
+    G.6 |--> H.4^57 * H.5^6 * H.6^30
+    G.7 |--> H.7^62 * H.8^42
+    G.8 |--> H.7^18 * H.8^58
+\end{code}
+\end{example}
+
+
 \index{TGIsPseudoIsometric}
 \begin{intrinsics}
-TGIsPseudoIsometric(s, t : parameters) : TenSpcElt, TenSpcElt -> BoolElt
+TGIsPseudoIsometric(s, t : parameters) : TenSpcElt, TenSpcElt -> BoolElt, Hmtp
     Cent : BoolElt : true
     Constructive : BoolElt : true
     Method : RngIntElt : 0
@@ -419,9 +642,9 @@ TGIsPseudoIsometric(s, t : parameters) : TenSpcElt, TenSpcElt -> BoolElt
 
 \color{black}
 Given indecomposable, alternating tensors $s, t : V\times V \rightarrowtail W$, where $V$ and $W$ are $\mathbb{F}_q$-vector spaces, decide if $s$ is pseudo-isometric to $t$.
-If so, a pseudo-isometry is also returned as an element of $\GL(V)\times \GL(W)$ unless specified otherwise. 
+If so, a pseudo-isometry is also returned as a homotopism.
 Currently this does not work for even $q$. 
-When the tensor are decomposable, the intrinsic might decide isomorphism (e.g.\ when the tensors have nontrivial radical), or it might return an error. In particular, an incorrect decision should not occur.  
+When the tensors are decomposable, the intrinsic might decide isomorphism (e.g.\ when the tensors have nontrivial radical), or it might return an error. In particular, an incorrect decision should not occur.  
 There are three optional parameters: \texttt{Cent}, \texttt{Constructive}, and \texttt{Method}.
 
 \begin{description}
@@ -436,6 +659,49 @@ The default is $0$, and any input from $\{ 0,1,2\}$ is acceptable.
 This will set the method for handling the sloped part of the tensor.
 If the adjoint-tensor method should be used, set to $1$. If the Pfaffian method should be used, set to $2$. The default will try to find the optimal method based on the input; this is not yet optimally tuned but is generally good.
 \end{description}
+
+\begin{example}[PseudoIsometries]
+    A pair of alternating matrices determines a tensor of tame genus. We will construct a pair of pseudo-isometric tensors by applying a change of basis isotopism. This is essentially how Experiment A from~\cite{BMW} was conducted. Generating random $100\times 100$ matrices over $\mathbb{F}_3$, we build two tensors $s,t : \mathbb{F}_3^{50} \times \mathbb{F}_3^{50}\rightarrowtail\mathbb{F}_3^2$. 
+\begin{code}
+> M := RandomMatrix(GF(3), 50, 50);
+> N := RandomMatrix(GF(3), 50, 50);
+> Forms1 := [M - Transpose(M), N - Transpose(N)];
+> s := Tensor(Forms1, 2, 1);
+> s;
+Tensor of valence 3, U2 x U1 >-> U0
+U2 : Full Vector space of degree 50 over GF(3)
+U1 : Full Vector space of degree 50 over GF(3)
+U0 : Full Vector space of degree 2 over GF(3)
+> IsAlternating(s);
+true       
+\end{code}
+
+    Now we construct a random invertible co-homotopism $\varphi$ such that $\varphi_2\in \GL(50, 3)$ and $\varphi_0\in\GL(2, 3)$. We define a new and pseudo-isometric tensor $t=s^{\varphi}$ in this way.
+\begin{code}
+> X := Random(GL(50, 3));
+> Y := Random(GL(2, 3));
+> Maps := [*X, X, Y*];
+> H := Homotopism(Maps, CohomotopismCategory(3));
+> t := s @ H;
+> t;
+Tensor of valence 3, U2 x U1 >-> U0
+U2 : Full Vector space of degree 50 over GF(3)
+U1 : Full Vector space of degree 50 over GF(3)
+U0 : Full Vector space of degree 2 over GF(3)
+> s eq t;
+false     
+\end{code}
+
+    We verify that both $s$ and $t$ are pseudo-isometric, and since we do not need to write these tensors over their centroid, we avoid that step by setting \texttt{Cent} to \texttt{false}.
+\begin{code}
+> pisometric, Phi := TGIsPseudoIsometric(s, t : Cent := false);
+> pisometric;
+true
+> Phi.0;
+[0 1]
+[2 2]
+\end{code}
+\end{example}
 
 
 
@@ -467,6 +733,29 @@ If the adjoint-tensor method should be used, set to $1$. If the Pfaffian method 
 The default is \texttt{false}. When \texttt{true}, the output will be a linear representation of the automorphism group. The row vectors of the matrix correspond to the polycyclic vectors from the polycyclic presentation.
 \end{description}
 
+\begin{example}[FlatIndecomposable]
+    We build a flat indecomposable genus 2 $p$-group $G$ and construct its automorphism group. We know that $\Aut(G)$ maps surjectivity onto $\GL(2, p)$, so we will verify that $|\Aut(G)|$ is divisible by $(p^2-1)(p^2-p)$. This corresponds to the quotient of the pseudo-isometry group by the isometry group. 
+\begin{code}
+> p := 541;
+> G := RandomGenus2Group(p, [29]);
+> #G eq p^(29 + 2);
+true
+> A := TGAutomorphismGroup(G);
+> IsDivisibleBy(#A, #GL(2, p));
+true
+\end{code}
+
+    The isometry group of the corresponding commutator tensor has an elementary abelian unipotent radical of rank $28$, and so is isomorphic to $(\mathbb{Z}/(p))^{28}\rtimes \mathrm{GL}(1, p)$, as seen in~\cite{BW:isometry}. Therefore, we can verify that we have constructed all automorphisms as 
+    \begin{align*}
+        |\Aut(G)| &= (p - 1)p^{28} \cdot (p^2-1)(p^2-p) \cdot p^{29\cdot 2}.
+    \end{align*}
+\begin{code}
+> #A eq (p - 1)*p^28 * (p^2 - 1)*(p^2 - p) * p^(29*2);
+true    
+\end{code}
+\end{example}
+
+
 \index{TGPseudoIsometryGroup}
 \begin{intrinsics}
 TGPseudoIsometryGroup(t : parameters) : TenSpcElt -> GrpMat
@@ -488,26 +777,104 @@ This will set the method for handling the sloped part of the tensor.
 If the adjoint-tensor method should be used, set to $1$. If the Pfaffian method should be used, set to $2$. The default will try to find the optimal method based on the input; this is not yet optimally tuned but is generally good.
 \end{description}
 
+\begin{example}[Extensions]
+    For $K$ vector spaces $V$ and $W$, we create a genus 2 alternating tensor $t: V \times V\rightarrowtail W$ such that $t$ is bilinear over an extension field $E/K$ and $\dim_E(W)=2$. One way to do this is via the constructor \texttt{RandomGenus2Group}. 
+\begin{code}
+> G := RandomGenus2Group(3^2, [6]);
+> t := pCentralTensor(G);
+> t;
+Tensor of valence 3, U2 x U1 >-> U0
+U2 : Full Vector space of degree 12 over GF(3)
+U1 : Full Vector space of degree 12 over GF(3)
+U0 : Full Vector space of degree 4 over GF(3)
+> Genus(t);
+2    
+\end{code}
 
+    The Pfaffian of $t$ is an irreducible cubic over $\mathbb{F}_9$, so computing its pseudo-isometry group may contain elements of $\mathrm{Gal}(\mathbb{F}_9)$. 
+\begin{code}
+> PI := TGPseudoIsometryGroup(t);
+> Random(PI);
+[0 1 0 0 0 2 1 1 0 2 1 0 0 0 0 0]
+[2 0 0 0 1 0 0 2 1 0 1 2 0 0 0 0]
+[1 1 0 0 0 1 1 1 0 0 2 1 0 0 0 0]
+[0 2 0 0 2 0 0 2 0 0 1 1 0 0 0 0]
+[1 2 2 0 0 2 2 2 1 0 0 0 0 0 0 0]
+[2 2 2 1 1 0 0 1 1 2 0 0 0 0 0 0]
+[2 2 2 0 1 0 1 0 2 2 1 2 0 0 0 0]
+[0 1 2 1 1 2 1 2 0 1 2 2 0 0 0 0]
+[2 0 1 0 2 2 2 1 1 1 0 0 0 0 0 0]
+[2 1 1 2 0 1 1 1 0 2 0 0 0 0 0 0]
+[0 2 0 1 2 2 1 1 0 1 1 0 0 0 0 0]
+[1 0 2 0 0 1 0 2 2 0 1 2 0 0 0 0]
+[0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0]
+[0 0 0 0 0 0 0 0 0 0 0 0 2 0 1 2]
+[0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0]
+[0 0 0 0 0 0 0 0 0 0 0 0 0 2 0 0]
+> Factorization(#PI);
+[ <2, 8>, <3, 7>, <5, 1>, <7, 1>, <13, 1>, <73, 1> ]
+\end{code}
+
+    Indeed, the pseudo-isometry group may not be linear over the centroid but semi-linear. To see the discrepancy, we rewrite $t$ over its centroid and determine its pseudo-isometry group. We see that $\pseudo(t)$ is strictly semi-linear over $\mathbb{F}_9$, as there exists a Galois involution. 
+\begin{code}
+> s := TensorOverCentroid(t);
+> s;
+Tensor of valence 3, U2 x U1 >-> U0
+U2 : Full Vector space of degree 6 over GF(3^2)
+U1 : Full Vector space of degree 6 over GF(3^2)
+U0 : Full Vector space of degree 2 over GF(3^2)
+> PI_C := TGPseudoIsometryGroup(s);
+> Random(PI_C);
+[    1 $.1^7     1 $.1^2 $.1^2 $.1^5     0     0]
+[  $.1     2 $.1^7 $.1^3 $.1^6 $.1^5     0     0]
+[$.1^7 $.1^2 $.1^7     1 $.1^6 $.1^2     0     0]
+[$.1^7 $.1^7 $.1^7 $.1^3 $.1^7     1     0     0]
+[    2 $.1^6 $.1^3 $.1^2 $.1^3     0     0     0]
+[$.1^7   $.1 $.1^7 $.1^6 $.1^6 $.1^7     0     0]
+[    0     0     0     0     0     0     2 $.1^7]
+[    0     0     0     0     0     0 $.1^3 $.1^5]
+> Factorization(#PI_C);
+[ <2, 7>, <3, 7>, <5, 1>, <7, 1>, <13, 1>, <73, 1> ]
+\end{code}
+\end{example}
 
 
 \chapter{Canonical Labeling}
 
-\index{Genus2Signature!groups}\index{Genus2Signature!tensors}
+\index{TGSignature!groups}\index{TGSignature!tensors}
 \begin{intrinsics}
-Genus2Signature(G) : GrpPC -> List
-Genus2Signature(t) : TenSpcElt -> List
+TGSignature(G) : GrpPC -> List
+TGSignature(t) : TenSpcElt -> List
 \end{intrinsics}
 
-Given a genus 2 indecomposable group or tensor, returns the canonical genus 2 signature as a list. 
-The list has four parts.
-The first entry is a sequence of odd integers corresponding to the dimensions of the flat indecomposable spaces.
-The second entry is a list of sequences in $\mathbb{F}_q$ of possibly different lengths. Here, $\mathbb{F}_q$ is the residue field of the centroid $\mathcal{C}(\circ)$, which is a local ring. 
-A sequence $[c_1,\dots, c_{d+1}]$ in the second entry corresponds to the coefficients of the homogeneous polynomial in $x$ and $y$ in degree $d$:
-\[ c_1x^d + c_2 x^{d-1}y + c_3 x^{d-2}y^2 + \cdots + c_{d+1}y^d. \]
-Because this is a canonical label, two groups (or tensors) are isoclinic (or pseudo-isometric) if, and only if, their genus 2 signatures are equal. 
+Given an indecomposable group or tensor of tame genus, returns the canonical tame genus signature as a list. 
+The list has four entries. For inputs with genus $\leq 1$, the last two entries will be empty lists. 
+\begin{enumerate}
+    \item The first is a triple of three integers $(q, d, e)$ such that associated fully nondegenerate tensor of the (commutator) tensor has the form $\mathbb{F}_q^d\times \mathbb{F}_q^d\rightarrowtail \mathbb{F}_q^e$. Here, $\mathbb{F}_q$ is the Galois field of the residue field of the centroid, which is a local ring. Therefore, $\mathbb{F}_q = \mathrm{GF}(q)$.
+    \item The second entry is a pair of integers $(r, c)$, where $r$ is the dimension of the radical of the (commutator) tensor and $c$ is the codimension of the image in the codomain. 
+    \item The third entry is a sequence of odd integers corresponding to the dimensions of the flat indecomposable spaces.
+    \item The fourth and last entry is a list sequences in $\mathbb{F}_q$ of possibly different lengths. A sequence $[c_1,\dots, c_{d+1}]$ in the second entry corresponds to the coefficients of the homogeneous polynomial in $x$ and $y$ in degree $d$:
+    \[ c_1x^d + c_2 x^{d-1}y + c_3 x^{d-2}y^2 + \cdots + c_{d+1}y^d. \]
+\end{enumerate}
+Because this is a canonical label, two groups (or tensors) are isoclinic (or pseudo-isometric) if, and only if, their genus 2 signatures are equal. Therefore, isoclinism or pseudo-isometry is determined by (honest) equality of lists. 
 
 When the input is decomposable, the intrinsic might construct the signature (e.g.\ when the tensor has a nontrivial radical), or it might return an error. In particular, the wrong signature should not be returned. 
+
+\begin{example}[ManyBlocks]
+    We construct a genus 2 group $G$ with many sloped and flat blocks. 
+\begin{code}
+> blocks := [1, 1, 1, 2, 2, 3, 3, 4, 5, 5, 7, 10, 11];
+> G := RandomGenus2Group(11, blocks);
+> #G eq 11^(&+blocks + 2); 
+true    
+\end{code}
+
+    We expect the commutator tensor from $G$ to have a $3$-dimensional radical 
+\end{example}
+
+\begin{example}
+
+\end{example}
 
 
 \begin{bibdiv}
@@ -550,17 +917,6 @@ When the input is decomposable, the intrinsic might construct the signature (e.g
    %edition={version 1.2.3},
    note={\url{https://github.com/thetensor-space/StarAlge}},
 }
-
-%\bib{LMG}{misc}{
-%   author={B\"{a}\"{a}rnhielm, Henrik},
-%   author={Holt, Derek F.},
-%   author={Leedham-Green, C. R.},
-%   author={O'Brien, E. A.},
-%   title={The Large Matrix Group Package},
-%   publisher={\textsc{Magma}},
-%   year={2017},
-%   note={\url{http://magma.maths.usyd.edu.au/magma/handbook/text/680}},
-%}
 
 \bib{LGM:book}{book}{
    author={Leedham-Green, C. R.},

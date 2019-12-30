@@ -115,10 +115,8 @@ intrinsic Genus( G::GrpPC ) -> RngIntElt
 	return Genus(pCentralTensor(G, 1, 1));
 end intrinsic;
 
-intrinsic Genus2Signature( t::TenSpcElt : Cent := true ) -> List
-{Returns the canonical genus 2 signature. The first entry are the dimensions of 
-the radical and co-radical, the second entry is the sequence of flat dimensions,
-and the third entry is the list of coefficients for the Pfaffians.}
+intrinsic TGSignature( t::TenSpcElt : Cent := true ) -> List
+{Returns the canonical tame genus signature. The first entry is the triple of integers describing the associated fully nondegenerate tensor. The second entry is the dimensions of the radical and co-radical. The third entry is the sequence of flat dimensions, and the fourth entry is the list of coefficients for the Pfaffians.}
   require Type(Cent) eq BoolElt : "'Cent' must be true or false.";
   require forall{X : X in t`Domain cat [*t`Codomain*] | Type(X) eq ModTupFld} : 
       "Domain and codomain must be vector spaces.";
@@ -131,23 +129,23 @@ and the third entry is the list of coefficients for the Pfaffians.}
   require success : issue;
   require Dimension(Codomain(s)) le 2 : issue;
   
-  return [*<Dimension(Radical(t, 2)), Dimension(Coradical(t))> *] cat
-      __GetGenus2Signature(H);
+  init_sig := [*<#BaseRing(s), Dimension(Domain(s)[1]), Dimension(Codomain(s))>,
+    <Dimension(Radical(t, 2)), Dimension(Coradical(t))>*];
+  if Dimension(Codomain(s)) le 1 then 
+    return init_sig cat [*[**], [**]*];
+  else
+    return init_sig cat __GetGenus2Signature(H);
+  end if;
 end intrinsic;
 
-intrinsic Genus2Signature( S::[Mtrx] : Cent := true ) -> List
-{Returns the canonical genus 2 signature. The first entry are the dimensions of 
-the radical and co-radical, the second entry is the sequence of flat dimensions,
-and the third entry is the list of coefficients for the Pfaffians.}
-  return Genus2Signature(Tensor(S, 2, 1) : Cent := Cent);
+intrinsic TGSignature( S::[Mtrx] : Cent := true ) -> List
+{Returns the canonical tame genus signature. The first entry is the triple of integers describing the associated fully nondegenerate tensor. The second entry is the dimensions of the radical and co-radical. The third entry is the sequence of flat dimensions, and the fourth entry is the list of coefficients for the Pfaffians.}
+  return TGSignature(Tensor(S, 2, 1) : Cent := Cent);
 end intrinsic;
 
-intrinsic Genus2Signature( G::GrpPC : Cent := true ) -> List
-{Returns the canonical genus 2 signature. The first entry are the ranks of the 
-center over the Frattini subgroup and the Frattini subgroup over the commutator
-subgroup, the second entry is the sequence of flat dimensions, and the third 
-entry is the list of coefficients for the Pfaffians.}
-  return Genus2Signature(pCentralTensor(G, 1, 1) : Cent := Cent);
+intrinsic TGSignature( G::GrpPC : Cent := true ) -> List
+{Returns the canonical tame genus signature. The first entry is the triple of integers describing the associated fully nondegenerate commutator tensor of G. The second entry is the ranks of the center over the Frattini subgroup and the Frattini subgroup over the commutator subgroup. The third entry is the sequence of flat dimensions, and the fourth entry is the list of coefficients for the Pfaffians.}
+  return TGSignature(pCentralTensor(G, 1, 1) : Cent := Cent);
 end intrinsic;
 
 intrinsic IsTameGenusTensor( t::TenSpcElt ) -> BoolElt
