@@ -92,6 +92,31 @@ true
 With the verbose printing, we can see how long each part of the algorithm takes and the information it obtains about the input.
 \begin{code}
 > SetVerbose("TameGenus", 1);
+> A := TGAutomorphismGroup(G);
+Extracting the p-central tensor and computing pseudo-isometries.
+Checking the radicals.
+        dim(Rad_V) = 0
+        dim(Rad_W) = 0
+Writing tensor over its centroid.
+Tensor has genus 2.
+Computing the adjoint algebra.
+        dim(Adj) = 40
+Decomposing tensor into flat and sloped subtensors.
+        Block dims = [ 4, 6, 10 ]
+Number of sloped blocks to lift: 3.
+Field is small enough, applying Pfaffian method.
+Number of flat blocks to lift: 0.
+Constructing the isometry group.
+   G
+   |   Sp ( 2 , 3 ^ 2 )
+   *
+   |   Sp ( 2 , 3 ^ 3 )
+   *
+   |   Sp ( 2 , 3 ^ 5 )
+   *
+   |   3 ^ 0    (unipotent radical)
+   1
+Constructing automorphism group from pseudo-isometries.
 \end{code}
 \end{example}
 
