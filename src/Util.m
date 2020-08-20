@@ -94,14 +94,14 @@ __TensorOverCentroid := function(t, Cent)
   _, SS0 := WedderburnDecomposition(C0);
   if Cent and IsSimple(SS0) then
     // Write tensor over its centroid. 
-    vprintf TameGenus, 1 : "\nWriting tensor over its centroid.\n";
+    vprintf TameGenus, 1 : "Writing tensor over its centroid.\n";
     tt := Cputime();
     T, H := TensorOverCentroid(t);
     __Print_field(T, "t");
     vprintf TameGenus, 2 : "Writing over centroid timing : %o s\n", Cputime(tt);
   else
     // Skip the centroid step.
-    vprintf TameGenus, 1 : "\nEither Cent turned off or centroid not simple.\n";
+    vprintf TameGenus, 1 : "Either Cent turned off or centroid not simple.\n";
     T := t;
     dims_T := [Dimension(X) : X in Frame(T)];
     H := Homotopism(T, T, [*IdentityMatrix(K, dims_T[1]), 
@@ -346,15 +346,15 @@ end function;
 // m : method, q : size of field, d : dims
 __WhichMethod := function(m, q, d)
   if m eq 1 then
-    vprintf TameGenus, 1 : "\nMethod set to adjoint-tensor.\n";
+    vprintf TameGenus, 1 : "Method set to adjoint-tensor.\n";
     return true;
   end if;
   if m eq 2 then
-    vprintf TameGenus, 1 : "\nMethod set to Pfaffian.\n";
+    vprintf TameGenus, 1 : "Method set to Pfaffian.\n";
     return false;
   end if;
   if q le 11 then
-    vprintf TameGenus, 1 : "\nField is small enough, applying Pfaffian method.\n";
+    vprintf TameGenus, 1 : "Field is small enough, applying Pfaffian method.\n";
     return false;
   end if; 
   ord := Factorization(q);
@@ -364,11 +364,11 @@ __WhichMethod := function(m, q, d)
   t := Maximum([Multiplicity(B, x) : x in B]);
   // can probably be improved
   if q^3*e le Factorial(t) then
-    vprintf TameGenus, 1 : "\nPGammaL is smaller than potential symmetric " cat 
+    vprintf TameGenus, 1 : "PGammaL is smaller than potential symmetric " cat 
         "group, applying Pfaffian method.\n";
     return false;
   else
-    vprintf TameGenus, 1 : "\nPGammaL is larger than symmetric group, " cat
+    vprintf TameGenus, 1 : "PGammaL is larger than symmetric group, " cat
         "applying adjoint-tensor method.\n";
     return true;
   end if;
