@@ -128,10 +128,10 @@ is a power of p.}
   require IsPrimePower(q) : "Argument 1 must be prime power.";
   require n gt 1 : "Argument 2 must be larger than 1.";
   require g gt 0 : "Argument 3 must be positive.";
-  require g le n*(n+1) div 2 : "Argument 3 must not exceed n(n+1)/2.";
+  require g le n*(n-1) div 2 : "Argument 3 must not exceed n(n-1)/2.";
   require Type(Exponentp) eq BoolElt : "Exponentp must be true or false.";
   if IsEven(q) then
-    require not Exponentp : "Cannot construct nonabelian group with exponent 2."
+    require not Exponentp :"Cannot construct nonabelian group with exponent 2.";
   end if;
 
   Forms := __WriteOverPrimeField([M - Transpose(M) : 
