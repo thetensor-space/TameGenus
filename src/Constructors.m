@@ -126,9 +126,13 @@ intrinsic TGRandomGroup( q::RngIntElt, n::RngIntElt, g::RngIntElt :
 is a power of p.}
   require q ge 2 : "Argument 1 must be greater than 1.";
   require IsPrimePower(q) : "Argument 1 must be prime power.";
-  require n gt 0 : "Argument 2 must be positive.";
+  require n gt 1 : "Argument 2 must be larger than 1.";
   require g gt 0 : "Argument 3 must be positive.";
+  require g le n*(n+1) div 2 : "Argument 3 must not exceed n(n+1)/2.";
   require Type(Exponentp) eq BoolElt : "Exponentp must be true or false.";
+  if IsEven(q) then
+    require not Exponentp : "Cannot construct nonabelian group with exponent 2."
+  end if;
 
   Forms := __WriteOverPrimeField([M - Transpose(M) : 
       M in [RandomMatrix(GF(q),n,n) : i in [1..g]]]);
