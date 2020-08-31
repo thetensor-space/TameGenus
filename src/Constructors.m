@@ -123,8 +123,17 @@ is a power of p.}
   require g gt 0 : "Argument 3 must be positive.";
   require Type(Exponentp) eq BoolElt : "Exponentp must be true or false.";
 
-  Forms := __WriteOverPrimeField([M - Transpose(M) : 
-      M in [RandomMatrix(GF(q),n,n) : i in [1..g]]]);
+  k := 0;
+  repeat
+    if k lt 100 then
+      k +:= 1;
+    else
+      error "Could not construct a group with given parameters.";
+    end if;
+    AltForms := [M-Transpose(M) : M in [RandomMatrix(GF(q),n,n) : i in [1..g]]];
+  until Dimension(sub< KMatrixSpace(GF(q), n, n) | AltForms>) eq g;
+  
+  Forms := __WriteOverPrimeField(AltForms);
   X := Random(GL(Nrows(Forms[1]), BaseRing(Forms[1])));
   Z := Random(GL(#Forms, BaseRing(Forms[1])));
   Forms := [X*F*Transpose(X) : F in Forms];
