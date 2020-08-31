@@ -34,7 +34,7 @@ __G1_PIsometry := function( t, H : Print := false )
   K := BaseRing(t);
 
   // Construct generators for isometry group
-  vprintf TameGenus, 1 : "\nConstructing the pseudo-isometry group.\n";
+  vprintf TameGenus, 1 : "Constructing the pseudo-isometry group.\n";
   tt := Cputime();
 
   pisom := SimilarityGroup(SystemOfForms(t)[1]);
@@ -60,7 +60,7 @@ __G1_PIsometry := function( t, H : Print := false )
   // Check if there are non-trivial Galois actions
   if #BaseRing(Domain(H)) ne #K then
 
-    vprintf TameGenus, 1 : "\nChecking Galois automorphisms.\n";
+    vprintf TameGenus, 1 : "Checking Galois automorphisms.\n";
 
     pseudo_in := [__RewriteMat(X, H.2) : X in pseudo_in];
     pseudo_out := [__RewriteMat(X, H.0) : X in pseudo_out];
@@ -80,7 +80,7 @@ __G1_PIsometry := function( t, H : Print := false )
 
   // Sanity check
   if __SANITY_CHECK then
-    vprintf TameGenus, 1 : "\nRunning sanity check.\n";
+    vprintf TameGenus, 1 : "Running sanity check.\n";
     tt := Cputime();
     s := Domain(H);
     assert forall{i : i in [1..#pseudo_in] | IsHomotopism(s, s, [*pseudo_in[i],
@@ -109,7 +109,7 @@ __G2_PIsometry := function( t, H : Method := 0 )
   k := BaseRing(t);
 
   // Step 1: Compute the adjoint algebra of the forms.
-  vprintf TameGenus, 1 : "\nComputing the adjoint algebra.\n";
+  vprintf TameGenus, 1 : "Computing the adjoint algebra.\n";
   tt := Cputime();
 
   A := AdjointAlgebra(t);
@@ -119,7 +119,7 @@ __G2_PIsometry := function( t, H : Method := 0 )
 
   // Break off the flat and sloped subtensors of t 
   vprintf TameGenus, 1 : 
-      "\nDecomposing tensor into flat and sloped subtensors.\n";
+      "Decomposing tensor into flat and sloped subtensors.\n";
   tt := Cputime(); 
 
   t_flat, t_slope, F, f_dims, s_dims := __Get_Flat_and_Sloped(t);
@@ -129,7 +129,7 @@ __G2_PIsometry := function( t, H : Method := 0 )
 
 
   // Step 3: Lift the sloped
-  vprintf TameGenus, 1 : "\nNumber of sloped blocks to lift: %o.\n", #s_dims;
+  vprintf TameGenus, 1 : "Number of sloped blocks to lift: %o.\n", #s_dims;
   if #s_dims gt 0 then
 
     // determine which method to use
@@ -166,7 +166,7 @@ __G2_PIsometry := function( t, H : Method := 0 )
   end if;
 
 
-  vprintf TameGenus, 1 : "\nNumber of flat blocks to lift: %o.\n", #f_dims;
+  vprintf TameGenus, 1 : "Number of flat blocks to lift: %o.\n", #f_dims;
 	// Step 4: Lift the flat blocks
   if #f_dims gt 0 then
 
@@ -219,7 +219,7 @@ __G2_PIsometry := function( t, H : Method := 0 )
 
   // Sanity check 
   if __SANITY_CHECK then
-    vprintf TameGenus, 1 : "\nRunning sanity check.\n";
+    vprintf TameGenus, 1 : "Running sanity check.\n";
     tt := Cputime();
     assert forall{i : i in [1..#inner] | IsHomotopism(t, t, [*inner[i], 
         inner[i], outer[i]*], HomotopismCategory(3))};
@@ -228,7 +228,7 @@ __G2_PIsometry := function( t, H : Method := 0 )
 	
 
 	// Construct generators for isometry group
-  vprintf TameGenus, 1 : "\nConstructing the isometry group.\n";
+  vprintf TameGenus, 1 : "Constructing the isometry group.\n";
   tt := Cputime();
 
   if GetVerbose("TameGenus") eq 0 then
@@ -247,7 +247,7 @@ __G2_PIsometry := function( t, H : Method := 0 )
 
   // Sanity check on isometry group
   if __SANITY_CHECK then
-    vprintf TameGenus, 1 : "\nRunning sanity check.\n";
+    vprintf TameGenus, 1 : "Running sanity check.\n";
     tt := Cputime();
     I2 := IdentityMatrix(k, 2);
     assert forall{I : I in Generators(isom) | IsHomotopism(t, t, [*I, I, 
@@ -264,7 +264,7 @@ __G2_PIsometry := function( t, H : Method := 0 )
   // Check if there are non-trivial Galois actions
   if #BaseRing(Domain(H)) ne #BaseRing(t) then
 
-    vprintf TameGenus, 1 : "\nChecking Galois automorphisms.\n";
+    vprintf TameGenus, 1 : "Checking Galois automorphisms.\n";
 
     pseudo_in := [__RewriteMat(X, H.2) : X in pseudo_in];
     pseudo_out := [__RewriteMat(X, H.0) : X in pseudo_out];
@@ -283,7 +283,7 @@ __G2_PIsometry := function( t, H : Method := 0 )
 
   // Sanity check
   if __SANITY_CHECK then
-    vprintf TameGenus, 1 : "\nRunning sanity check.\n";
+    vprintf TameGenus, 1 : "Running sanity check.\n";
     tt := Cputime();
     s := Domain(H);
     assert forall{i : i in [1..#pseudo_in] | IsHomotopism(s, s, [*pseudo_in[i],
@@ -337,12 +337,12 @@ adjoint-tensor method or 2 for Pfaffian method.}
     // Construct pseudo-isometry group
     if Dimension(Codomain(T)) eq 1 then
     
-      vprintf TameGenus, 1 : "\nTensor has genus 1.\n";
+      vprintf TameGenus, 1 : "Tensor has genus 1.\n";
       IN, OUT, ORD := __G1_PIsometry(T, H);
 
     else
 
-      vprintf TameGenus, 1 : "\nTensor has genus 2.\n";
+      vprintf TameGenus, 1 : "Tensor has genus 2.\n";
       IN, OUT, ORD := __G2_PIsometry(T, H : Method := Method);
 
     end if;
@@ -358,7 +358,7 @@ adjoint-tensor method or 2 for Pfaffian method.}
   dims_t_fn := [Dimension(X) : X in Frame(t_fn)];
   if d_rad gt 0 then
     // Add pseudo-isometries on radical.
-    vprintf TameGenus, 1 : "\nIncluding the pseudo-isometries from the radical.\n";
+    vprintf TameGenus, 1 : "Including the pseudo-isometries from the radical.\n";
   
     rad_auts := __Radical_auts(K, dims_t_fn[1], d_rad);
     pseudo_in := [DiagonalJoin(X, IdentityMatrix(K, d_rad)) : X in IN] cat 
@@ -375,7 +375,7 @@ adjoint-tensor method or 2 for Pfaffian method.}
 
   if d_crad gt 0 then
     // Add pseudo-isometries on co-radical.
-    vprintf TameGenus, 1 : "\nIncluding the pseudo-isometries from the co-radical.\n";
+    vprintf TameGenus, 1 : "Including the pseudo-isometries from the co-radical.\n";
 
     crad_auts := [Transpose(X) : X in __Radical_auts(K, dims_t_fn[3], d_crad)];
     pseudo_in cat:= [IdentityMatrix(K, dims_t_fn[1] + d_rad) : 
@@ -390,7 +390,7 @@ adjoint-tensor method or 2 for Pfaffian method.}
 
   // Sanity check
   if __SANITY_CHECK then
-    vprintf TameGenus, 1 : "\nRunning sanity check.\n";
+    vprintf TameGenus, 1 : "Running sanity check.\n";
     tt := Cputime();
     assert forall{i : i in [1..#pseudo_in] | IsHomotopism(t, t, [*pseudo_in[i],
         pseudo_in[i], pseudo_out[i]*], HomotopismCategory(3))};

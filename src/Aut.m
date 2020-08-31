@@ -94,7 +94,7 @@ __TameGenusAutomorphism := function( G : Cent := true, Method := 0,
 
 
   vprintf TameGenus, 1 : 
-    "\nConstructing automorphism group from pseudo-isometries.\n";
+    "Constructing automorphism group from pseudo-isometries.\n";
   tt := Cputime();
 
   // Adjust by the coercsion maps
@@ -134,7 +134,7 @@ __TameGenusAutomorphism := function( G : Cent := true, Method := 0,
   end if;
   A`Order := Integers()!ORD;
 
-  vprintf TameGenus, 2 : "Automorphism group construction : %o s\n", 
+  vprintf TameGenus, 2 : "Automorphism group construction : %o s.\n", 
       Cputime(tt);
 
 	return A;
@@ -159,7 +159,7 @@ structure set Method to 1 for adjoint-tensor method or 2 for Pfaffian method.}
   
   // Just call Magma funcion for the abelian case.
   if IsAbelian(G) then
-    vprintf TameGenus, 1 : "Group is abelian. Using Magma's default algorithm.";
+    vprintf TameGenus, 1 : "Group is abelian. Using Magma's default algorithm.\n";
     return AutomorphismGroup(G);
   end if;
 

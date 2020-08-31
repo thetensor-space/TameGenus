@@ -53,30 +53,37 @@ __FormsToGroup := function( Forms : ExponentP := false )
 end function;
 
 __WriteOverPrimeField := function( Forms )
-  K := BaseRing(Forms[1]);
-  if IsPrimeField(K) then
+  E := BaseRing(Forms[1]);
+  if IsPrimeField(E) then
     return Forms;
   end if;
-  E := GF(Characteristic(K));
-  e := Degree(K, E);
+  K := GF(Characteristic(E));
+  e := Degree(E, K);
   n := Ncols(Forms[1]);
-  alpha := CompanionMatrix(DefiningPolynomial(K, E));
-  sys := [ZeroMatrix(E, n*e, n*e) : i in [1..e*#Forms]];
-  // Build the matrices blocks at a time. We know our input is alternating.
-  for i in [1..n] do
-    for j in [i+1..n] do
-      for k in [1..#Forms] do
-        vec := ElementToSequence(Forms[k][i][j], E);
-        M := &+[vec[l]*alpha^(l-1) : l in [1..e]];
-        blocks := [M*alpha^(l-1) : l in [1..e]];
-        for l in [1..e] do
-          InsertBlock(~(sys[(k-1)*e + l]), blocks[l], (i-1)*e + 1, (j-1)*e + 1);
-          InsertBlock(~(sys[(k-1)*e + l]), -blocks[l], (j-1)*e + 1, (i-1)*e + 1);
-        end for;
+  m := #Forms;
+  V_E := VectorSpace(E, n);
+  W_E := VectorSpace(E, m);
+  V_K := VectorSpace(K, n*e);
+  W_K := VectorSpace(E, m*e);
+
+  V_map := map<V_K -> V_E | 
+    x :-> V_E![E!(Eltseq(x)[e*(i-1)+1..e*i]) : i in [1..n]] >;
+  W_map := map<W_E -> W_K | 
+    x :-> W_K!(&cat[Eltseq(x[i]) : i in [1..m]]) >;
+  
+  new_Forms := [ZeroMatrix(K, n*e, n*e) : i in [1..m*e]];
+  for i in [1..n*e-1] do
+    u := Matrix(1, n, Eltseq(V_K.i @ V_map));
+    for j in [i+1..n*e] do 
+      v := Matrix(n, 1, Eltseq(V_K.j @ V_map));
+      w := Eltseq((W_E![(u*X*v)[1][1] : X in Forms]) @ W_map);
+      for k in [1..#w] do
+        new_Forms[k][i][j] := w[k];
+        new_Forms[k][j][i] := -w[k];
       end for;
     end for;
   end for;
-  return sys;
+  return new_Forms;
 end function;
 
 // Takes a homogeneous multivariate polynomial in 2 vars and returns a system of 
@@ -119,9 +126,13 @@ intrinsic TGRandomGroup( q::RngIntElt, n::RngIntElt, g::RngIntElt :
 is a power of p.}
   require q ge 2 : "Argument 1 must be greater than 1.";
   require IsPrimePower(q) : "Argument 1 must be prime power.";
-  require n gt 0 : "Argument 2 must be positive.";
+  require n gt 1 : "Argument 2 must be larger than 1.";
   require g gt 0 : "Argument 3 must be positive.";
+  require g le n*(n-1) div 2 : "Argument 3 must not exceed n(n-1)/2.";
   require Type(Exponentp) eq BoolElt : "Exponentp must be true or false.";
+  if IsEven(q) then
+    require not Exponentp :"Cannot construct nonabelian group with exponent 2.";
+  end if;
 
   k := 0;
   repeat

@@ -74,7 +74,7 @@ __Interweave_units := function(X, Y)
 end function;
 
 __G1_Isotopism := function(s, t : Const := true)
-  vprintf TameGenus, 1 : "\nGenus 1 case.\n";
+  vprintf TameGenus, 1 : "Genus 1 case.\n";
   K := BaseRing(s);
   A_s := AdjointAlgebra(s);
   A_t := AdjointAlgebra(t);
@@ -103,7 +103,7 @@ end function;
 __IsPseudoSG := function( s, t : Constructive := true, Method := 0 )
   K := BaseRing(s);
 
-  vprintf TameGenus, 1 : "\nComputing the adjoint algebra.\n";
+  vprintf TameGenus, 1 : "Computing the adjoint algebra.\n";
   tt := Cputime();
 
   A_s := AdjointAlgebra(s);
@@ -117,9 +117,9 @@ __IsPseudoSG := function( s, t : Constructive := true, Method := 0 )
   end if;
 
   // genus 2
-  vprintf TameGenus, 1 : "\nGenus 2 case.\n";
+  vprintf TameGenus, 1 : "Genus 2 case.\n";
   vprintf TameGenus, 1 : 
-      "\nDecomposing tensors into flat and sloped subtensors.\n";
+      "Decomposing tensors into flat and sloped subtensors.\n";
   tt := Cputime(); 
 
   s_flat, s_sloped, H_s, fdims_s, sdims_s := __Get_Flat_and_Sloped(s);
@@ -127,7 +127,7 @@ __IsPseudoSG := function( s, t : Constructive := true, Method := 0 )
 
   // Quick checks
   if (fdims_s ne fdims_t) or (sdims_s ne sdims_t) then
-    vprint TameGenus, 1 : "\nGenus 2 signatures are not the same.";
+    vprint TameGenus, 1 : "Genus 2 signatures are not the same.";
     return false, _; 
   end if;
   if not Constructive and (sdims_s eq []) then 
@@ -205,7 +205,7 @@ __Galois_wrapped_IsPseudo := function(F, G : Const := true, Method := 0)
   W := Codomain(t);
   
   // Compute the adjoint algebras
-  vprintf TameGenus, 1 : "\nComputing the adjoint algebra.\n";
+  vprintf TameGenus, 1 : "Computing the adjoint algebra.\n";
   tt := Cputime();
 
   A_s := AdjointAlgebra(S);
@@ -217,7 +217,7 @@ __Galois_wrapped_IsPseudo := function(F, G : Const := true, Method := 0)
 
   // Quick adjoint check
   if Multiset(SimpleParameters(A_s)) ne Multiset(SimpleParameters(A_t)) then
-    vprintf TameGenus, 1 : "\nAdjoint algebras are not isomorphic.\n";
+    vprintf TameGenus, 1 : "Adjoint algebras are not isomorphic.\n";
     return false, _;
   end if;
 
@@ -225,7 +225,7 @@ __Galois_wrapped_IsPseudo := function(F, G : Const := true, Method := 0)
   if #BaseRing(S) ne #BaseRing(s) then
 
     // There are potential isomorphisms arising from Galois actions
-    vprintf TameGenus, 1 : "\nPotential Galois actions present.\n";
+    vprintf TameGenus, 1 : "Potential Galois actions present.\n";
 
     // First construct a homotopism that mimics Galois
     Y := __Standard_Gen(G);
@@ -324,13 +324,13 @@ pseudo-isometric over a finite field of odd characteristic.}
 
   // Check radical dimensions
   if dim_rad_s ne dim_rad_t or dim_crad_s ne dim_crad_t then
-    vprintf TameGenus, 1 : "\nRadicals have different dimensions.\n";
+    vprintf TameGenus, 1 : "Radicals have different dimensions.\n";
     return false, _;
   end if;
 
   // Check the frames
   if Frame(s_nondeg) ne Frame(t_nondeg) then
-    vprintf TameGenus, 1 : "\nTensors have non-equivalent frames.\n";
+    vprintf TameGenus, 1 : "Tensors have non-equivalent frames.\n";
     return false, _;
   end if;
 
@@ -351,7 +351,7 @@ pseudo-isometric over a finite field of odd characteristic.}
 
   // Check that their centroids are isomorphic
   if #BaseRing(S) ne #BaseRing(T) then
-    vprint TameGenus, 1 : "\nCentroids are not isormorphic.";
+    vprint TameGenus, 1 : "Centroids are not isormorphic.";
     return false, _;
   end if;
 
@@ -393,7 +393,7 @@ H.}
   // Abelian case
   if IsAbelian(G) then 
     vprintf TameGenus, 1 : 
-        "Groups are abelian. Using Magma's default algorithm.";
+        "Groups are abelian. Using Magma's default algorithm.\n";
     return IsIsomorphic(G, H);
   end if;
 
