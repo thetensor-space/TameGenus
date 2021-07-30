@@ -151,6 +151,7 @@ end intrinsic;
 
 intrinsic TGSignature( G::GrpPC : Cent := true ) -> List
 {Returns the canonical tame genus signature. The first entry is the triple of integers describing the associated fully nondegenerate commutator tensor of G. The second entry is the ranks of the center over the Frattini subgroup and the Frattini subgroup over the commutator subgroup. The third entry is the sequence of flat dimensions, and the fourth entry is the list of coefficients for the Pfaffians.}
+  require IsTameGenusGroup(G) : "Group does not have tame genus.";
   return TGSignature(pCentralTensor(G, 1, 1) : Cent := Cent);
 end intrinsic;
 
