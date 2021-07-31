@@ -65,11 +65,12 @@ __GetGenus2Signature := function(H)
     end for;
     pfaff_prod := {@ &*(P) : P in pfaff_orbits @};
     ind := Index(pfaff_prod, Minimum(pfaff_prod)); // internal Magma ordering 
-    can_polys := [f : f in pfaff_orbits[ind]];
+    can_polys := Sort([f : f in pfaff_orbits[ind]]);
 
     // Polynomials are difficult to compare.
     // Here's the (possibly temporary) fix.
-    terms := [* [ K!0 : i in [0..Degree(f)] ] : f in can_polys *];
+    terms := [* [ K!0 : i in [0..Degree(can_polys[j])] ] : 
+      j in [1..#can_polys] *];
     for i in [1..#can_polys] do
       f := can_polys[i];
       T := Terms(f); // sorted via lex
@@ -86,7 +87,7 @@ __GetGenus2Signature := function(H)
     terms := [**];
   end if;
 
-  return [*f_dims, terms*];
+  return [*Sort(f_dims), terms*];
 end function;
 
 
