@@ -1,0 +1,45 @@
+Magma file discrepancies:
+  Genus() :  -> RngIntElt
+  Genus() :  -> RngIntElt
+  Genus2Group() :  -> GrpPC
+  Genus2Group() :  -> GrpPC
+  Genus2Group() :  -> GrpPC
+  Genus2Group() :  -> GrpPC
+  IsIndecomposable() :  -> BoolElt
+  IsIndecomposable() :  -> BoolElt
+  IsTameGenusGroup() :  -> BoolElt
+  IsTameGenusTensor() :  -> BoolElt
+  RandomGenus1Group() :  -> ::RngIntElt, d::RngIntElt, r::RngIntElt:
+  RandomGenus2Group() :  -> ::RngIntElt, d::[RngIntElt]:Exponentp:=true)
+  TGAutomorphismGroup() :  -> ::GrpPC:Cent:=true, Method:=0, 
+  TGIsIsomorphic() :  -> ::GrpPC, H::GrpPC:Cent:=true, 
+  TGIsPseudoIsometric() :  -> ::TenSpcElt, t::TenSpcElt:Cent:=true, 
+  TGPseudoIsometryGroup() :  -> 
+  TGRandomGroup() :  -> ::RngIntElt, n::RngIntElt, g::RngIntElt:
+  TGSignature() :  -> List
+  TGSignature() :  -> List
+  TGSignature() :  -> List
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+
+Documentation file discrepancies:
+  Genus(G) : GrpPC -> RngIntElt
+  Genus(t) : TenSpcElt -> RngIntElt
+  Genus2Group(f) : RngMPolElt -> GrpPC
+  Genus2Group(f) : RngUPolElt -> GrpPC
+  IsIndecomposable(G) : GrpPC -> BoolElt
+  IsIndecomposable(t) : TenSpcElt -> BoolElt
+  IsTameGenusGroup(G) : Group -> BoolElt
+  IsTameGenusTensor(t) : TenSpcElt -> BoolElt
+  RandomGenus1Group(q, d, r : parameters) : RngIntElt, RngIntElt, RngIntElt -> GrpPC
+  RandomGenus2Group(q, d : parameters) : RngIntElt, [RngIntElt] -> GrpPC
+  SetVerbose(MonStgElt, RngIntElt) : -> 
+  TGAutomorphismGroup(G : parameters) : GrpPC -> GrpAuto
+  TGIsIsomorphic(G, H : parameters) : GrpPC, GrpPC -> BoolElt
+  TGIsPseudoIsometric(s, t : parameters) : TenSpcElt, TenSpcElt -> BoolElt, Hmtp
+  TGPseudoIsometryGroup(t : parameters) : TenSpcElt -> GrpMat
+  TGRandomGroup(q, n, g : parameters) : RngIntElt, RngIntElt, RngIntElt -> GrpPC
+  TGSignature(G) : GrpPC -> List
+  TGSignature(t) : TenSpcElt -> List

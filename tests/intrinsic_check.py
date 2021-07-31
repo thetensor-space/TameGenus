@@ -52,8 +52,11 @@ def get_magma_intrinsics(direc, files):
       intrin = intrin[i+1:]
       intrin_input = []
       intrin_vars = []
-      while intrin[0] != ')':
+      while len(intrin) <= 2:
+        print(intrin)
         i = intrin.find('::')
+        if i == -1:
+          i = intrin.find(':=')
         if i != -1:
           intrin_vars += [intrin[:i].replace(',', '')]
           j = 2
@@ -125,8 +128,8 @@ while no_working_spec:
 
 print("\n--------------------------------------------")
 print("Package name: " + pack_name)
-print("   Directory: " + pack_dir)
-print("   Spec file: " + pack_name + ".spec")
+print("\tDirectory: " + pack_dir)
+print("\tSpec file: " + pack_name + ".spec")
 print("--------------------------------------------")
 magma_files = parse_spec(lines)
 magma_intrin = get_magma_intrinsics(pack_dir, magma_files)
@@ -145,20 +148,20 @@ print("--------------------------------------------")
 magma_discrep = []
 doc_discrep = []
 for i in magma_intrin:
-  if not i in doc_intrin:
+  if not i.replace(' ', '') in [j.replace(' ', '') for j in doc_intrin]:
     magma_discrep += [i]
 for i in doc_intrin:
-  if not i in magma_intrin:
+  if not i.replace(' ', '') in [j.replace(' ', '') for j in magma_intrin]:
     doc_discrep += [i]
-print("Found " + str(len(magma_discrep)) + " discrepencies with the Magma files.")
-print("Found " + str(len(doc_discrep)) + " discrepencies with the documentation files.")
+print("Found " + str(len(magma_discrep)) + " discrepancies with the Magma files.")
+print("Found " + str(len(doc_discrep)) + " discrepancies with the documentation files.")
 with open(pack_dir + "/tests/IntrinsicOutput.txt", 'w') as result:
-  result.write("Magma file discrepencies:\n")
+  result.write("Magma file discrepancies:\n")
   for i in range(len(magma_discrep)):
     result.write("  " + magma_discrep[i] + "\n")
   result.write("\n" + "-"*80 + "\n\n")
   result.write("-"*80 + "\n\n")
-  result.write("Documentation file discrepencies:\n")
+  result.write("Documentation file discrepancies:\n")
   for i in range(len(doc_discrep)):
     result.write("  " + doc_discrep[i] + "\n")
 print("Results printed out to " + pack_dir + "/tests/IntrinsicOutput.txt")

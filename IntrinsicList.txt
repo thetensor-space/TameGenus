@@ -1,0 +1,21 @@
+TameGenusVersion
+IsIndecomposable(TenSpcElt): BoolElt
+IsIndecomposable(GrpPC): BoolElt
+TGAutomorphismGroup(GrpPC : Method:=0, Mat:=false): GrpAuto
+TGIsPseudoIsometric(TenSpcElt, TenSpcElt : Constructive:=true, Method:=0): BoolElt, Hmtp
+TGIsIsomorphic(GrpPC, GrpPC : Constructive:=true, Method:=0): BoolElt, Map
+TGPseudoIsometryGroup(TenSpcElt : Method:=0): GrpMat
+TGRandomGroup(RngIntElt, RngIntElt, RngIntElt): GrpPC
+RandomGenus2Group(RngIntElt, [RngIntElt]): GrpPC
+RandomGenus1Group(RngIntElt, RngIntElt, RngIntElt): GrpPC
+Genus2Group([RngMPolElt]): GrpPC
+Genus2Group([RngUPolElt]): GrpPC
+Genus2Group(RngMPolElt): GrpPC
+Genus2Group(RngUPolElt): GrpPC
+Genus(TenSpcElt): RngIntElt
+Genus(GrpPC): RngIntElt
+TGSignature(TenSpcElt): List
+TGSignature([Mtrx]): List
+TGSignature(GrpPC): List
+IsTameGenusTensor(TenSpcElt): BoolElt
+IsTameGenusGroup(GrpPC): BoolElt
