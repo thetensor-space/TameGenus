@@ -118,11 +118,11 @@ end intrinsic;
 
 intrinsic TGSignature( t::TenSpcElt : Cent := true ) -> List
 {Returns the canonical tame genus signature. The first entry is the triple of integers describing the associated fully nondegenerate tensor. The second entry is the dimensions of the radical and co-radical. The third entry is the sequence of flat dimensions, and the fourth entry is the list of coefficients for the Pfaffians.}
+  K := BaseRing(t); 
   require Type(Cent) eq BoolElt : "'Cent' must be true or false.";
   require forall{X : X in t`Domain cat [*t`Codomain*] | Type(X) eq ModTupFld} : 
       "Domain and codomain must be vector spaces.";
   require IsAlternating(t) : "Tensor must be alternating.";
-  K := BaseRing(t);
   require ISA(Type(K), FldFin) : "Field must be finite.";
 
   t_fn := __Radical_removal(t);
@@ -145,35 +145,56 @@ intrinsic TGSignature( t::TenSpcElt : Cent := true ) -> List
   end if;
 end intrinsic;
 
-intrinsic TGSignature( S::[Mtrx] : Cent := true ) -> List
+intrinsic TGSignature( S::[Mtrx] : Cent := true, Check := true ) -> List
 {Returns the canonical tame genus signature. The first entry is the triple of integers describing the associated fully nondegenerate tensor. The second entry is the dimensions of the radical and co-radical. The third entry is the sequence of flat dimensions, and the fourth entry is the list of coefficients for the Pfaffians.}
-  return TGSignature(Tensor(S, 2, 1) : Cent := Cent);
+  require Type(Cent) eq BoolElt : "'Cent' must be true or false.";
+  require Type(Check) eq BoolElt : "'Check' must be true or false.";
+  return TGSignature(Tensor(S, 2, 1) : Cent := Cent, Check := Check);
 end intrinsic;
 
-intrinsic TGSignature( G::GrpPC : Cent := true ) -> List
+intrinsic TGSignature( G::GrpPC : Cent := true, Check := true ) -> List
 {Returns the canonical tame genus signature. The first entry is the triple of integers describing the associated fully nondegenerate commutator tensor of G. The second entry is the ranks of the center over the Frattini subgroup and the Frattini subgroup over the commutator subgroup. The third entry is the sequence of flat dimensions, and the fourth entry is the list of coefficients for the Pfaffians.}
-  require IsTameGenusGroup(G) : "Group does not have tame genus.";
+  require Type(Cent) eq BoolElt : "'Cent' must be true or false.";
+  require Type(Check) eq BoolElt : "'Check' must be true or false.";
+  if Check then 
+    require IsTameGenusGroup(G) : "Group does not have tame genus.";
+  end if;
   return TGSignature(pCentralTensor(G, 1, 1) : Cent := Cent);
 end intrinsic;
 
 intrinsic IsTameGenusTensor( t::TenSpcElt ) -> BoolElt
 {Decides if the given tensor is a tensor which can be handled by the TameGenus package.}
-  s := __Radical_removal(t);
-  if Dimension(Codomain(s)) le 2 or Dimension(Domain(s)[1]) eq 0 then
-    return true;
-  else 
-    T, _, success, issue := __TensorOverCentroid(s, true);
-    // This means that tensor is decomposable
-    if not success then
-      vprint TameGenus, 1 : issue;
-      return false;
-    end if;
-    // This means that the tensor just has genus that is too large
-    if Dimension(Codomain(T)) gt 2 then
-      vprint TameGenus, 1 : "Group does not have genus 1 or 2.";
-      return false;
-    end if;
+  if not IsAlternating(t) then 
+    return false;
   end if;
+  quick_check := function(s) 
+    return Dimension(Codomain(s)) le 2 or Dimension(Domain(s)[1]) eq 0;
+  end function;
+
+  // Do an initial first pass 
+  if quick_check(t) then 
+    return true;
+  end if;
+  s := __Radical_removal(t);
+  if quick_check(s) then
+    return true;
+  end if;
+
+  // Work harder to decide
+  T, _, success, issue := __TensorOverCentroid(s, true);
+  // This means that tensor is decomposable (this is an implementation issue).
+  // We just do not yet have an implementation to decompose a tensor. 
+  if not success then
+    vprint TameGenus, 1 : issue;
+    return false;
+  end if;
+
+  // This means that the tensor just has genus that is too large
+  if not quick_check(T) then
+    vprint TameGenus, 1 : "Group does not have genus 1 or 2.";
+    return false;
+  end if;
+
   return true;
 end intrinsic;
 
@@ -188,6 +209,10 @@ intrinsic IsTameGenusGroup( G::GrpPC ) -> BoolElt
   end if;
   // Give abelian groups a pass
   if IsAbelian(G) then
+    return true;
+  end if;
+  // Make a quick exit if it's already obvious.
+  if #FrattiniSubgroup(G) le p^2 then 
     return true;
   end if;
   // Now we check the tensor has good properties
