@@ -145,20 +145,15 @@ intrinsic TGSignature( t::TenSpcElt : Cent := true ) -> List
   end if;
 end intrinsic;
 
-intrinsic TGSignature( S::[Mtrx] : Cent := true, Check := true ) -> List
+intrinsic TGSignature( S::[Mtrx] : Cent := true ) -> List
 {Returns the canonical tame genus signature. The first entry is the triple of integers describing the associated fully nondegenerate tensor. The second entry is the dimensions of the radical and co-radical. The third entry is the sequence of flat dimensions, and the fourth entry is the list of coefficients for the Pfaffians.}
   require Type(Cent) eq BoolElt : "'Cent' must be true or false.";
-  require Type(Check) eq BoolElt : "'Check' must be true or false.";
-  return TGSignature(Tensor(S, 2, 1) : Cent := Cent, Check := Check);
+  return TGSignature(Tensor(S, 2, 1) : Cent := Cent);
 end intrinsic;
 
-intrinsic TGSignature( G::GrpPC : Cent := true, Check := true ) -> List
+intrinsic TGSignature( G::GrpPC : Cent := true ) -> List
 {Returns the canonical tame genus signature. The first entry is the triple of integers describing the associated fully nondegenerate commutator tensor of G. The second entry is the ranks of the center over the Frattini subgroup and the Frattini subgroup over the commutator subgroup. The third entry is the sequence of flat dimensions, and the fourth entry is the list of coefficients for the Pfaffians.}
   require Type(Cent) eq BoolElt : "'Cent' must be true or false.";
-  require Type(Check) eq BoolElt : "'Check' must be true or false.";
-  if Check then 
-    require IsTameGenusGroup(G) : "Group does not have tame genus.";
-  end if;
   return TGSignature(pCentralTensor(G, 1, 1) : Cent := Cent);
 end intrinsic;
 
