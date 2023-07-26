@@ -5,7 +5,3 @@ Exponent(G);
 Genus(G);
 
 DerivedSubgroup(G);
-
-// not implemented yet.
-//Genus2Signature(G);
-

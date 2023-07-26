@@ -6,5 +6,5 @@ G;
 
 Genus(G);
 
-Genus2Signature(G);
+TGSignature(G);
 

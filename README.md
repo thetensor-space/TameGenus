@@ -4,7 +4,7 @@ A package for isomorphism testing of groups and tensors of tame genus for  Magma
 V2.22 and beyond. 
 
 This software was created by Peter A. Brooksbank, Joshua Maglione, and James B. 
-Wilson, Copyright 2015--2019. Distributed under MIT License.
+Wilson, Copyright 2015--2023. Distributed under MIT License.
 
 If you want a copy of the software under a different license, please contact 
 the authors. 

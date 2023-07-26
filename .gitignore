@@ -1,2 +1,4 @@
 *.sig
 .DS_Store
+example_list.m
+log.txt
