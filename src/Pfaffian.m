@@ -39,8 +39,8 @@ __Pfaffian_ISO := function( bB, bC, flats, sloped )
     if i lt si then //flat 
       temp1 := Tensor( [ ExtractBlock(X, start, start, d[i], d[i]) : X in BB1 ], 2, 1 );
       temp2 := Tensor( [ ExtractBlock(X, start, start, d[i], d[i]) : X in BB2 ], 2, 1 );
-      temp1`Adjoint := __GetStarAlg( AdjointAlgebra(bB), IdentityMatrix(k,&+sorted_dims), start, d[i] );
-      temp2`Adjoint := __GetStarAlg( AdjointAlgebra(bC), IdentityMatrix(k,&+sorted_dims), start, d[i] );
+      temp1`Bimap`Adjoint := __GetStarAlg( AdjointAlgebra(bB), IdentityMatrix(k,&+sorted_dims), start, d[i] );
+      temp2`Bimap`Adjoint := __GetStarAlg( AdjointAlgebra(bC), IdentityMatrix(k,&+sorted_dims), start, d[i] );
       Append(~Flat_Bimaps1,temp1);
       Append(~Flat_Bimaps2,temp2);
     else //sloped 
