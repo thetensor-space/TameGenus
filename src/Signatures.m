@@ -19,14 +19,14 @@ __GetGenus2Signature := function(H)
 
     R := PolynomialRing( K, 2 );
     Forms := SystemOfForms(t_sloped);
-    polys := {@@};
+    polys := [];
     start := 1;
     for d in s_dims do
       X := ExtractBlock(Forms[1], start, start + d div 2, d div 2, d div 2);
       Y := ExtractBlock(Forms[2], start, start + d div 2, d div 2, d div 2);
       start +:= d;
       det := R!Determinant(X*R.1 + Y*R.2);
-      Include(~polys, (Coefficients(det)[1])^-1 * det);
+      Append(~polys, (Coefficients(det)[1])^-1 * det);
     end for;
 
     //Needed for PGL
@@ -52,18 +52,18 @@ __GetGenus2Signature := function(H)
     end if;
 
     // Get canonical Pfaffian.
-    pfaff_orbits := {@ polys @};
+    pfaff_orbits := [* polys *];
     for a in powers do
       for Z in Perms do // include Galois auts here
         X := cleartop(Z @@ act, K);
-        polys_new := {@@};
+        polys_new := [];
         for f in polys do
-          Include(~polys_new, __GL2ActionOnPolynomial(f, X : Gal := a));
+          Append(~polys_new, __GL2ActionOnPolynomial(f, X : Gal := a));
         end for;
-        Include(~pfaff_orbits, polys_new);
+        Append(~pfaff_orbits, polys_new);
       end for;
     end for;
-    pfaff_prod := {@ &*(P) : P in pfaff_orbits @};
+    pfaff_prod := [&*(P) : P in pfaff_orbits];
     ind := Index(pfaff_prod, Minimum(pfaff_prod)); // internal Magma ordering 
     can_polys := Sort([f : f in pfaff_orbits[ind]]);
 
